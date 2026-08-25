@@ -8,6 +8,7 @@ export function CancelButton({ bookingId }: { bookingId: string }) {
   const router = useRouter();
   const [confirming, setConfirming] = useState(false);
   const [busy, setBusy] = useState(false);
+  const [promoted, setPromoted] = useState(false);
   const [, startTransition] = useTransition();
 
   async function cancel() {
@@ -21,12 +22,20 @@ export function CancelButton({ bookingId }: { bookingId: string }) {
     setBusy(false);
     setConfirming(false);
 
-    if (body.promotedUserId) {
-      // Worth surfacing: the release and the next person's offer committed in
-      // the same transaction, so the slot is never briefly unowned.
-      alert("Cancelled. The next student on the waitlist has been offered this slot.");
-    }
+    // Worth surfacing inline rather than in a native alert: the release and
+    // the next student's offer committed in the same transaction, so the slot
+    // was never briefly unowned. A modal alert would also block the page.
+    if (body.promotedUserId) setPromoted(true);
+
     startTransition(() => router.refresh());
+  }
+
+  if (promoted) {
+    return (
+      <span className="rounded-lg border border-info/40 bg-info/10 px-3 py-1.5 text-xs text-info">
+        Cancelled · next in queue offered
+      </span>
+    );
   }
 
   if (!confirming) {

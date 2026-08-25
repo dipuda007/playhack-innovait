@@ -130,7 +130,12 @@ export function BookingSheet({
         aria-modal="true"
         aria-labelledby="booking-title"
         onClick={(e) => e.stopPropagation()}
-        className="animate-slide-up w-full max-w-md rounded-t-2xl border border-line bg-surface-solid p-6 sm:rounded-2xl"
+        /*
+          The dialog is focused on open so screen readers land inside it, but
+          it is not itself an interactive control — the focus ring belongs on
+          the buttons within, not around the whole sheet.
+        */
+        className="animate-slide-up w-full max-w-md rounded-t-2xl border border-line bg-surface-solid p-6 focus:outline-none sm:rounded-2xl"
       >
         <div className="flex items-start justify-between gap-4">
           <div>
