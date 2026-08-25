@@ -1,0 +1,158 @@
+@import "tailwindcss";
+
+/*
+ * Palette lifted from the PlayHack problem-statement deck: deep indigo ground,
+ * orange for action, violet for structural labels. Using the organisers' own
+ * visual language means the product looks like it belongs to the event.
+ */
+@theme {
+  --color-ground: #0d0a1f;
+  --color-surface: #16123180;
+  --color-surface-solid: #161231;
+  --color-raised: #1e1940;
+  --color-line: #2b2456;
+  --color-line-soft: #221d47;
+
+  --color-ink: #f4f2ff;
+  --color-ink-dim: #a9a2ce;
+  --color-ink-faint: #6f6795;
+
+  --color-flame: #f97316;
+  --color-flame-soft: #fb923c;
+  --color-violet: #8b5cf6;
+  --color-violet-soft: #a78bfa;
+
+  /*
+   * Chart-mark variants of the brand hues.
+   *
+   * The UI orange (#f97316) sits at L 0.705, above the lightness band that
+   * keeps a categorical set legible as data marks on the dark chart surface.
+   * These steps were picked by running the palette validator rather than by
+   * eye: --chart-1 vs --chart-2 gives CVD ΔE 32 (protan) and passes the
+   * lightness, chroma, contrast and normal-vision checks. The brighter brand
+   * orange stays where it belongs — buttons, accents, text.
+   */
+  --color-chart-1: #e2620a;
+  --color-chart-2: #8b5cf6;
+
+  --color-go: #22c55e;
+  --color-go-dim: #16a34a;
+  --color-stop: #ef4444;
+  --color-warn: #eab308;
+  --color-info: #38bdf8;
+
+  --font-display: "Space Grotesk", ui-sans-serif, system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, "SF Mono", Menlo, monospace;
+}
+
+@layer base {
+  * {
+    border-color: var(--color-line);
+  }
+
+  html {
+    scroll-behavior: smooth;
+  }
+
+  body {
+    background: var(--color-ground);
+    color: var(--color-ink);
+    font-family: var(--font-display);
+    -webkit-font-smoothing: antialiased;
+    /* Faint vertical banding, echoing the deck cover. */
+    background-image:
+      radial-gradient(
+        ellipse 80% 50% at 50% -20%,
+        rgb(139 92 246 / 0.16),
+        transparent
+      ),
+      repeating-linear-gradient(
+        90deg,
+        rgb(255 255 255 / 0.012) 0px,
+        rgb(255 255 255 / 0.012) 1px,
+        transparent 1px,
+        transparent 44px
+      );
+    background-attachment: fixed;
+  }
+
+  ::selection {
+    background: var(--color-flame);
+    color: #150f05;
+  }
+
+  /* Keyboard focus must stay obvious against a dark ground. */
+  :focus-visible {
+    outline: 2px solid var(--color-flame);
+    outline-offset: 2px;
+    border-radius: 4px;
+  }
+
+  ::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+  }
+  ::-webkit-scrollbar-track {
+    background: var(--color-ground);
+  }
+  ::-webkit-scrollbar-thumb {
+    background: var(--color-line);
+    border-radius: 6px;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background: var(--color-violet);
+  }
+}
+
+@layer components {
+  .eyebrow {
+    font-family: var(--font-mono);
+    font-size: 0.6875rem;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    color: var(--color-flame);
+  }
+
+  .panel {
+    background: var(--color-surface);
+    border: 1px solid var(--color-line);
+    border-radius: 1rem;
+    backdrop-filter: blur(12px);
+  }
+
+  .rail {
+    border-left: 3px solid var(--color-flame);
+  }
+}
+
+/* Respect a stated preference for less motion, including the race waterfall. */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+@keyframes pulse-ring {
+  0% { box-shadow: 0 0 0 0 rgb(249 115 22 / 0.55); }
+  70% { box-shadow: 0 0 0 12px rgb(249 115 22 / 0); }
+  100% { box-shadow: 0 0 0 0 rgb(249 115 22 / 0); }
+}
+
+@keyframes slide-up {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes flash-green {
+  0%, 100% { background-color: rgb(34 197 94 / 0.16); }
+  50% { background-color: rgb(34 197 94 / 0.42); }
+}
+
+.animate-pulse-ring { animation: pulse-ring 1.6s ease-out infinite; }
+.animate-slide-up { animation: slide-up 0.28s ease-out both; }
+.animate-flash-green { animation: flash-green 0.9s ease-in-out 2; }
