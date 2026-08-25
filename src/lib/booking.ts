@@ -103,7 +103,12 @@ function toRecord(row: Record<string, unknown>): BookingRecord {
   };
 }
 
-const SELECT_BOOKING = sql`
+/**
+ * Built on call, not at module scope. A fragment created at import time would
+ * touch the connection pool while the module graph is still loading, which
+ * defeats the lazy pool and fails any build without a DATABASE_URL.
+ */
+const selectBooking = () => sql`
   SELECT b.id, b.facility_id, b.user_id, b.status, b.kind, b.party_size,
          b.note, b.booking_code, b.created_at,
          lower(b.during) AS starts_at, upper(b.during) AS ends_at,
@@ -399,7 +404,7 @@ export async function createBooking(
     );
 
     const [full] = await sql<Record<string, unknown>[]>`
-      ${SELECT_BOOKING} WHERE b.id = ${String(result.id)}
+      ${selectBooking()} WHERE b.id = ${String(result.id)}
     `;
 
     return {
@@ -467,7 +472,7 @@ async function handleWriteFailure(
   // makes the second one return the first one's booking instead of a new row.
   if (state === PG.UNIQUE_VIOLATION && constraint?.includes("idempotency")) {
     const [existing] = await sql<Record<string, unknown>[]>`
-      ${SELECT_BOOKING} WHERE b.idempotency_key = ${req.idempotencyKey}
+      ${selectBooking()} WHERE b.idempotency_key = ${req.idempotencyKey}
     `;
     if (existing) {
       return {

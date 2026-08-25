@@ -64,7 +64,8 @@ export type FacilityDay = {
   totalCount: number;
 };
 
-const FACILITY_COLUMNS = sql`
+/** Built on call — see the note on the lazy pool in db/client.ts. */
+const facilityColumns = () => sql`
   id, slug, name, sport, location, description, capacity,
   opens_at, closes_at, slot_minutes, peak_from, color, emoji, is_active
 `;
@@ -88,7 +89,7 @@ function toFacilityView(r: FacilityRow): FacilityView {
 
 export async function listFacilities(): Promise<FacilityView[]> {
   const rows = await sql<FacilityRow[]>`
-    SELECT ${FACILITY_COLUMNS} FROM facilities
+    SELECT ${facilityColumns()} FROM facilities
     ORDER BY is_active DESC, sport, name
   `;
   return rows.map(toFacilityView);
@@ -96,7 +97,7 @@ export async function listFacilities(): Promise<FacilityView[]> {
 
 export async function getFacility(slug: string): Promise<FacilityView | null> {
   const [row] = await sql<FacilityRow[]>`
-    SELECT ${FACILITY_COLUMNS} FROM facilities WHERE slug = ${slug}
+    SELECT ${facilityColumns()} FROM facilities WHERE slug = ${slug}
   `;
   return row ? toFacilityView(row) : null;
 }

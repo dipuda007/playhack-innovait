@@ -16,16 +16,33 @@ function create() {
   const url = process.env.DATABASE_URL;
   if (!url) throw new Error("DATABASE_URL is not set (see .env.example)");
 
+  const isLocal = url.includes("localhost") || url.includes("127.0.0.1");
+
+  /**
+   * A transaction-mode connection pooler (Neon's pooler, PgBouncer) hands a
+   * different backend to each transaction, so a prepared statement created on
+   * one is not there on the next — which surfaces as intermittent
+   * "prepared statement does not exist" errors under exactly the concurrent
+   * load this app is built to survive. Disabling prepared statements is the
+   * documented fix and costs a little planning time per query.
+   *
+   * Detected from the host rather than configured, so a direct connection
+   * string keeps the faster prepared path automatically.
+   */
+  const behindPooler = url.includes("-pooler.");
+
   return postgres(url, {
     // Headroom above the largest race burst the demo fires, so queueing
     // happens inside Postgres where we can reason about it.
     max: 40,
     idle_timeout: 30,
-    connect_timeout: 15,
+    // Neon scales an idle branch to zero, so the first connection after a
+    // quiet period pays a cold start. Generous enough to absorb that rather
+    // than fail the judge's first page load.
+    connect_timeout: 30,
+    prepare: !behindPooler,
     // Neon and most hosted providers require TLS; local dev does not have it.
-    ssl: url.includes("localhost") || url.includes("127.0.0.1")
-      ? false
-      : "require",
+    ssl: isLocal ? false : "require",
     // Ranges come back as raw strings and are parsed where they are needed.
     // The default parser would hand us objects that lose the bound style.
     types: {},
@@ -33,11 +50,35 @@ function create() {
   });
 }
 
-export const sql = globalForDb.__playhackSql ?? create();
-
-if (process.env.NODE_ENV !== "production") {
-  globalForDb.__playhackSql = sql;
+function pool() {
+  if (!globalForDb.__playhackSql) {
+    globalForDb.__playhackSql = create();
+  }
+  return globalForDb.__playhackSql;
 }
+
+/**
+ * The pool is created on first use, not on import.
+ *
+ * Creating it at module scope means importing this file throws when
+ * DATABASE_URL is absent — which fails the build on any machine without a
+ * database, since Next statically generates the 404 page and that pulls in the
+ * layout, which pulls in this module. Deferring construction lets the shell
+ * render and confines the error to code that actually talks to the database.
+ *
+ * The proxy forwards both the tagged-template call and every property
+ * (`begin`, `json`, `unsafe`, `end`), so callers see an ordinary postgres.js
+ * instance and nothing downstream needs to know.
+ */
+export const sql = new Proxy((() => {}) as unknown as ReturnType<typeof postgres>, {
+  apply(_target, _thisArg, args: unknown[]) {
+    return (pool() as unknown as (...a: unknown[]) => unknown)(...args);
+  },
+  get(_target, prop) {
+    const value = (pool() as unknown as Record<string | symbol, unknown>)[prop];
+    return typeof value === "function" ? value.bind(pool()) : value;
+  },
+}) as ReturnType<typeof postgres>;
 
 /** Postgres SQLSTATE codes we translate into product-level outcomes. */
 export const PG = {
