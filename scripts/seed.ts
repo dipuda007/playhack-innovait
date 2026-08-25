@@ -108,11 +108,17 @@ const FIRST = [
   "Kabir", "Sneha", "Vivaan", "Riya", "Aditya", "Tara", "Karan", "Nikita",
   "Rahul", "Anjali", "Siddharth", "Pooja", "Dev", "Kavya", "Manav", "Sanya",
   "Yash", "Isha", "Nikhil", "Aditi", "Varun", "Shreya", "Aman", "Neha",
-];
+  "Rudra", "Trisha", "Kunal", "Ira", "Advait", "Myra", "Parth", "Saanvi",
+  "Jai", "Naina", "Om", "Kiara", "Reyansh", "Aarohi", "Vihaan", "Anvi",
+  "Krish", "Zara", "Atharv", "Prisha", "Ayush", "Navya", "Rian", "Mahi",
+  "Dhruv", "Ridhi", "Samar", "Bhavya", "Aryan", "Lavanya", "Tanish", "Amaira",
+]
 const LAST = [
   "Sharma", "Verma", "Nair", "Iyer", "Das", "Bora", "Saikia", "Gogoi",
   "Reddy", "Patel", "Bose", "Chatterjee", "Rao", "Menon", "Kalita", "Deka",
-];
+  "Barua", "Hazarika", "Dutta", "Baishya", "Phukan", "Mahanta", "Sarma", "Choudhury",
+  "Ghosh", "Mukherjee", "Banerjee", "Sen", "Pillai", "Krishnan", "Joshi", "Desai",
+]
 const HOSTELS = [
   "Brahmaputra", "Lohit", "Kapili", "Manas", "Dihing", "Umiam",
   "Barak", "Siang", "Kameng", "Dhansiri", "Subansiri",
@@ -179,8 +185,14 @@ async function main() {
   // 200 students: enough that a 200-way race is 200 distinct people
   // rather than the same handful cycled, which would weaken the demo.
   for (let i = 0; i < 200; i++) {
-    const name = `${pick(FIRST, i)} ${pick(LAST, i * 3)}`;
-    const email = `${pick(FIRST, i).toLowerCase()}.${pick(LAST, i * 3).toLowerCase()}${i}@iitg.ac.in`;
+    // FIRST has 64 entries and LAST has 32; stepping the surname every time
+    // the given-name list wraps walks the 2048-pair grid without repeating a
+    // pair. Three students called "Aarav Sharma" in a demo reads as fake data
+    // and makes the race waterfall impossible to follow.
+    const firstName = FIRST[i % FIRST.length];
+    const lastName = LAST[(Math.floor(i / FIRST.length) + i * 7) % LAST.length];
+    const name = `${firstName} ${lastName}`;
+    const email = `${firstName.toLowerCase()}.${lastName.toLowerCase()}${i}@iitg.ac.in`;
     // Spread reliability so the fair-draw weighting has something to chew on.
     const reliability = 60 + ((i * 17) % 41);
     const [row] = await sql<{ id: string }[]>`

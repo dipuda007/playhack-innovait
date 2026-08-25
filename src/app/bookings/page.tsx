@@ -4,6 +4,7 @@ import { myBookings, myWaitlist } from "@/lib/availability";
 import { currentUser } from "@/lib/session";
 import { istClock, istDayLabel, istDateKey } from "@/lib/time";
 import { CancelButton } from "@/components/CancelButton";
+import { ClaimButton } from "@/components/ClaimButton";
 import { cn } from "@/lib/cn";
 
 export const dynamic = "force-dynamic";
@@ -97,9 +98,10 @@ export default async function BookingsPage() {
                     </p>
                   </div>
                   {offered ? (
-                    <span className="rounded-full bg-flame px-3 py-1 font-mono text-[10px] uppercase tracking-wider text-ground">
-                      Slot free — claim it
-                    </span>
+                    <ClaimButton
+                      waitlistId={w.id}
+                      expiresAt={w.claim_expires_at}
+                    />
                   ) : (
                     <span className="rounded-full bg-raised px-3 py-1 font-mono text-[10px] uppercase tracking-wider text-ink-dim">
                       #{w.position} in queue
