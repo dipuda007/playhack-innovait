@@ -114,53 +114,48 @@ check("grid marks the slot as mine", Boolean(code) && gridText.includes(code!));
 // ── 7. Cancel it again ───────────────────────────────────────────────
 await page.goto(`${BASE}/bookings`, { waitUntil: "networkidle2" });
 
-// Target THIS booking's row. The page lists every upcoming booking, so
-// clicking the first "Cancel" on the page cancels whichever one happens to
-// sort first — which is how this test failed the first time, blaming the
-// cancel path for a bug in the test.
+// Target THIS booking's row through its data hook. Inferring the row from
+// DOM shape is how this test failed once already — it cancelled whichever
+// booking happened to sort first and then blamed the cancel path.
 const rowFound = await page.evaluate((bookingCode) => {
-  const row = [...document.querySelectorAll("div")].find(
-    (d) =>
-      d.textContent?.includes(bookingCode) &&
-      [...d.querySelectorAll("button")].some(
-        (b) => b.textContent?.trim() === "Cancel",
-      ) &&
-      // innermost matching container
-      ![...d.querySelectorAll("div")].some((c) =>
-        c.textContent?.includes(bookingCode),
-      ),
-  );
-  if (!row) return false;
-  const btn = [...row.querySelectorAll("button")].find(
+  const row = document.querySelector(`[data-booking-code="${bookingCode}"]`);
+  const btn = [...(row?.querySelectorAll("button") ?? [])].find(
     (b) => b.textContent?.trim() === "Cancel",
   );
-  (btn as HTMLButtonElement)?.click();
+  if (!btn) return false;
+  (btn as HTMLButtonElement).click();
   return true;
 }, code!);
 check("found this booking's cancel control", rowFound);
 
 await new Promise((r) => setTimeout(r, 400));
 await page.evaluate((bookingCode) => {
-  const row = [...document.querySelectorAll("div")].find(
-    (d) =>
-      d.textContent?.includes(bookingCode) &&
-      [...d.querySelectorAll("button")].some(
-        (b) => b.textContent?.trim() === "Confirm",
-      ),
-  );
-  const btn = [...(row ?? document).querySelectorAll("button")].find(
+  const row = document.querySelector(`[data-booking-code="${bookingCode}"]`);
+  const btn = [...(row?.querySelectorAll("button") ?? [])].find(
     (b) => b.textContent?.trim() === "Confirm",
   );
   (btn as HTMLButtonElement)?.click();
 }, code!);
 await new Promise((r) => setTimeout(r, 2000));
 await page.goto(`${BASE}/bookings`, { waitUntil: "networkidle2" });
-const afterCancel = await page.evaluate(() => document.body.innerText);
-const upcomingSection = afterCancel.split("History")[0];
+/*
+ * Read the upcoming list from its data hooks, not from innerText.
+ *
+ * The section heading is uppercased in CSS, and innerText reflects
+ * text-transform — so splitting the page on "History" silently matched
+ * nothing, took the whole document as the upcoming section, found the code
+ * in the history table, and reported a cancellation failure that had not
+ * happened. The attributes cannot lie about which rows are upcoming.
+ */
+const stillUpcoming = await page.evaluate(() =>
+  [...document.querySelectorAll("[data-booking-code]")].map((e) =>
+    e.getAttribute("data-booking-code"),
+  ),
+);
 check(
   "cancellation removes it from upcoming",
-  Boolean(code) && !upcomingSection.includes(code!),
-  code && upcomingSection.includes(code) ? "still listed as upcoming" : "",
+  Boolean(code) && !stillUpcoming.includes(code!),
+  code && stillUpcoming.includes(code) ? "still listed as upcoming" : "",
 );
 
 // The freed slot must be immediately bookable again — the partial index

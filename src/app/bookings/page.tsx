@@ -138,6 +138,9 @@ export default async function BookingsPage() {
             {upcoming.map((b) => (
               <article
                 key={b.id}
+                /* A stable hook for the smoke test, so it targets THIS row
+                   rather than inferring one from the shape of the DOM. */
+                data-booking-code={b.booking_code}
                 className="flex flex-wrap items-center gap-x-5 gap-y-3 border-b border-rule px-1 py-4"
               >
                 <SportIcon
