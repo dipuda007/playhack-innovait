@@ -302,64 +302,71 @@ export async function createBooking(
     const result = await withDeadlockRetry(() =>
       sql.begin(async (tx) => {
       /**
-       * Two advisory locks, always taken in ascending key order.
+       * ONE advisory lock, on the user.
        *
-       * WHY TWO:
-       *   · per-USER, because the quota check below is a read-then-write. One
-       *     student firing ten parallel requests would otherwise pass ten
-       *     quota checks and commit all ten.
-       *   · per-SLOT, because without it 200 contenders all pile into the
-       *     exclusion constraint's wait-for-uncommitted-row path at once. The
-       *     constraint still decides the winner either way, but the queue is
-       *     far cheaper to resolve on a plain lock than on constraint waits
-       *     tangled with foreign-key row locks.
+       * The quota check below is a genuine read-then-write: one student firing
+       * ten parallel requests would otherwise pass ten quota checks and commit
+       * all ten. Different students hash to different keys and never contend,
+       * so in a race between fifty students this lock is uncontended.
        *
-       * WHY SORTED — this is the part that matters:
-       *   Taking two locks in an order that varies between transactions is the
-       *   textbook way to build a deadlock. Transaction A holding the user
-       *   lock and waiting for the slot lock, while B holds the slot lock and
-       *   waits for the user lock, is a cycle, and Postgres breaks it by
-       *   killing one of them after `deadlock_timeout`.
+       * ── Why there is no longer a per-SLOT lock ────────────────────────
+       * There used to be one, taken alongside this in sorted key order. It
+       * made a co-located database faster: contenders queued on a cheap lock
+       * instead of piling into the constraint's wait-for-uncommitted-row path.
        *
-       *   Measured, not theorised: a 200-way burst against one slot produced
-       *   27 SQLSTATE 40P01 deadlock failures before this ordering was
-       *   imposed, and zero after.
+       * Over a network it is a disaster, because it serialises every
+       * contender and each transaction then costs a full round trip budget.
+       * Measured against Neon in Singapore from a Vercel function:
        *
-       *   Sorting the two keys gives every transaction in the system one
-       *   global lock order, which makes a cycle impossible to construct.
+       *     n=2  6.3s    n=5  10.6s    n=10  19.2s    n=20  36.4s
+       *
+       * Dead linear at ~1.8s per contender — 50 would exceed the function
+       * timeout. Correctness was never in question (one booking, every run);
+       * throughput was.
+       *
+       * Without the slot lock, all contenders attempt the insert at once. One
+       * wins; the rest block on its uncommitted row and are released together
+       * the moment it commits, each getting 23P01. Total time is one
+       * transaction plus a round trip, whatever n is.
+       *
+       * The deadlock this used to guard against needed two locks taken in
+       * varying order. With a single lock per transaction, and that lock keyed
+       * per user, an advisory-lock cycle cannot be constructed at all.
+       * `withDeadlockRetry` still wraps this for the residual case where
+       * partially-overlapping ranges deadlock on the constraint itself.
        */
-      const slotKey = lockKey(`${req.facilityId}:${req.startsAt.getTime()}`);
-      const userKey = lockKey(req.userId);
-      const [firstLock, secondLock] =
-        slotKey < userKey ? [slotKey, userKey] : [userKey, slotKey];
-
       // postgres.js sends bigint as text; the explicit cast keeps Postgres happy.
-      await tx`SELECT pg_advisory_xact_lock(${firstLock.toString()}::bigint)`;
-      await tx`SELECT pg_advisory_xact_lock(${secondLock.toString()}::bigint)`;
+      await tx`
+        SELECT pg_advisory_xact_lock(${lockKey(req.userId).toString()}::bigint)
+      `;
 
-      const [{ used, quota }] = await tx<{ used: number; quota: number }[]>`
+      /**
+       * Quota and self-clash in one round trip.
+       *
+       * These were two separate queries. On a co-located database that was
+       * free; against a database a continent away every statement inside the
+       * transaction is paid for twice, once on the way out and once back.
+       */
+      const [pre] = await tx<
+        { used: number; quota: number; has_clash: boolean }[]
+      >`
         SELECT
           (SELECT count(*)::int FROM bookings
             WHERE user_id = ${req.userId}
               AND status = 'confirmed'
               AND lower(during) > now()
               AND lower(during) < now() + interval '7 days') AS used,
-          (SELECT weekly_quota FROM users WHERE id = ${req.userId}) AS quota
+          (SELECT weekly_quota FROM users WHERE id = ${req.userId}) AS quota,
+          -- A student cannot be on two courts at once. Same shape of rule as
+          -- the court invariant, but scoped to the person.
+          EXISTS (SELECT 1 FROM bookings
+                   WHERE user_id = ${req.userId}
+                     AND status = 'confirmed'
+                     AND during && tstzrange(${req.startsAt}, ${req.endsAt}, '[)')
+                 ) AS has_clash
       `;
-      if (used >= quota) {
-        throw new DomainReject("QUOTA_EXCEEDED");
-      }
-
-      // A student cannot be on two courts at once. Same shape of rule as the
-      // court invariant, but scoped to the person rather than the facility.
-      const [clash] = await tx<{ id: string }[]>`
-        SELECT id FROM bookings
-        WHERE user_id = ${req.userId}
-          AND status = 'confirmed'
-          AND during && tstzrange(${req.startsAt}, ${req.endsAt}, '[)')
-        LIMIT 1
-      `;
-      if (clash) throw new DomainReject("OVERLAPS_OWN");
+      if (pre.used >= pre.quota) throw new DomainReject("QUOTA_EXCEEDED");
+      if (pre.has_clash) throw new DomainReject("OVERLAPS_OWN");
 
       // ─────────────────────────────────────────────────────────────────
       // THE DECISIVE STATEMENT.
@@ -368,48 +375,58 @@ export async function createBooking(
       // slot is the user's, or it raises 23P01 and the slot never was. There
       // is no window between deciding and doing, because they are the same
       // operation.
+      //
+      // The audit row rides along in the same statement via a CTE — same
+      // transaction as before, so the trail still cannot disagree with
+      // reality, but one round trip instead of two.
       // ─────────────────────────────────────────────────────────────────
       const [row] = await tx<Record<string, unknown>[]>`
-        INSERT INTO bookings
-          (facility_id, user_id, during, idempotency_key,
-           party_size, note, lottery_id)
-        VALUES (
-          ${req.facilityId},
-          ${req.userId},
-          tstzrange(${req.startsAt}, ${req.endsAt}, '[)'),
-          ${req.idempotencyKey},
-          ${req.partySize ?? 1},
-          ${req.note ?? null},
-          ${req.fromLottery ?? null}
+        WITH booked AS (
+          INSERT INTO bookings
+            (facility_id, user_id, during, idempotency_key,
+             party_size, note, lottery_id)
+          VALUES (
+            ${req.facilityId},
+            ${req.userId},
+            tstzrange(${req.startsAt}, ${req.endsAt}, '[)'),
+            ${req.idempotencyKey},
+            ${req.partySize ?? 1},
+            ${req.note ?? null},
+            ${req.fromLottery ?? null}
+          )
+          RETURNING id, facility_id, user_id, status, kind, party_size, note,
+                    booking_code, created_at, during
+        ),
+        logged AS (
+          INSERT INTO booking_events
+            (booking_id, facility_id, user_id, type, payload)
+          SELECT b.id, b.facility_id, b.user_id, 'booking.confirmed',
+                 jsonb_build_object(
+                   'bookingCode', b.booking_code,
+                   'raceRunId', ${req.raceRunId ?? null}::text
+                 )
+          FROM booked b
         )
-        RETURNING id, facility_id, user_id, status, kind, party_size, note,
-                  booking_code, created_at,
-                  lower(during) AS starts_at, upper(during) AS ends_at
-      `;
-
-      // Same transaction as the booking: the audit trail cannot disagree with
-      // reality, because a rollback takes both or neither.
-      await tx`
-        INSERT INTO booking_events (booking_id, facility_id, user_id, type, payload)
-        VALUES (${String(row.id)}, ${req.facilityId}, ${req.userId},
-                'booking.confirmed',
-                ${sql.json({
-                  bookingCode: String(row.booking_code),
-                  raceRunId: req.raceRunId ?? null,
-                })})
+        SELECT id, facility_id, user_id, status, kind, party_size, note,
+               booking_code, created_at,
+               lower(during) AS starts_at, upper(during) AS ends_at
+        FROM booked
       `;
 
         return row;
       }),
     );
 
-    const [full] = await sql<Record<string, unknown>[]>`
-      ${selectBooking()} WHERE b.id = ${String(result.id)}
-    `;
-
+    // Built from what the INSERT already returned plus the facility row we
+    // loaded before the transaction — no extra round trip to re-read a row we
+    // just wrote.
     return {
       ok: true,
-      booking: toRecord(full),
+      booking: toRecord({
+        ...result,
+        facility_name: facility.name,
+        user_name: null,
+      }),
       replayed: false,
       mechanism: req.fromLottery ? "lottery" : "exclusion-constraint",
     };
