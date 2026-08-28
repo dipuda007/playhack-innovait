@@ -1,0 +1,18 @@
+PlayHack — third-party material
+===============================
+
+The MIT licence in LICENSE covers the source code of this project. It does
+NOT cover the campus photographs.
+
+  public/campus/tihor-lake.jpg
+      "IIT Guwahati lake 01" by Ganesh Mohan T, CC BY-SA 4.0, via Wikimedia
+      Commons. Reuse requires attribution and share-alike on the image.
+
+  public/campus/academic-complex.jpg
+      "IITG acad complex" by Satyadeep Karnati, public domain, via Wikimedia
+      Commons.
+
+Full details, including source links, are in public/campus/CREDITS.md.
+
+Fonts (Archivo, Archivo Black, Newsreader, JetBrains Mono) are served through
+next/font from Google Fonts and are licensed under the SIL Open Font License.
