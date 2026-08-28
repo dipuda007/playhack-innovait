@@ -27,7 +27,12 @@ export function OpsConsole({
     code?: string;
     message?: string;
     sqlstate?: string;
-    clashes?: { user_name: string; starts_at: string }[];
+    clashes?: {
+      user_name: string | null;
+      kind?: string;
+      note?: string | null;
+      starts_at: string;
+    }[];
   } | null>(null);
 
   async function createBlock() {
@@ -173,7 +178,10 @@ export function OpsConsole({
               <ul className="mt-2 space-y-0.5 text-xs text-ink-dim">
                 {result.clashes.map((c, i) => (
                   <li key={i}>
-                    · {c.user_name ?? "a student"} holds{" "}
+                    ·{" "}
+                    {c.kind === "block"
+                      ? `already closed${c.note ? ` — ${c.note}` : ""} at `
+                      : `${c.user_name ?? "a student"} holds `}
                     {new Date(c.starts_at).toLocaleTimeString("en-GB", {
                       timeZone: "Asia/Kolkata",
                       hour: "2-digit",
