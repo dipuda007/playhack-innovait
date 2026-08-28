@@ -2,7 +2,6 @@
 
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { Loader2, X } from "lucide-react";
 
 export function CancelButton({ bookingId }: { bookingId: string }) {
   const router = useRouter();
@@ -32,9 +31,7 @@ export function CancelButton({ bookingId }: { bookingId: string }) {
 
   if (promoted) {
     return (
-      <span className="rounded-lg border border-info/40 bg-info/10 px-3 py-1.5 text-xs text-info">
-        Cancelled · next in queue offered
-      </span>
+      <span className="tag text-ink-2">Cancelled · next in queue offered</span>
     );
   }
 
@@ -42,7 +39,7 @@ export function CancelButton({ bookingId }: { bookingId: string }) {
     return (
       <button
         onClick={() => setConfirming(true)}
-        className="rounded-lg border border-line px-3 py-1.5 text-xs text-ink-dim transition-colors hover:border-stop hover:text-stop"
+        className="btn btn-outline px-3 py-1.5 text-[10px]"
       >
         Cancel
       </button>
@@ -50,21 +47,20 @@ export function CancelButton({ bookingId }: { bookingId: string }) {
   }
 
   return (
-    <span className="flex items-center gap-1.5">
+    <span className="flex items-center gap-px bg-rule">
       <button
         onClick={cancel}
         disabled={busy}
-        className="flex items-center gap-1 rounded-lg bg-stop px-3 py-1.5 text-xs font-semibold text-ground disabled:opacity-60"
+        className="btn btn-signal px-3 py-1.5 text-[10px]"
       >
-        {busy && <Loader2 className="h-3 w-3 animate-spin" />}
-        Confirm
+        {busy ? "Releasing…" : "Confirm"}
       </button>
       <button
         onClick={() => setConfirming(false)}
-        className="rounded-lg p-1.5 text-ink-faint hover:text-ink"
+        className="btn btn-outline px-2.5 py-1.5 text-[10px]"
         aria-label="Keep booking"
       >
-        <X className="h-3.5 w-3.5" />
+        Keep
       </button>
     </span>
   );

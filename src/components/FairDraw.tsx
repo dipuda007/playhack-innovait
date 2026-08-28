@@ -1,7 +1,6 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { Dices, Loader2, Trophy, ShieldCheck, Hash } from "lucide-react";
 import { cn } from "@/lib/cn";
 import type { FacilityView } from "@/lib/availability";
 import { istClock } from "@/lib/time";
@@ -26,6 +25,14 @@ type Lottery = {
   entries: Entry[];
 };
 
+/**
+ * The draw, set as a ballot sheet.
+ *
+ * The seed is printed above the entrant list and stays there after the draw,
+ * because that is the entire claim: given this seed and this list of entrants,
+ * anyone can recompute the winner. A result nobody can check is not a fair
+ * draw, it is an assertion — so the audit trail is the page, not a footnote.
+ */
 export function FairDraw({
   facilities,
   defaultDate,
@@ -99,20 +106,18 @@ export function FairDraw({
     : [];
 
   return (
-    <div className="space-y-5">
-      <div className="panel p-5">
-        <div className="grid gap-4 sm:grid-cols-3">
-          <label className="block">
-            <span className="mb-1.5 block font-mono text-[10px] uppercase tracking-wider text-ink-faint">
-              Contested facility
-            </span>
+    <div>
+      <div className="border-y-2 border-ink">
+        <div className="grid gap-px bg-rule sm:grid-cols-3">
+          <label className="block bg-paper p-4">
+            <span className="kicker mb-2 block">Contested facility</span>
             <select
               value={facilityId}
               onChange={(e) => {
                 setFacilityId(e.target.value);
                 setLottery(null);
               }}
-              className="w-full rounded-lg border border-line bg-raised px-3 py-2 text-sm outline-none focus:border-violet"
+              className="field border-0 bg-transparent px-0 py-1 text-[15px] font-semibold"
             >
               {facilities.map((f) => (
                 <option key={f.id} value={f.id}>
@@ -122,116 +127,96 @@ export function FairDraw({
             </select>
           </label>
 
-          <label className="block">
-            <span className="mb-1.5 block font-mono text-[10px] uppercase tracking-wider text-ink-faint">
-              Students entering · {entrants}
+          <label className="block bg-paper p-4">
+            <span className="kicker mb-2 block">Students entering</span>
+            <span className="flex items-center gap-3">
+              <span className="fig w-10 text-[15px] font-bold">{entrants}</span>
+              <input
+                type="range"
+                min={2}
+                max={150}
+                value={entrants}
+                onChange={(e) => setEntrants(Number(e.target.value))}
+                className="w-full accent-[var(--color-signal)]"
+              />
             </span>
-            <input
-              type="range"
-              min={2}
-              max={150}
-              value={entrants}
-              onChange={(e) => setEntrants(Number(e.target.value))}
-              className="w-full accent-[var(--color-flame)]"
-            />
           </label>
 
-          <div className="flex items-end gap-2">
+          <div className="flex items-stretch gap-px bg-rule">
             <button
               onClick={openWindow}
               disabled={busy !== null}
-              className="flex flex-1 items-center justify-center gap-2 rounded-xl bg-violet px-4 py-2.5 text-sm font-semibold text-ground disabled:opacity-50"
+              className="btn btn-outline flex-1 border-0 bg-paper"
             >
-              {busy === "enter" ? (
-                <Loader2 className="h-4 w-4 animate-spin" />
-              ) : null}
-              Open window
+              {busy === "enter" ? "Opening…" : "Open window"}
             </button>
             <button
               onClick={draw}
               disabled={busy !== null || !lottery || Boolean(lottery.drawnAt)}
-              className="flex flex-1 items-center justify-center gap-2 rounded-xl bg-flame px-4 py-2.5 text-sm font-semibold text-ground disabled:opacity-40"
+              className="btn btn-signal flex-1 border-0"
             >
-              {busy === "draw" ? (
-                <Loader2 className="h-4 w-4 animate-spin" />
-              ) : (
-                <Dices className="h-4 w-4" />
-              )}
-              Draw
+              {busy === "draw" ? "Drawing…" : "Draw"}
             </button>
           </div>
         </div>
-
-        {slot && (
-          <p className="mt-3 text-xs text-ink-faint">
-            Slot under contention: {facility?.name} ·{" "}
-            {istClock(slot.start)}–{istClock(slot.end)}
-          </p>
-        )}
       </div>
+
+      {slot && (
+        <p className="border-b border-rule py-2.5 font-mono text-[10px] uppercase tracking-[0.14em] text-ink-3">
+          Slot under contention: {facility?.name} · {istClock(slot.start)}–
+          {istClock(slot.end)}
+        </p>
+      )}
 
       {lottery && (
         <>
-          {/* The seed, shown before and after — that is what makes it auditable. */}
-          <div className="flex flex-wrap items-center gap-x-6 gap-y-2 rounded-xl border border-line bg-raised/40 p-4">
-            <span className="flex items-center gap-2 text-sm font-medium">
-              <Hash className="h-4 w-4 text-violet" />
-              Published seed
-            </span>
-            <code className="font-mono text-xs text-violet-soft">
-              {lottery.seed}
-            </code>
-            <span className="text-xs text-ink-faint">
+          {/* The seed, printed before and after the draw. */}
+          <div className="mt-5 flex flex-wrap items-baseline gap-x-4 gap-y-1 border-l-2 border-signal bg-paper-2 px-4 py-3">
+            <span className="kicker">Published seed</span>
+            <code className="fig text-[12px] font-semibold">{lottery.seed}</code>
+            <span className="text-[11px] text-ink-3">
               generated when the window opened — before anyone entered
             </span>
           </div>
 
           {lottery.drawnAt && lottery.winnerName && (
-            <div className="animate-slide-up rounded-2xl border border-go/50 bg-go/10 p-5">
-              <div className="flex flex-wrap items-center gap-3">
-                <Trophy className="h-7 w-7 shrink-0 text-go" />
-                <div>
-                  <h2 className="text-xl font-bold text-go">
-                    {lottery.winnerName} takes the court
-                  </h2>
-                  <p className="mt-0.5 text-sm text-ink-dim">
-                    Drawn from {lottery.entries.length} entrants · booking{" "}
-                    <code className="font-mono text-go">
-                      {lottery.bookingCode}
-                    </code>
-                  </p>
-                </div>
-              </div>
-              <p className="mt-3 flex items-start gap-2 text-xs text-ink-dim">
-                <ShieldCheck className="mt-0.5 h-3.5 w-3.5 shrink-0 text-go" />
-                <span>
-                  The winner&apos;s booking was inserted through the same
-                  exclusion constraint as every other booking. Fairness chose
-                  the winner; correctness still enforced the slot.
-                </span>
+            <section className="animate-ink-in mt-5 border-2 border-ink bg-ink px-6 py-7 text-paper sm:px-8">
+              <p className="font-mono text-[10px] uppercase tracking-[0.3em] text-paper/60">
+                Drawn from {lottery.entries.length} entrants
               </p>
-            </div>
+              <h3 className="hed-lg mt-3 font-display uppercase">
+                {lottery.winnerName} takes the court
+              </h3>
+              <p className="fig mt-4 text-lg">
+                Booking {lottery.bookingCode}
+              </p>
+              <p className="mt-4 max-w-[62ch] font-serif text-[16px] leading-relaxed text-paper/85">
+                The winner&apos;s booking was inserted through the same
+                exclusion constraint as every other booking. Fairness chose the
+                winner; correctness still enforced the slot.
+              </p>
+            </section>
           )}
 
-          <div className="panel overflow-hidden">
-            <div className="flex flex-wrap items-center justify-between gap-2 border-b border-line px-5 py-3">
-              <h3 className="font-semibold">
-                Entrants{" "}
-                <span className="text-ink-faint">({lottery.entries.length})</span>
+          <section className="mt-8">
+            <div className="flex flex-wrap items-baseline justify-between gap-x-6 gap-y-1 border-b border-ink pb-2">
+              <h3 className="hed-sm font-display uppercase">
+                Entrants ({lottery.entries.length})
               </h3>
-              <p className="text-xs text-ink-faint">
+              <p className="text-[11px] text-ink-3">
                 Weight = 50 + reliability ÷ 2 — a tilt, not a ranking
               </p>
             </div>
-            <div className="max-h-[26rem] overflow-y-auto">
-              <table className="w-full text-sm">
-                <thead className="sticky top-0 bg-surface-solid">
-                  <tr className="text-left font-mono text-[10px] uppercase tracking-wider text-ink-faint">
-                    <th className="px-4 py-2 font-normal">Student</th>
-                    <th className="px-2 py-2 font-normal">Reliability</th>
-                    <th className="px-2 py-2 font-normal">Weight</th>
-                    <th className="px-2 py-2 font-normal">Chance</th>
-                    <th className="px-4 py-2 text-right font-normal">Result</th>
+
+            <div className="max-h-[28rem] overflow-y-auto">
+              <table className="w-full border-collapse text-sm">
+                <thead className="sticky top-0 bg-paper">
+                  <tr className="border-b border-ink text-left">
+                    <th className="kicker py-2 pr-3 font-normal">Student</th>
+                    <th className="kicker py-2 pr-3 font-normal">Reliability</th>
+                    <th className="kicker py-2 pr-3 text-right font-normal">Weight</th>
+                    <th className="kicker py-2 pr-3 text-right font-normal">Chance</th>
+                    <th className="kicker py-2 text-right font-normal">Result</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -239,41 +224,44 @@ export function FairDraw({
                     <tr
                       key={e.userId}
                       className={cn(
-                        "border-t border-line-soft",
-                        e.won && "bg-go/10",
+                        "border-b border-rule",
+                        e.won && "bg-ink text-paper",
                       )}
                     >
-                      <td className="px-4 py-1.5">{e.userName}</td>
-                      <td className="px-2 py-1.5">
-                        <span className="flex items-center gap-1.5">
-                          <span className="h-1.5 w-14 overflow-hidden rounded-full bg-line">
+                      <td className="py-1.5 pr-3">{e.userName}</td>
+                      <td className="py-1.5 pr-3">
+                        <span className="flex items-center gap-2">
+                          {/* A bar drawn in rules, not in colour. */}
+                          <span
+                            className={cn(
+                              "h-2 w-16 border",
+                              e.won ? "border-paper/40" : "border-rule",
+                            )}
+                          >
                             <span
-                              className="block h-full rounded-full bg-chart-2"
+                              className={cn(
+                                "block h-full",
+                                e.won ? "bg-paper" : "bg-ink",
+                              )}
                               style={{ width: `${e.reliability}%` }}
                             />
                           </span>
-                          <span className="font-mono text-[10px] tabular-nums text-ink-faint">
-                            {e.reliability}
-                          </span>
+                          <span className="fig text-[11px]">{e.reliability}</span>
                         </span>
                       </td>
-                      <td className="px-2 py-1.5 font-mono text-xs tabular-nums text-ink-dim">
+                      <td className="fig py-1.5 pr-3 text-right text-[12px]">
                         {e.weight}
                       </td>
-                      <td className="px-2 py-1.5 font-mono text-xs tabular-nums text-ink-dim">
+                      <td className="fig py-1.5 pr-3 text-right text-[12px]">
                         {e.chance}%
                       </td>
-                      <td className="px-4 py-1.5 text-right">
+                      <td className="py-1.5 text-right">
                         {e.won ? (
-                          <span className="rounded bg-go/25 px-1.5 py-0.5 font-mono text-[10px] text-go">
-                            WON
-                          </span>
+                          <span className="fig text-[11px] font-bold">WON</span>
                         ) : lottery.drawnAt ? (
-                          <span className="font-mono text-[10px] text-ink-faint">
-                            —
-                          </span>
+                          <span className="fig text-[11px] text-ink-3">—</span>
                         ) : (
-                          <span className="font-mono text-[10px] text-violet-soft">
+                          <span className="fig text-[11px] text-ink-3">
                             entered
                           </span>
                         )}
@@ -283,7 +271,7 @@ export function FairDraw({
                 </tbody>
               </table>
             </div>
-          </div>
+          </section>
         </>
       )}
     </div>

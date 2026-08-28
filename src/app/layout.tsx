@@ -1,13 +1,34 @@
 import type { Metadata, Viewport } from "next";
-import { Space_Grotesk, JetBrains_Mono } from "next/font/google";
+import { Archivo, Archivo_Black, Newsreader, JetBrains_Mono } from "next/font/google";
 import "./globals.css";
-import { TopBar } from "@/components/TopBar";
+import { Masthead } from "@/components/Masthead";
 import { currentUserOrDemo } from "@/lib/session";
 import { sql } from "@/db/client";
 
-const display = Space_Grotesk({
+/*
+ * Four faces, which is what a newspaper actually uses:
+ *
+ *   Archivo Black   mastheads and headlines — heavy, tight, no ornament
+ *   Archivo         labels, navigation, controls
+ *   Newsreader      body copy, because this page argues a case
+ *   JetBrains Mono  times, codes, counts — anything that must line up
+ */
+const display = Archivo_Black({
   subsets: ["latin"],
-  variable: "--font-space-grotesk",
+  weight: "400",
+  variable: "--font-archivo-black",
+  display: "swap",
+});
+
+const sans = Archivo({
+  subsets: ["latin"],
+  variable: "--font-archivo",
+  display: "swap",
+});
+
+const serif = Newsreader({
+  subsets: ["latin"],
+  variable: "--font-newsreader",
   display: "swap",
 });
 
@@ -24,7 +45,7 @@ export const metadata: Metadata = {
 };
 
 export const viewport: Viewport = {
-  themeColor: "#0d0a1f",
+  themeColor: "#faf8f3",
   width: "device-width",
   initialScale: 1,
 };
@@ -60,42 +81,58 @@ export default async function RootLayout({
   const { user, roster } = await loadShell();
 
   return (
-    <html lang="en" className={`${display.variable} ${mono.variable}`}>
-      {/*
-        overflow-x-clip, not hidden: full-bleed sections are laid out with
-        100vw, which is a scrollbar wider than the content box. `hidden` would
-        also make the sticky header stop sticking in some browsers; `clip`
-        leaves position: sticky alone.
-      */}
-      <body className="min-h-screen overflow-x-clip">
+    <html
+      lang="en"
+      className={`${display.variable} ${sans.variable} ${serif.variable} ${mono.variable}`}
+    >
+      <body className="min-h-screen">
         <a
           href="#main"
-          className="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-50 focus:rounded-lg focus:bg-flame focus:px-4 focus:py-2 focus:font-medium focus:text-void"
+          className="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-50 focus:bg-ink focus:px-4 focus:py-2 focus:font-medium focus:text-paper"
         >
           Skip to content
         </a>
-        <TopBar user={user} roster={roster} />
-        <main
-          id="main"
-          className="mx-auto w-full max-w-7xl px-4 pb-24 pt-6 sm:px-6"
-        >
+
+        <Masthead user={user} roster={roster} />
+
+        <main id="main" className="mx-auto w-full max-w-[86rem] px-5 pb-20 sm:px-8">
           {children}
         </main>
-        <footer className="relative mt-10 border-t border-line-soft">
-          <div className="mx-auto flex max-w-7xl flex-col items-center gap-3 px-4 py-10 text-center sm:px-6">
-            <p className="font-mono text-[11px] uppercase tracking-[0.2em] text-ink-faint">
-              PlayHack · SDE Track · Team InnovAIT
-            </p>
-            <p className="max-w-2xl text-xs leading-relaxed text-ink-faint">
-              One invariant, enforced by Postgres:{" "}
-              <code className="font-mono text-violet-soft">
-                EXCLUDE USING gist (facility_id WITH =, during WITH &amp;&amp;)
+
+        {/* The colophon. What a reader needs to check the paper against. */}
+        <footer className="mt-16 border-t-2 border-ink">
+          <div className="mx-auto grid max-w-[86rem] gap-8 px-5 py-10 sm:px-8 md:grid-cols-[1.4fr_1fr_1fr]">
+            <div>
+              <p className="font-display text-2xl leading-none">PLAYHACK</p>
+              <p className="prose-news mt-3 max-w-[40ch] text-[15px]">
+                A sports facility booking system for IIT Guwahati, built for the
+                PlayHack SDE track by Team InnovAIT.
+              </p>
+            </div>
+
+            <div>
+              <p className="kicker">The invariant</p>
+              <code className="mt-2 block whitespace-pre font-mono text-[11px] leading-relaxed text-ink-2">
+{`EXCLUDE USING gist (
+  facility_id WITH =,
+  during      WITH &&
+) WHERE (status = 'confirmed')`}
               </code>
-            </p>
-            <p className="text-[11px] text-ink-faint/70">
-              Campus photography from Wikimedia Commons — Tihor lake by Ganesh
-              Mohan T (CC BY-SA 4.0), academic complex by Satyadeep Karnati
-              (public domain).
+            </div>
+
+            <div>
+              <p className="kicker">Picture credits</p>
+              <p className="mt-2 text-[11px] leading-relaxed text-ink-3">
+                Tihor lake, IIT Guwahati — Ganesh Mohan T, CC BY-SA 4.0.
+                Academic complex — Satyadeep Karnati, public domain. Both via
+                Wikimedia Commons.
+              </p>
+            </div>
+          </div>
+
+          <div className="border-t border-rule">
+            <p className="mx-auto max-w-[86rem] px-5 py-4 text-center font-mono text-[10px] uppercase tracking-[0.2em] text-ink-3 sm:px-8">
+              PlayHack · SDE Track · Team InnovAIT · IIT Guwahati
             </p>
           </div>
         </footer>

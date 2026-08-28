@@ -2,7 +2,7 @@
   "name": "playhack",
   "version": "1.0.0",
   "private": true,
-  "description": "PlayHack \u2014 IIT Guwahati sports facility booking. Team InnovAIT.",
+  "description": "PlayHack — IIT Guwahati sports facility booking. Team InnovAIT.",
   "scripts": {
     "dev": "next dev -p 3000",
     "build": "next build",
@@ -20,7 +20,6 @@
     "clsx": "^2.1.1",
     "date-fns": "^4.1.0",
     "eslint-config-next": "15.5.24",
-    "framer-motion": "^11.15.0",
     "lucide-react": "^0.468.0",
     "next": "15.5.24",
     "postgres": "^3.4.5",

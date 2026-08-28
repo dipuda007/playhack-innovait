@@ -2,7 +2,6 @@
 
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { Loader2, Check, AlertTriangle } from "lucide-react";
 
 export function ClaimButton({
   waitlistId,
@@ -43,30 +42,25 @@ export function ClaimButton({
 
   if (done) {
     return (
-      <span className="flex items-center gap-1.5 rounded-full bg-go px-3 py-1 font-mono text-[10px] uppercase tracking-wider text-ground">
-        <Check className="h-3 w-3" /> {done}
+      <span className="fig border border-ink bg-ink px-2.5 py-1 text-[11px] font-bold text-paper">
+        {done}
       </span>
     );
   }
 
   if (error) {
-    return (
-      <span className="flex items-center gap-1.5 rounded-full bg-stop/20 px-3 py-1 text-[11px] text-stop">
-        <AlertTriangle className="h-3 w-3" /> {error}
-      </span>
-    );
+    return <span className="tag text-signal">{error}</span>;
   }
 
   return (
     <button
       onClick={claim}
       disabled={busy}
-      className="flex items-center gap-1.5 rounded-full bg-flame px-3.5 py-1.5 font-mono text-[10px] uppercase tracking-wider text-ground transition-opacity hover:opacity-90 disabled:opacity-60"
+      className="btn btn-signal px-3 py-1.5 text-[10px]"
     >
-      {busy && <Loader2 className="h-3 w-3 animate-spin" />}
-      Claim slot
-      {minutesLeft !== null && (
-        <span className="opacity-70">· {minutesLeft}m left</span>
+      {busy ? "Claiming…" : "Claim slot"}
+      {minutesLeft !== null && !busy && (
+        <span className="font-mono opacity-70">· {minutesLeft}m</span>
       )}
     </button>
   );

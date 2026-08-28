@@ -1,10 +1,6 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import {
-  Play, RotateCcw, ShieldCheck, ShieldAlert, Loader2, Database,
-  TriangleAlert, Check,
-} from "lucide-react";
 import { cn } from "@/lib/cn";
 import type { FacilityView } from "@/lib/availability";
 import { istClock } from "@/lib/time";
@@ -45,6 +41,15 @@ type Invariant = {
   holds: boolean;
 };
 
+/**
+ * The race console, set as a results desk.
+ *
+ * The verdict is the largest thing on the page by a wide margin, reversed out
+ * of solid ink, because it is the finding — the way a paper sets the result of
+ * the match above the report of it. Everything below is evidence: the counts,
+ * the whole-table sweep, and a per-request timeline set as a ruled table with
+ * solid bars rather than as a chart.
+ */
 export function RaceConsole({
   facilities,
   defaultDate,
@@ -144,15 +149,15 @@ export function RaceConsole({
   }
 
   return (
-    <div className="space-y-5">
-      {/* ── Controls ─────────────────────────────────────────────────── */}
-      <div className="panel p-5">
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+    <div>
+      {/* ── The entry form ───────────────────────────────────────────── */}
+      <div className="border-y-2 border-ink">
+        <div className="grid gap-px bg-rule sm:grid-cols-2 lg:grid-cols-4">
           <Field label="Facility">
             <select
               value={facilityId}
               onChange={(e) => setFacilityId(e.target.value)}
-              className="w-full rounded-lg border border-line bg-raised px-3 py-2 text-sm outline-none focus:border-violet"
+              className="field border-0 bg-transparent px-0 py-1 text-[15px] font-semibold"
             >
               {facilities.map((f) => (
                 <option key={f.id} value={f.id}>
@@ -162,11 +167,11 @@ export function RaceConsole({
             </select>
           </Field>
 
-          <Field label="Slot (tomorrow, IST)">
+          <Field label="Slot · tomorrow, IST">
             <select
               value={effectiveHour}
               onChange={(e) => setHour(e.target.value)}
-              className="w-full rounded-lg border border-line bg-raised px-3 py-2 text-sm outline-none focus:border-violet"
+              className="field fig border-0 bg-transparent px-0 py-1 text-[15px] font-semibold"
             >
               {slotOptions.map((o) => (
                 <option key={o.value} value={o.value}>
@@ -176,89 +181,72 @@ export function RaceConsole({
             </select>
           </Field>
 
-          <Field label={`Concurrent requests · ${count}`}>
-            <input
-              type="range"
-              min={2}
-              max={200}
-              step={1}
-              value={count}
-              onChange={(e) => setCount(Number(e.target.value))}
-              className="w-full accent-[var(--color-flame)]"
-            />
+          <Field label="Concurrent requests">
+            <div className="flex items-center gap-3">
+              <span className="fig w-10 text-[15px] font-bold">{count}</span>
+              <input
+                type="range"
+                min={2}
+                max={200}
+                step={1}
+                value={count}
+                onChange={(e) => setCount(Number(e.target.value))}
+                className="w-full accent-[var(--color-signal)]"
+              />
+            </div>
           </Field>
 
           <Field label="Implementation">
-            <div className="flex gap-1.5">
-              <ModeButton
-                active={mode === "naive"}
-                onClick={() => setMode("naive")}
-                tone="stop"
-              >
+            <div className="flex gap-px bg-rule">
+              <ModeButton active={mode === "naive"} onClick={() => setMode("naive")}>
                 Naive
               </ModeButton>
-              <ModeButton
-                active={mode === "safe"}
-                onClick={() => setMode("safe")}
-                tone="go"
-              >
+              <ModeButton active={mode === "safe"} onClick={() => setMode("safe")}>
                 Safe
               </ModeButton>
             </div>
           </Field>
         </div>
+      </div>
 
-        <p className="mt-4 rounded-lg border border-line-soft bg-raised/50 p-3 text-xs text-ink-dim">
+      <div className="grid gap-6 border-b border-rule py-5 lg:grid-cols-[1fr_auto] lg:items-center">
+        <p className="prose-news max-w-[74ch] text-[15px]">
           {mode === "naive" ? (
             <>
-              <strong className="text-stop">Naive:</strong> checks whether the
-              slot is free, then inserts if it looked free. No constraint, no
-              lock. Every line is individually reasonable — it is wrong only
-              because another request commits in the gap.
+              <strong>Naive.</strong> Checks whether the slot is free, then
+              inserts if it looked free. No constraint, no lock. Every line is
+              individually reasonable — it is wrong only because another request
+              commits in the gap between the question and the answer.
             </>
           ) : (
             <>
-              <strong className="text-go">Safe:</strong> no availability check
-              at all. It attempts the insert and lets{" "}
-              <code className="font-mono text-violet-soft">
-                bookings_no_overlap
-              </code>{" "}
-              decide. Deciding and doing are the same operation, so there is no
-              gap to lose.
+              <strong>Safe.</strong> No availability check at all. It attempts
+              the insert and lets{" "}
+              <span className="fig">bookings_no_overlap</span> decide. Deciding
+              and doing are the same operation, so there is no gap to lose.
             </>
           )}
         </p>
 
-        <div className="mt-4 flex flex-wrap gap-2">
+        <div className="flex flex-wrap gap-2">
           <button
             onClick={fire}
             disabled={running || !facility}
-            className={cn(
-              "flex items-center gap-2 rounded-xl px-5 py-2.5 font-semibold text-ground transition-colors disabled:opacity-50",
-              mode === "naive"
-                ? "bg-stop hover:bg-stop/85"
-                : "bg-go hover:bg-go/85",
-            )}
+            className={cn("btn", mode === "naive" ? "btn-signal" : "btn-solid")}
           >
-            {running ? (
-              <Loader2 className="h-4 w-4 animate-spin" />
-            ) : (
-              <Play className="h-4 w-4" />
-            )}
             {running ? "Racing…" : `Fire ${count} requests`}
           </button>
-
           <button
             onClick={reset}
             disabled={running}
-            className="flex items-center gap-2 rounded-xl border border-line px-4 py-2.5 text-sm transition-colors hover:border-violet disabled:opacity-50"
+            className="btn btn-outline"
           >
-            <RotateCcw className="h-3.5 w-3.5" /> Reset demo data
+            Reset demo data
           </button>
         </div>
       </div>
 
-      {/* ── Verdict ──────────────────────────────────────────────────── */}
+      {/* ── The finding ──────────────────────────────────────────────── */}
       {result &&
         (() => {
           /*
@@ -280,105 +268,106 @@ export function RaceConsole({
             .sort((a, b) => b[1] - a[1])[0]?.[0];
 
           return (
-        <div
-          className={cn(
-            "animate-slide-up rounded-2xl border p-5",
-            verdict === "corrupt"
-              ? "border-stop/50 bg-stop/10"
-              : verdict === "correct"
-                ? "border-go/50 bg-go/10"
-                : "border-warn/50 bg-warn/10",
-          )}
-        >
-          <div className="flex flex-wrap items-center gap-3">
-            {verdict === "corrupt" ? (
-              <ShieldAlert className="h-7 w-7 shrink-0 text-stop" />
-            ) : verdict === "correct" ? (
-              <ShieldCheck className="h-7 w-7 shrink-0 text-go" />
-            ) : (
-              <TriangleAlert className="h-7 w-7 shrink-0 text-warn" />
-            )}
-            <div>
-              <h2
-                className={cn(
-                  "text-xl font-bold",
-                  verdict === "corrupt"
-                    ? "text-stop"
+            <section
+              className={cn(
+                "animate-ink-in mt-6 border-2",
+                verdict === "corrupt"
+                  ? "border-signal bg-signal text-paper"
+                  : verdict === "correct"
+                    ? "border-ink bg-ink text-paper"
+                    : "border-ink bg-paper",
+              )}
+            >
+              <div className="px-6 py-7 sm:px-8 sm:py-9">
+                <p
+                  className={cn(
+                    "font-mono text-[10px] uppercase tracking-[0.3em]",
+                    verdict === "nothing" ? "text-ink-3" : "text-paper/60",
+                  )}
+                >
+                  {result.requested} simultaneous requests ·{" "}
+                  {result.facilityName} · {istClock(new Date(result.startsAt))}{" "}
+                  · {result.wallClockMs} ms
+                </p>
+
+                <h3 className="hed-lg mt-4 font-display uppercase">
+                  {verdict === "corrupt"
+                    ? `${result.rowsInDb} bookings. One court.`
                     : verdict === "correct"
-                      ? "text-go"
-                      : "text-warn",
+                      ? "Exactly one survives."
+                      : "Nothing reached the constraint."}
+                </h3>
+
+                <p
+                  className={cn(
+                    "mt-4 max-w-[62ch] font-serif text-[17px] leading-relaxed",
+                    verdict === "nothing" ? "text-ink-2" : "text-paper/85",
+                  )}
+                >
+                  {verdict === "corrupt" ? (
+                    <>
+                      {result.rowsInDb} students each believe they hold this
+                      court at this hour. Nothing errored; every request
+                      succeeded. Switch to <strong>Safe</strong> and fire the
+                      identical burst.
+                    </>
+                  ) : verdict === "correct" ? (
+                    <>
+                      {result.rejected} requests were refused by Postgres before
+                      they could become rows, each with a typed outcome the
+                      student can act on. The winner was decided by the write
+                      itself.
+                    </>
+                  ) : (
+                    <>
+                      Every request was refused as{" "}
+                      <span className="fig">{dominant}</span> before it reached
+                      the constraint, so this run says nothing about
+                      concurrency. Pick a slot that is open on this
+                      facility&apos;s grid and run it again.
+                    </>
+                  )}
+                </p>
+              </div>
+
+              <dl
+                className={cn(
+                  "grid grid-cols-2 border-t sm:grid-cols-4",
+                  verdict === "nothing" ? "border-rule" : "border-paper/25",
                 )}
               >
-                {verdict === "corrupt"
-                  ? `${result.rowsInDb} bookings for one slot — data corrupted`
-                  : verdict === "correct"
-                    ? "Exactly one booking survives"
-                    : `No booking created — every request rejected as ${dominant}`}
-              </h2>
-              <p className="mt-0.5 text-sm text-ink-dim">
-                {result.requested} simultaneous requests ·{" "}
-                {result.facilityName} · {istClock(new Date(result.startsAt))} ·
-                finished in {result.wallClockMs} ms
-              </p>
-            </div>
-          </div>
-
-          <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-4">
-            <Stat label="Requests fired" value={result.requested} />
-            <Stat
-              label="Confirmed"
-              value={result.confirmed}
-              tone={verdict === "correct" ? "go" : verdict === "corrupt" ? "stop" : undefined}
-            />
-            <Stat label="Rejected" value={result.rejected} />
-            <Stat
-              label="Rows in database"
-              value={result.rowsInDb}
-              tone={verdict === "correct" ? "go" : verdict === "corrupt" ? "stop" : undefined}
-              hint="read back from Postgres"
-            />
-          </div>
-
-          {verdict === "corrupt" && (
-            <p className="mt-4 flex items-start gap-2 rounded-lg border border-stop/40 bg-stop/10 p-3 text-sm text-stop">
-              <TriangleAlert className="mt-0.5 h-4 w-4 shrink-0" />
-              <span>
-                {result.rowsInDb} students each believe they have this court.
-                Switch to <strong>Safe</strong> and fire the identical burst.
-              </span>
-            </p>
-          )}
-
-          {verdict === "nothing" && (
-            <p className="mt-4 rounded-lg border border-warn/40 bg-warn/10 p-3 text-sm text-warn">
-              Nothing reached the constraint, so this run says nothing about
-              concurrency. Pick a slot that is open on this facility's grid and
-              run it again.
-            </p>
-          )}
-        </div>
+                <Score label="Requests" value={result.requested} muted={verdict === "nothing"} />
+                <Score label="Confirmed" value={result.confirmed} muted={verdict === "nothing"} />
+                <Score label="Rejected" value={result.rejected} muted={verdict === "nothing"} />
+                <Score
+                  label="Rows in database"
+                  value={result.rowsInDb}
+                  note="read back from Postgres"
+                  muted={verdict === "nothing"}
+                />
+              </dl>
+            </section>
           );
         })()}
 
-      {/* ── Whole-table invariant, side by side ──────────────────────── */}
-      <div className="panel p-5">
-        <h3 className="flex items-center gap-2 font-semibold">
-          <Database className="h-4 w-4 text-violet" />
+      {/* ── Whole-table sweep ────────────────────────────────────────── */}
+      <section className="mt-8">
+        <h3 className="hed-sm border-b border-ink pb-2 font-display uppercase">
           Whole-table sweep
         </h3>
-        <p className="mt-1 text-xs text-ink-dim">
+        <p className="prose-news mt-3 max-w-[76ch] text-[15px]">
           Every confirmed row checked against every other row on the same court
           — not a sample, and not limited to the slot just tested.
         </p>
 
-        <div className="mt-4 grid gap-3 sm:grid-cols-2">
-          <InvariantCard
+        <div className="mt-4 grid gap-px bg-rule sm:grid-cols-2">
+          <InvariantPanel
             title="bookings"
             subtitle="protected by bookings_no_overlap"
             overlaps={invariant.overlaps}
             rows={invariant.confirmedRows}
           />
-          <InvariantCard
+          <InvariantPanel
             title="naive_bookings"
             subtitle="no constraint — the control group"
             overlaps={invariant.naiveOverlaps}
@@ -386,15 +375,14 @@ export function RaceConsole({
             empty={invariant.naiveRows === 0}
           />
         </div>
-      </div>
+      </section>
 
-      {/* ── Waterfall ────────────────────────────────────────────────── */}
       {result && <Waterfall result={result} />}
     </div>
   );
 }
 
-function InvariantCard({
+function InvariantPanel({
   title,
   subtitle,
   overlaps,
@@ -411,42 +399,40 @@ function InvariantCard({
   return (
     <div
       className={cn(
-        "rounded-xl border p-4",
-        empty
-          ? "border-line bg-ground/40"
-          : holds
-            ? "border-go/40 bg-go/10"
-            : "border-stop/50 bg-stop/10",
+        "p-5",
+        empty ? "bg-paper-2" : holds ? "bg-paper" : "bg-signal text-paper",
       )}
     >
-      <div className="flex items-center justify-between gap-2">
-        <code className="font-mono text-sm font-semibold">{title}</code>
+      <div className="flex items-center justify-between gap-3">
+        <code className="fig text-sm font-bold">{title}</code>
         <span
           className={cn(
-            "flex items-center gap-1 rounded-full px-2 py-0.5 font-mono text-[10px] uppercase tracking-wider",
-            empty
-              ? "bg-line text-ink-faint"
-              : holds
-                ? "bg-go/20 text-go"
-                : "bg-stop/20 text-stop",
+            "tag",
+            empty ? "text-ink-3" : holds ? "text-ink" : "border-paper text-paper",
           )}
         >
-          {!empty && holds && <Check className="h-3 w-3" />}
           {empty ? "No runs yet" : holds ? "Holds" : "Violated"}
         </span>
       </div>
-      <p className="mt-0.5 text-[11px] text-ink-faint">{subtitle}</p>
-      <p className="mt-3 font-mono text-xs text-ink-dim">
-        overlapping pairs ={" "}
-        <strong
+      <p
+        className={cn(
+          "mt-1 text-[11px]",
+          empty || holds ? "text-ink-3" : "text-paper/75",
+        )}
+      >
+        {subtitle}
+      </p>
+
+      <p className="fig mt-5 flex items-baseline gap-3">
+        <span className="text-[2.5rem] font-bold leading-none">{overlaps}</span>
+        <span
           className={cn(
-            "text-base",
-            empty ? "text-ink-faint" : holds ? "text-go" : "text-stop",
+            "text-[11px] uppercase tracking-[0.1em]",
+            empty || holds ? "text-ink-3" : "text-paper/75",
           )}
         >
-          {overlaps}
-        </strong>
-        <span className="ml-2 text-ink-faint">
+          overlapping pairs
+          <br />
           across {rows.toLocaleString()} rows
         </span>
       </p>
@@ -459,20 +445,18 @@ function Waterfall({ result }: { result: RaceResult }) {
   const span = Math.max(1, result.wallClockMs);
 
   return (
-    <div className="panel overflow-hidden">
-      <div className="flex flex-wrap items-center justify-between gap-3 border-b border-line px-5 py-3">
-        <h3 className="font-semibold">Per-request timeline</h3>
-        <div className="flex flex-wrap gap-2">
+    <section className="mt-8">
+      <div className="flex flex-wrap items-baseline justify-between gap-x-6 gap-y-2 border-b border-ink pb-2">
+        <h3 className="hed-sm font-display uppercase">Per-request timeline</h3>
+        <div className="flex flex-wrap gap-1.5">
           {Object.entries(result.outcomeCounts).map(([code, n]) => (
             <span
               key={code}
               className={cn(
-                "rounded-full px-2.5 py-0.5 font-mono text-[10px] uppercase tracking-wider",
+                "tag",
                 code === "CONFIRMED"
-                  ? "bg-go/20 text-go"
-                  : code === "ERROR"
-                    ? "bg-warn/20 text-warn"
-                    : "bg-raised text-ink-dim",
+                  ? "border-ink bg-ink text-paper"
+                  : "text-ink-3",
               )}
             >
               {code} × {n}
@@ -481,16 +465,16 @@ function Waterfall({ result }: { result: RaceResult }) {
         </div>
       </div>
 
-      <div className="max-h-[26rem] overflow-y-auto">
-        <table className="w-full text-sm">
-          <thead className="sticky top-0 bg-surface-solid">
-            <tr className="text-left font-mono text-[10px] uppercase tracking-wider text-ink-faint">
-              <th className="px-4 py-2 font-normal">#</th>
-              <th className="px-2 py-2 font-normal">Student</th>
-              <th className="px-2 py-2 font-normal">Outcome</th>
-              <th className="px-2 py-2 font-normal">SQLSTATE</th>
-              <th className="px-2 py-2 font-normal">Timeline</th>
-              <th className="px-4 py-2 text-right font-normal">ms</th>
+      <div className="max-h-[28rem] overflow-y-auto">
+        <table className="w-full border-collapse text-sm">
+          <thead className="sticky top-0 bg-paper">
+            <tr className="border-b border-ink text-left">
+              <th className="kicker py-2 pr-3 font-normal">#</th>
+              <th className="kicker py-2 pr-3 font-normal">Student</th>
+              <th className="kicker py-2 pr-3 font-normal">Outcome</th>
+              <th className="kicker py-2 pr-3 font-normal">SQLSTATE</th>
+              <th className="kicker w-[45%] py-2 pr-3 font-normal">Timeline</th>
+              <th className="kicker py-2 text-right font-normal">ms</th>
             </tr>
           </thead>
           <tbody>
@@ -503,47 +487,45 @@ function Waterfall({ result }: { result: RaceResult }) {
               return (
                 <tr
                   key={a.attemptNo}
-                  className={cn(
-                    "border-t border-line-soft",
-                    won && "bg-go/10",
-                    errored && "bg-warn/5",
-                  )}
+                  className={cn("border-b border-rule", won && "bg-paper-2")}
                 >
-                  <td className="px-4 py-1.5 font-mono text-xs text-ink-faint">
+                  <td className="fig py-1.5 pr-3 text-[11px] text-ink-3">
                     {a.attemptNo}
                   </td>
-                  <td className="max-w-[9rem] truncate px-2 py-1.5 text-xs">
+                  <td className="max-w-[9rem] truncate py-1.5 pr-3 text-[12px]">
                     {a.userName}
                   </td>
-                  <td className="px-2 py-1.5">
+                  <td className="py-1.5 pr-3">
                     <span
                       className={cn(
-                        "rounded px-1.5 py-0.5 font-mono text-[10px]",
+                        "fig text-[11px] font-semibold",
                         won
-                          ? "bg-go/25 text-go"
+                          ? "text-ink"
                           : errored
-                            ? "bg-warn/20 text-warn"
-                            : "bg-raised text-ink-faint",
+                            ? "text-signal"
+                            : "text-ink-3",
                       )}
                     >
+                      {won ? "▸ " : ""}
                       {a.outcome}
                     </span>
                   </td>
-                  <td className="px-2 py-1.5 font-mono text-[10px] text-ink-faint">
+                  <td className="fig py-1.5 pr-3 text-[11px] text-ink-3">
                     {a.sqlstate ?? "—"}
                   </td>
-                  <td className="px-2 py-1.5">
-                    <div className="relative h-2 w-full min-w-[6rem] overflow-hidden rounded-full bg-line/50">
+                  <td className="py-1.5 pr-3">
+                    {/* Solid blocks on a hairline baseline — a Gantt strip. */}
+                    <div className="relative h-2.5 w-full min-w-[8rem] border-b border-rule">
                       <div
                         className={cn(
-                          "absolute h-full rounded-full",
-                          won ? "bg-go" : errored ? "bg-warn" : "bg-violet/60",
+                          "absolute top-0 h-2",
+                          won ? "bg-ink" : errored ? "bg-signal" : "bg-ink-3",
                         )}
                         style={{ left: `${left}%`, width: `${width}%` }}
                       />
                     </div>
                   </td>
-                  <td className="px-4 py-1.5 text-right font-mono text-xs tabular-nums text-ink-dim">
+                  <td className="fig py-1.5 text-right text-[11px] text-ink-2">
                     {a.durationMs}
                   </td>
                 </tr>
@@ -552,7 +534,7 @@ function Waterfall({ result }: { result: RaceResult }) {
           </tbody>
         </table>
       </div>
-    </div>
+    </section>
   );
 }
 
@@ -564,10 +546,8 @@ function Field({
   children: React.ReactNode;
 }) {
   return (
-    <label className="block">
-      <span className="mb-1.5 block font-mono text-[10px] uppercase tracking-wider text-ink-faint">
-        {label}
-      </span>
+    <label className="block bg-paper p-4">
+      <span className="kicker mb-2 block">{label}</span>
       {children}
     </label>
   );
@@ -576,22 +556,18 @@ function Field({
 function ModeButton({
   active,
   onClick,
-  tone,
   children,
 }: {
   active: boolean;
   onClick: () => void;
-  tone: "go" | "stop";
   children: React.ReactNode;
 }) {
   return (
     <button
       onClick={onClick}
       className={cn(
-        "flex-1 rounded-lg border py-2 text-sm font-medium transition-colors",
-        active && tone === "stop" && "border-stop bg-stop/20 text-stop",
-        active && tone === "go" && "border-go bg-go/20 text-go",
-        !active && "border-line text-ink-dim hover:border-violet",
+        "flex-1 py-2 text-[12px] font-semibold uppercase tracking-[0.08em] transition-colors",
+        active ? "bg-ink text-paper" : "bg-paper hover:bg-paper-2",
       )}
     >
       {children}
@@ -599,32 +575,43 @@ function ModeButton({
   );
 }
 
-function Stat({
+function Score({
   label,
   value,
-  tone,
-  hint,
+  note,
+  muted,
 }: {
   label: string;
   value: number;
-  tone?: "go" | "stop";
-  hint?: string;
+  note?: string;
+  muted?: boolean;
 }) {
   return (
-    <div className="rounded-xl border border-line bg-ground/40 p-3">
-      <p className="font-mono text-[10px] uppercase tracking-wider text-ink-faint">
-        {label}
-      </p>
-      <p
+    <div
+      className={cn(
+        "border-r px-5 py-4 last:border-r-0",
+        muted ? "border-rule" : "border-paper/25",
+      )}
+    >
+      <dt
         className={cn(
-          "mt-1 text-2xl font-bold tabular-nums",
-          tone === "go" && "text-go",
-          tone === "stop" && "text-stop",
+          "font-mono text-[10px] uppercase tracking-[0.16em]",
+          muted ? "text-ink-3" : "text-paper/60",
         )}
       >
-        {value}
-      </p>
-      {hint && <p className="text-[10px] text-ink-faint">{hint}</p>}
+        {label}
+      </dt>
+      <dd className="fig mt-1.5 text-[2rem] font-bold leading-none">{value}</dd>
+      {note && (
+        <p
+          className={cn(
+            "mt-1 text-[10px]",
+            muted ? "text-ink-3" : "text-paper/60",
+          )}
+        >
+          {note}
+        </p>
+      )}
     </div>
   );
 }

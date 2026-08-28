@@ -2,7 +2,6 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { Loader2, Undo2 } from "lucide-react";
 
 /**
  * Lifts a maintenance closure.
@@ -43,16 +42,11 @@ export function ReopenButton({
         onClick={reopen}
         disabled={disabled || busy}
         title={disabled ? "Manager access required" : "Reopen this window"}
-        className="flex shrink-0 items-center gap-1 rounded bg-warn/20 px-2 py-1 font-mono text-[10px] uppercase tracking-wider text-warn transition-colors hover:bg-warn/30 disabled:opacity-40"
+        className="btn btn-outline shrink-0 px-2.5 py-1 text-[10px]"
       >
-        {busy ? (
-          <Loader2 className="h-3 w-3 animate-spin" />
-        ) : (
-          <Undo2 className="h-3 w-3" />
-        )}
-        Reopen
+        {busy ? "Reopening…" : "Reopen"}
       </button>
-      {error && <p className="mt-1 text-xs text-stop">{error}</p>}
+      {error && <p className="mt-1 text-[11px] text-signal">{error}</p>}
     </>
   );
 }

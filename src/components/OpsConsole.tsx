@@ -2,11 +2,18 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { Loader2, Wrench, Check, AlertTriangle, Power } from "lucide-react";
 import { cn } from "@/lib/cn";
 import type { FacilityView } from "@/lib/availability";
 import { SportIcon } from "@/components/SportIcon";
 
+/**
+ * The ops console, set as a duty desk.
+ *
+ * Closing a court is paperwork with consequences, so the form looks like a
+ * docket and the refusal looks like a stamped rejection — including the
+ * SQLSTATE, because the point being made is that the same constraint which
+ * stops two students colliding also stopped the manager.
+ */
 export function OpsConsole({
   facilities,
   isManager,
@@ -65,23 +72,16 @@ export function OpsConsole({
   }
 
   return (
-    <div className="space-y-5">
-      <div className="panel p-5">
-        <h2 className="flex items-center gap-2 font-semibold">
-          <Wrench className="h-4 w-4 text-warn" />
-          Schedule a closure
-        </h2>
-
-        <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
-          <label className="block lg:col-span-2">
-            <span className="mb-1.5 block font-mono text-[10px] uppercase tracking-wider text-ink-faint">
-              Facility
-            </span>
+    <div>
+      {/* ── Closure docket ───────────────────────────────────────────── */}
+      <div className="border-y-2 border-ink">
+        <div className="grid gap-px bg-rule sm:grid-cols-2 lg:grid-cols-4">
+          <Cell label="Facility">
             <select
               value={facilityId}
               onChange={(e) => setFacilityId(e.target.value)}
               disabled={!isManager}
-              className="w-full rounded-lg border border-line bg-raised px-3 py-2 text-sm outline-none focus:border-violet disabled:opacity-50"
+              className="field border-0 bg-transparent px-0 py-1 text-[15px] font-semibold disabled:opacity-50"
             >
               {facilities.map((f) => (
                 <option key={f.id} value={f.id}>
@@ -89,156 +89,140 @@ export function OpsConsole({
                 </option>
               ))}
             </select>
-          </label>
+          </Cell>
 
-          <label className="block">
-            <span className="mb-1.5 block font-mono text-[10px] uppercase tracking-wider text-ink-faint">
-              Date
-            </span>
+          <Cell label="Date">
             <input
               type="date"
               value={date}
               onChange={(e) => setDate(e.target.value)}
               disabled={!isManager}
-              className="w-full rounded-lg border border-line bg-raised px-3 py-2 text-sm outline-none focus:border-violet disabled:opacity-50"
+              className="field fig border-0 bg-transparent px-0 py-1 text-[15px] font-semibold disabled:opacity-50"
             />
-          </label>
+          </Cell>
 
-          <label className="block">
-            <span className="mb-1.5 block font-mono text-[10px] uppercase tracking-wider text-ink-faint">
-              From
-            </span>
+          <Cell label="From">
             <input
               type="time"
               value={from}
               onChange={(e) => setFrom(e.target.value)}
               disabled={!isManager}
-              className="w-full rounded-lg border border-line bg-raised px-3 py-2 text-sm outline-none focus:border-violet disabled:opacity-50"
+              className="field fig border-0 bg-transparent px-0 py-1 text-[15px] font-semibold disabled:opacity-50"
             />
-          </label>
+          </Cell>
 
-          <label className="block">
-            <span className="mb-1.5 block font-mono text-[10px] uppercase tracking-wider text-ink-faint">
-              To
-            </span>
+          <Cell label="To">
             <input
               type="time"
               value={to}
               onChange={(e) => setTo(e.target.value)}
               disabled={!isManager}
-              className="w-full rounded-lg border border-line bg-raised px-3 py-2 text-sm outline-none focus:border-violet disabled:opacity-50"
+              className="field fig border-0 bg-transparent px-0 py-1 text-[15px] font-semibold disabled:opacity-50"
             />
-          </label>
+          </Cell>
         </div>
 
-        <label className="mt-3 block">
-          <span className="mb-1.5 block font-mono text-[10px] uppercase tracking-wider text-ink-faint">
-            Reason (shown to students)
-          </span>
-          <input
-            value={note}
-            onChange={(e) => setNote(e.target.value)}
-            disabled={!isManager}
-            maxLength={200}
-            className="w-full rounded-lg border border-line bg-raised px-3 py-2 text-sm outline-none focus:border-violet disabled:opacity-50"
-          />
-        </label>
+        <div className="grid gap-px border-t border-rule bg-rule lg:grid-cols-[1fr_auto]">
+          <Cell label="Reason (shown to students)">
+            <input
+              value={note}
+              onChange={(e) => setNote(e.target.value)}
+              disabled={!isManager}
+              maxLength={200}
+              className="field border-0 bg-transparent px-0 py-1 text-[15px] disabled:opacity-50"
+            />
+          </Cell>
+          <div className="flex items-stretch bg-paper p-4">
+            <button
+              onClick={createBlock}
+              disabled={!isManager || busy}
+              className="btn btn-solid w-full lg:w-auto"
+            >
+              {busy ? "Filing…" : "Close this window"}
+            </button>
+          </div>
+        </div>
+      </div>
 
-        <button
-          onClick={createBlock}
-          disabled={!isManager || busy}
-          className="mt-4 flex items-center gap-2 rounded-xl bg-warn px-5 py-2.5 font-semibold text-ground transition-opacity hover:opacity-90 disabled:opacity-40"
-        >
-          {busy ? (
-            <Loader2 className="h-4 w-4 animate-spin" />
-          ) : (
-            <Wrench className="h-4 w-4" />
-          )}
-          Close this window
-        </button>
+      {result?.ok && (
+        <p className="animate-ink-in mt-4 border-l-2 border-ink bg-paper-2 px-4 py-3 text-[14px]">
+          <strong>Closure filed.</strong> Those slots are now unbookable and
+          appear as closed on the student grid.
+        </p>
+      )}
 
-        {result?.ok && (
-          <p className="mt-3 flex items-center gap-2 rounded-lg border border-go/40 bg-go/10 p-3 text-sm text-go">
-            <Check className="h-4 w-4" />
-            Closure scheduled. Those slots are now unbookable.
+      {result && !result.ok && (
+        <div className="animate-ink-in mt-4 border-2 border-signal">
+          <p className="bg-signal px-4 py-2.5 font-display text-[15px] uppercase text-paper">
+            Refused — {result.message}
           </p>
-        )}
-
-        {result && !result.ok && (
-          <div className="mt-3 rounded-lg border border-stop/40 bg-stop/10 p-3">
-            <p className="flex items-center gap-2 text-sm font-medium text-stop">
-              <AlertTriangle className="h-4 w-4" />
-              {result.message}
-            </p>
+          <div className="px-4 py-3">
             {result.sqlstate && (
-              <p className="mt-1 font-mono text-[10px] text-ink-faint">
+              <p className="fig text-[11px] text-ink-3">
                 SQLSTATE {result.sqlstate} · bookings_no_overlap
               </p>
             )}
             {result.clashes && result.clashes.length > 0 && (
-              <ul className="mt-2 space-y-0.5 text-xs text-ink-dim">
+              <ul className="mt-2 space-y-1 text-[13px] text-ink-2">
                 {result.clashes.map((c, i) => (
-                  <li key={i}>
-                    ·{" "}
+                  <li key={i} className="flex gap-2">
+                    <span className="fig text-ink-3">
+                      {new Date(c.starts_at).toLocaleTimeString("en-GB", {
+                        timeZone: "Asia/Kolkata",
+                        hour: "2-digit",
+                        minute: "2-digit",
+                      })}
+                    </span>
                     {c.kind === "block"
-                      ? `already closed${c.note ? ` — ${c.note}` : ""} at `
-                      : `${c.user_name ?? "a student"} holds `}
-                    {new Date(c.starts_at).toLocaleTimeString("en-GB", {
-                      timeZone: "Asia/Kolkata",
-                      hour: "2-digit",
-                      minute: "2-digit",
-                    })}
+                      ? `already closed${c.note ? ` — ${c.note}` : ""}`
+                      : `${c.user_name ?? "a student"} holds this slot`}
                   </li>
                 ))}
               </ul>
             )}
-            <p className="mt-2 text-xs text-ink-faint">
+            <p className="prose-news mt-3 text-[14px]">
               The same constraint that protects students from each other just
               protected them from an operator mistake.
             </p>
           </div>
-        )}
-      </div>
+        </div>
+      )}
 
-      <div className="panel p-5">
-        <h2 className="flex items-center gap-2 font-semibold">
-          <Power className="h-4 w-4 text-violet" />
+      {/* ── Facility roll ────────────────────────────────────────────── */}
+      <section className="mt-9">
+        <h3 className="hed-sm border-b border-ink pb-2 font-display uppercase">
           Facility availability
-        </h2>
-        <p className="mt-1 text-xs text-ink-dim">
+        </h3>
+        <p className="prose-news mt-3 max-w-[76ch] text-[15px]">
           Taking a facility offline stops new bookings. Existing reservations
           are left alone — they are somebody&apos;s plan for this evening.
         </p>
-        <div className="mt-4 grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
+
+        <div className="mt-4 grid gap-px bg-rule sm:grid-cols-2 lg:grid-cols-3">
           {facilities.map((f) => (
             <div
               key={f.id}
               className={cn(
-                "flex items-center gap-2 rounded-lg border px-3 py-2",
-                f.isActive
-                  ? "border-line bg-raised/40"
-                  : "border-stop/40 bg-stop/10",
+                "flex items-center gap-3 p-3",
+                f.isActive ? "bg-paper" : "hatch bg-paper",
               )}
             >
-              <span
-                className="grid h-7 w-7 shrink-0 place-items-center rounded-lg border"
-                style={{
-                  color: f.color,
-                  borderColor: `${f.color}44`,
-                  background: `${f.color}18`,
-                }}
-              >
-                <SportIcon sport={f.sport} size={15} />
+              <SportIcon
+                sport={f.sport}
+                size={16}
+                className="shrink-0 text-ink-3"
+              />
+              <span className="min-w-0 flex-1 truncate text-[14px] font-semibold">
+                {f.name}
               </span>
-              <span className="min-w-0 flex-1 truncate text-sm">{f.name}</span>
               <button
                 onClick={() => toggle(f.id, !f.isActive)}
                 disabled={!isManager}
                 className={cn(
-                  "rounded px-2 py-1 font-mono text-[10px] uppercase tracking-wider transition-colors disabled:opacity-40",
+                  "tag transition-colors disabled:opacity-40",
                   f.isActive
-                    ? "bg-go/20 text-go hover:bg-go/30"
-                    : "bg-stop/20 text-stop hover:bg-stop/30",
+                    ? "border-ink text-ink hover:bg-ink hover:text-paper"
+                    : "border-signal bg-signal text-paper",
                 )}
               >
                 {f.isActive ? "Open" : "Closed"}
@@ -246,7 +230,22 @@ export function OpsConsole({
             </div>
           ))}
         </div>
-      </div>
+      </section>
     </div>
+  );
+}
+
+function Cell({
+  label,
+  children,
+}: {
+  label: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <label className="block bg-paper p-4">
+      <span className="kicker mb-2 block">{label}</span>
+      {children}
+    </label>
   );
 }

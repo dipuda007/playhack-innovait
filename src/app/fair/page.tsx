@@ -1,6 +1,6 @@
-import { KeyRound, Scale, ShieldCheck, Timer } from "lucide-react";
 import { listFacilities } from "@/lib/availability";
 import { FairDraw } from "@/components/FairDraw";
+import { SectionHead } from "@/components/SectionHead";
 import { todayKey, addDaysToKey } from "@/lib/time";
 
 export const dynamic = "force-dynamic";
@@ -9,102 +9,102 @@ export default async function FairPage() {
   const facilities = await listFacilities();
 
   return (
-    <div className="space-y-6">
-      <section className="rail pl-5">
-        <p className="eyebrow">Innovation · Fair allocation</p>
-        <h1 className="display mt-3 text-[clamp(1.9rem,4.4vw,2.9rem)]">
-          Winning a race is not the same as deserving the court.
-        </h1>
-        <p className="mt-3 max-w-3xl text-ink-dim">
-          The exclusion constraint guarantees that exactly one booking survives
-          a stampede. It does not decide <em>who</em> should win — and
-          first-come-first-serve decides that badly. At 6 p.m. the winner is
-          whoever has the best wifi, the newest phone, or a script.
-        </p>
-        <p className="mt-2 max-w-3xl text-ink-dim">
-          So peak slots are not released as a race. Requests arriving inside a
-          short window become entries, and one weighted, seeded draw picks the
-          winner. Fairness sits on top of correctness — the winner&apos;s booking
-          is still inserted through the same constrained path as any other.
-        </p>
+    <div>
+      <header className="border-b-2 border-ink pb-8 pt-8">
+        <p className="kicker kicker-signal">Innovation · Fair allocation</p>
+
+        <div className="mt-4 grid gap-8 lg:grid-cols-[1.15fr_1fr] lg:gap-12">
+          <h2 className="hed-xl font-display uppercase">
+            Winning a race is not deserving the court
+          </h2>
+
+          <div className="prose-news space-y-4 self-end">
+            <p>
+              The exclusion constraint guarantees that exactly one booking
+              survives a stampede. It does not decide <em>who</em> should win —
+              and first-come-first-served decides that badly. At six the winner
+              is whoever has the best wifi, the newest phone, or a script.
+            </p>
+            <p>
+              So peak slots are not released as a race. Requests arriving inside
+              a short window become entries, and one weighted, seeded draw picks
+              the winner. Fairness sits on top of correctness: the winner&apos;s
+              booking still goes through the same constrained path as any other.
+            </p>
+          </div>
+        </div>
+      </header>
+
+      {/* The rules, printed before anyone presses anything. */}
+      <section className="pt-9">
+        <SectionHead
+          index="01"
+          rule={false}
+          title="How the draw works"
+          note="A draw a student cannot explain to the person who lost is not fair, only opaque."
+        />
+
+        <div className="mt-5 grid gap-px bg-rule md:grid-cols-3">
+          <Rule
+            n="01"
+            title="A window, not a starting pistol"
+          >
+            Every request that arrives inside the window becomes an{" "}
+            <em>entry</em>. Arriving in the first millisecond buys nothing, so
+            there is no advantage in a faster phone, a closer router, or a
+            script left running.
+          </Rule>
+          <Rule n="02" title="Weight by reliability">
+            Each entry carries weight <span className="fig">50 + reliability/2</span>.
+            A student who turns up keeps a full ticket; a record of no-shows
+            costs some of it. The floor of 50 means nobody is ever locked out.
+          </Rule>
+          <Rule n="03" title="Seeded, and published">
+            The winner is <span className="fig">sha256(seed ‖ entries)</span>{" "}
+            over the entrant list sorted by id. The seed is published with the
+            result, so anyone can recompute the winner and check it.
+          </Rule>
+        </div>
       </section>
 
-      <FairDraw
-        facilities={facilities.filter((f) => f.isActive)}
-        defaultDate={addDaysToKey(todayKey(), 2)}
-      />
-
-      {/*
-        Shown before anyone presses anything. A draw that a student cannot
-        explain to the person who lost is not fair, it is just opaque — so the
-        rules are on the page whether or not a draw has been run.
-      */}
-      <section className="grid gap-4 md:grid-cols-3">
-        <Step
-          n="01"
-          title="A window, not a starting pistol"
-          icon={<Timer className="h-4 w-4" />}
-        >
-          Every request that arrives inside the window becomes an{" "}
-          <em>entry</em>. Arriving in the first millisecond buys nothing, so
-          there is no advantage in a faster phone, a closer router, or a script.
-        </Step>
-        <Step
-          n="02"
-          title="Weight by reliability"
-          icon={<Scale className="h-4 w-4" />}
-        >
-          Each entry carries weight{" "}
-          <code className="font-mono text-violet-soft">50 + reliability/2</code>
-          . A student who turns up keeps a full ticket; a record of no-shows
-          costs some of it. The floor of 50 means nobody is ever locked out.
-        </Step>
-        <Step
-          n="03"
-          title="Seeded, and published"
-          icon={<KeyRound className="h-4 w-4" />}
-        >
-          The winner is <code className="font-mono text-violet-soft">sha256(seed ‖ entries)</code>{" "}
-          over the entrant list sorted by id. The seed is published with the
-          result, so anyone can recompute the same winner and check it — the
-          draw is verifiable, not merely asserted.
-        </Step>
+      <section className="pt-10">
+        <SectionHead
+          index="02"
+          title="Run a draw"
+          note="Opening a window clears the slot first, so every draw starts from the same state."
+        />
+        <div className="mt-5">
+          <FairDraw
+            facilities={facilities.filter((f) => f.isActive)}
+            defaultDate={addDaysToKey(todayKey(), 2)}
+          />
+        </div>
       </section>
 
-      <p className="flex items-start gap-2.5 rounded-xl border border-line-soft bg-white/[0.02] p-4 text-xs leading-relaxed text-ink-dim">
-        <ShieldCheck className="mt-0.5 h-4 w-4 shrink-0 text-go" />
-        <span>
-          Fairness never replaces correctness. The winning entry is written
-          through the same constrained INSERT as an ordinary booking, so if a
-          slot somehow went to two draws, the second one would still be
-          rejected by <code className="font-mono text-violet-soft">bookings_no_overlap</code>.
-        </span>
+      <p className="prose-news mt-10 border-t-2 border-ink pt-5 text-[15px]">
+        <strong>Fairness never replaces correctness.</strong> The winning entry
+        is written through the same constrained INSERT as an ordinary booking,
+        so if a slot somehow went to two draws, the second would still be
+        rejected by <span className="fig">bookings_no_overlap</span>.
       </p>
     </div>
   );
 }
 
-function Step({
+function Rule({
   n,
   title,
-  icon,
   children,
 }: {
   n: string;
   title: string;
-  icon: React.ReactNode;
   children: React.ReactNode;
 }) {
   return (
-    <div className="panel p-5">
-      <div className="flex items-center gap-2.5">
-        <span className="grid h-8 w-8 place-items-center rounded-lg border border-violet/40 bg-violet/15 text-violet-soft">
-          {icon}
-        </span>
-        <span className="metric-label">{n}</span>
-      </div>
-      <h3 className="mt-3.5 font-semibold tracking-tight">{title}</h3>
-      <p className="mt-2 text-sm leading-relaxed text-ink-dim">{children}</p>
+    <div className="bg-paper p-5">
+      <p className="fig text-[11px] text-signal">{n}</p>
+      <h3 className="hed-sm mt-3 font-display uppercase">{title}</h3>
+      <p className="prose-news mt-2.5 text-[15px]">{children}</p>
     </div>
   );
 }

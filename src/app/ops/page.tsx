@@ -1,9 +1,9 @@
-import { Wrench, ShieldAlert, Activity } from "lucide-react";
 import { sql } from "@/db/client";
 import { listFacilities } from "@/lib/availability";
 import { currentUser } from "@/lib/session";
 import { istClock, istDateKey, istDayLabel, todayKey, addDaysToKey } from "@/lib/time";
 import { OpsConsole } from "@/components/OpsConsole";
+import { SectionHead } from "@/components/SectionHead";
 import { ReopenButton } from "@/components/ReopenButton";
 import { cn } from "@/lib/cn";
 import { SportIcon } from "@/components/SportIcon";
@@ -55,141 +55,155 @@ export default async function OpsPage() {
   ]);
 
   return (
-    <div className="space-y-8">
-      <section className="rail pl-5">
-        <p className="eyebrow">Facility management</p>
-        <h1 className="display mt-3 text-[clamp(1.8rem,4vw,2.5rem)]">Ops console</h1>
-        <p className="mt-2 max-w-3xl text-ink-dim">
-          Closures are not a separate system. A maintenance window is a row in{" "}
-          <code className="font-mono text-violet-soft">bookings</code> with{" "}
-          <code className="font-mono text-violet-soft">kind = &apos;block&apos;</code>, so
-          the same constraint that stops two students double-booking also stops
-          a closure being scheduled over a reservation somebody is relying on.
-        </p>
-      </section>
+    <div>
+      <header className="border-b-2 border-ink pb-8 pt-8">
+        <p className="kicker kicker-signal">Facility management</p>
+
+        <div className="mt-4 grid gap-8 lg:grid-cols-[1.05fr_1fr] lg:gap-12">
+          <h2 className="hed-xl font-display uppercase">Ops console</h2>
+
+          <div className="prose-news space-y-4 self-end">
+            <p>
+              Closures are not a separate system. A maintenance window is a row
+              in <span className="fig">bookings</span> with{" "}
+              <span className="fig">kind = &apos;block&apos;</span>, which means
+              the constraint that stops two students double-booking also stops a
+              closure being scheduled over a reservation somebody is relying on.
+            </p>
+            <p>
+              One invariant, two features, and no second code path that can be
+              got wrong independently.
+            </p>
+          </div>
+        </div>
+      </header>
 
       {!isManager && (
-        <p className="flex items-start gap-2 rounded-xl border border-warn/40 bg-warn/10 p-4 text-sm text-warn">
-          <ShieldAlert className="mt-0.5 h-4 w-4 shrink-0" />
-          <span>
-            You are signed in as a student, so the controls below are read-only.
-            Switch to <strong>Sports Office</strong> in the identity menu to act
-            as a manager. Authorisation is enforced on the server, not by hiding
-            these buttons.
-          </span>
+        <p className="mt-6 border-l-2 border-signal bg-paper-2 px-4 py-3 text-[14px] leading-relaxed">
+          <strong>Read-only.</strong> You are signed in as a student, so the
+          controls below will refuse. Switch to <strong>Sports Office</strong>{" "}
+          in the masthead to act as a manager — authorisation is enforced on the
+          server, not by hiding these buttons.
         </p>
       )}
 
-      <OpsConsole
-        facilities={facilities}
-        isManager={Boolean(isManager)}
-        defaultDate={addDaysToKey(todayKey(), 2)}
-      />
+      <section className="pt-9">
+        <SectionHead
+          index="01"
+          rule={false}
+          title="Schedule a closure"
+          note="A closure goes through the same constrained INSERT as a student booking."
+        />
+        <div className="mt-5">
+          <OpsConsole
+            facilities={facilities}
+            isManager={Boolean(isManager)}
+            defaultDate={addDaysToKey(todayKey(), 2)}
+          />
+        </div>
+      </section>
 
-      <div className="grid gap-5 lg:grid-cols-2">
-        <section className="panel p-5">
-          <h2 className="flex items-center gap-2 font-semibold">
-            <Wrench className="h-4 w-4 text-warn" />
-            Scheduled closures
-          </h2>
+      <div className="grid gap-10 pt-10 lg:grid-cols-2">
+        <section>
+          <SectionHead index="02" title="Scheduled closures" />
+
           {blocks.length === 0 ? (
-            <p className="mt-3 text-sm text-ink-faint">
+            <p className="prose-news mt-4 border-b border-rule pb-4 text-[15px]">
               No maintenance windows scheduled.
             </p>
           ) : (
-            <div className="mt-4 space-y-2">
+            <div className="mt-4 border-t border-ink">
               {blocks.map((b) => (
                 <div
                   key={b.id}
-                  className="rounded-lg border border-warn/30 bg-warn/10 px-3 py-2.5"
+                  className="flex items-start gap-3 border-b border-rule py-3"
                 >
-                  <div className="flex items-start gap-2">
-                    <div className="min-w-0 flex-1">
-                      <p className="text-sm font-medium">
-                        <span className="flex items-center gap-1.5">
-                          <SportIcon sport={b.sport} size={15} className="shrink-0 text-warn" />
-                          {b.facility_name}
-                        </span>
+                  <SportIcon
+                    sport={b.sport}
+                    size={16}
+                    className="mt-0.5 shrink-0 text-ink-3"
+                  />
+                  <div className="min-w-0 flex-1">
+                    <p className="text-[14px] font-semibold">
+                      {b.facility_name}
+                    </p>
+                    <p className="fig mt-0.5 text-[11px] text-ink-3">
+                      {istDayLabel(istDateKey(new Date(b.starts_at)))} ·{" "}
+                      {istClock(new Date(b.starts_at))}–
+                      {istClock(new Date(b.ends_at))}
+                    </p>
+                    {b.note && (
+                      <p className="mt-1 text-[12px] italic text-ink-2">
+                        {b.note}
                       </p>
-                      <p className="mt-0.5 text-xs text-ink-dim">
-                        {istDayLabel(istDateKey(new Date(b.starts_at)))} ·{" "}
-                        {istClock(new Date(b.starts_at))}–
-                        {istClock(new Date(b.ends_at))}
-                      </p>
-                      {b.note && (
-                        <p className="mt-1 text-xs text-warn">{b.note}</p>
-                      )}
-                    </div>
-                    <ReopenButton blockId={b.id} disabled={!isManager} />
+                    )}
                   </div>
+                  <ReopenButton blockId={b.id} disabled={!isManager} />
                 </div>
               ))}
             </div>
           )}
 
-          <h3 className="mt-6 font-semibold">Queue pressure</h3>
-          <p className="mt-1 text-xs text-ink-dim">
+          <h3 className="hed-sm mt-8 border-b border-ink pb-2 font-display uppercase">
+            Queue pressure
+          </h3>
+          <p className="prose-news mt-3 text-[15px]">
             Slots with students waiting — where demand exceeds supply.
           </p>
-          <div className="mt-3 space-y-1.5">
-            {queues.length === 0 ? (
-              <p className="text-sm text-ink-faint">No active waitlists.</p>
-            ) : (
-              queues.map((q, i) => (
+
+          {queues.length === 0 ? (
+            <p className="mt-3 text-[13px] text-ink-3">No active waitlists.</p>
+          ) : (
+            <div className="mt-3 border-t border-rule">
+              {queues.map((q, i) => (
                 <div
                   key={i}
-                  className="flex items-center justify-between rounded-lg border border-line bg-raised/40 px-3 py-2 text-sm"
+                  className="flex items-center gap-3 border-b border-rule py-2"
                 >
-                  <span>
-                    <span className="flex items-center gap-1.5">
-                      <SportIcon sport={q.sport} size={15} className="shrink-0 text-ink-faint" />
-                      {q.facility_name}
-                    </span>
-                    <span className="ml-2 font-mono text-xs text-ink-faint">
-                      {istClock(new Date(q.starts_at))}
-                    </span>
+                  <SportIcon
+                    sport={q.sport}
+                    size={15}
+                    className="shrink-0 text-ink-3"
+                  />
+                  <span className="min-w-0 flex-1 truncate text-[13px]">
+                    {q.facility_name}
                   </span>
-                  <span className="rounded-full bg-info/20 px-2 py-0.5 font-mono text-[10px] text-info">
-                    {q.waiting} waiting
+                  <span className="fig text-[11px] text-ink-3">
+                    {istClock(new Date(q.starts_at))}
                   </span>
+                  <span className="tag text-signal">{q.waiting} waiting</span>
                 </div>
-              ))
-            )}
-          </div>
+              ))}
+            </div>
+          )}
         </section>
 
-        <section className="panel p-5">
-          <h2 className="flex items-center gap-2 font-semibold">
-            <Activity className="h-4 w-4 text-violet" />
-            Event log
-          </h2>
-          <p className="mt-1 text-xs text-ink-dim">
+        <section>
+          <SectionHead index="03" title="Event log" />
+          <p className="prose-news mt-3 text-[15px]">
             Written inside the same transaction as the booking it describes, so
             the audit trail cannot disagree with what actually happened.
           </p>
-          <div className="mt-4 max-h-[26rem] space-y-1 overflow-y-auto">
+
+          <div className="mt-4 max-h-[28rem] overflow-y-auto border-t border-ink">
             {events.map((e) => (
               <div
                 key={e.id}
-                className="flex items-center gap-2 rounded-lg px-2 py-1.5 text-xs odd:bg-raised/30"
+                className="flex items-center gap-3 border-b border-rule py-1.5 text-[12px]"
               >
                 <span
                   className={cn(
-                    "shrink-0 rounded px-1.5 py-0.5 font-mono text-[9px] uppercase",
-                    e.type.includes("cancel")
-                      ? "bg-stop/15 text-stop"
-                      : e.type.includes("waitlist")
-                        ? "bg-info/15 text-info"
-                        : "bg-go/15 text-go",
+                    "fig w-24 shrink-0 text-[10px] uppercase",
+                    e.type.includes("cancel") ? "text-signal" : "text-ink-3",
                   )}
                 >
                   {e.type.replace("booking.", "").replace("waitlist.", "wl.")}
                 </span>
-                <span className="min-w-0 flex-1 truncate text-ink-dim">
+                <span className="min-w-0 flex-1 truncate text-ink-2">
                   {e.user_name ?? "system"}
                   {e.facility_name && ` · ${e.facility_name}`}
                 </span>
-                <span className="shrink-0 font-mono text-[10px] text-ink-faint">
+                <span className="fig shrink-0 text-[10px] text-ink-3">
                   {istClock(new Date(e.at))}
                 </span>
               </div>

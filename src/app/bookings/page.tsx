@@ -1,19 +1,19 @@
 import Link from "next/link";
-import { CalendarX, MapPin, Ticket, ListPlus, Clock, Gauge } from "lucide-react";
 import { myBookings, myWaitlist } from "@/lib/availability";
 import { currentUser } from "@/lib/session";
 import { istClock, istDayLabel, istDateKey } from "@/lib/time";
 import { CancelButton } from "@/components/CancelButton";
 import { ClaimButton } from "@/components/ClaimButton";
-import { cn } from "@/lib/cn";
+import { SectionHead } from "@/components/SectionHead";
 import { SportIcon } from "@/components/SportIcon";
+import { cn } from "@/lib/cn";
 
 export const dynamic = "force-dynamic";
 
 export default async function BookingsPage() {
   const user = await currentUser();
   if (!user) {
-    return <p className="text-ink-dim">Sign in to see your bookings.</p>;
+    return <p className="prose-news pt-10">Sign in to see your bookings.</p>;
   }
 
   const [bookings, queue] = await Promise.all([
@@ -26,87 +26,82 @@ export default async function BookingsPage() {
     (b) => b.status === "confirmed" && new Date(b.starts_at).getTime() > now,
   );
   const history = bookings.filter((b) => !upcoming.includes(b));
-
   const noShows = history.filter((b) => b.status === "no_show").length;
 
   return (
-    <div className="space-y-8">
-      <section className="rail pl-5">
-        <p className="eyebrow">Your account</p>
-        <h1 className="display mt-3 text-[clamp(1.8rem,4vw,2.5rem)]">{user.name}</h1>
-        <p className="mt-1 text-sm text-ink-dim">
-          {user.rollNumber} · {user.hostel}
+    <div>
+      {/* The reader's own page: name at masthead scale, standing under it. */}
+      <header className="border-b-2 border-ink pb-7 pt-8">
+        <p className="kicker kicker-signal">Your account</p>
+        <h2 className="hed-lg mt-3 font-display uppercase">{user.name}</h2>
+        <p className="mt-2 font-mono text-[11px] uppercase tracking-[0.14em] text-ink-3">
+          {user.rollNumber} · {user.hostel} hostel
         </p>
-      </section>
 
-      {/* Standing — the numbers that actually affect what a student can book. */}
-      <div className="grid gap-3 sm:grid-cols-3">
-        <StatCard
-          icon={<Ticket className="h-4 w-4" />}
-          label="Booked this week"
-          value={`${upcoming.length} / ${user.weeklyQuota}`}
-          hint="rolling 7 days"
-        />
-        <StatCard
-          icon={<Gauge className="h-4 w-4" />}
-          label="Reliability"
-          value={String(user.reliabilityScore)}
-          hint={
-            noShows
-              ? `${noShows} no-show${noShows > 1 ? "s" : ""} on record`
-              : "no no-shows"
-          }
-          tone={
-            user.reliabilityScore >= 85
-              ? "go"
-              : user.reliabilityScore >= 60
-                ? "warn"
-                : "stop"
-          }
-        />
-        <StatCard
-          icon={<ListPlus className="h-4 w-4" />}
-          label="On waitlists"
-          value={String(queue.length)}
-          hint="queued slots"
-        />
-      </div>
+        <dl className="mt-7 grid grid-cols-2 border-t border-rule sm:grid-cols-4">
+          <Standing
+            label="Booked this week"
+            value={`${upcoming.length}/${user.weeklyQuota}`}
+            note="rolling 7 days"
+          />
+          <Standing
+            label="Reliability"
+            value={String(user.reliabilityScore)}
+            note={noShows ? `${noShows} no-show${noShows > 1 ? "s" : ""}` : "no no-shows"}
+            accent={user.reliabilityScore < 60}
+          />
+          <Standing
+            label="On waitlists"
+            value={String(queue.length)}
+            note="queued slots"
+          />
+          <Standing
+            label="Lifetime"
+            value={String(bookings.length)}
+            note="bookings on record"
+          />
+        </dl>
+      </header>
 
-      {/* Waitlist offers first — they expire, so they are the urgent item. */}
+      {/* Offers expire, so they lead the page whenever there are any. */}
       {queue.length > 0 && (
-        <section>
-          <h2 className="mb-3 text-lg font-semibold">Waitlist</h2>
-          <div className="space-y-2">
+        <section className="pt-10">
+          <SectionHead
+            index="01"
+            rule={false}
+            title="Waitlist"
+            note="An offer holds for 15 minutes, then passes to the next student in line."
+          />
+          <div className="mt-5 border-t border-ink">
             {queue.map((w) => {
               const offered = w.state === "offered";
               return (
                 <div
                   key={w.id}
                   className={cn(
-                    "flex flex-wrap items-center gap-3 rounded-xl border p-4",
-                    offered
-                      ? "border-flame/50 bg-flame/10"
-                      : "border-line bg-raised/40",
+                    "flex flex-wrap items-center gap-4 border-b border-rule px-1 py-3.5",
+                    offered && "bg-paper-2",
                   )}
                 >
-                  <span className="grid h-9 w-9 shrink-0 place-items-center rounded-xl border border-info/30 bg-info/10 text-info">
-                    <SportIcon sport={w.sport_name} size={18} />
-                  </span>
+                  <SportIcon
+                    sport={w.sport_name}
+                    size={18}
+                    className="shrink-0 text-ink-3"
+                  />
                   <div className="min-w-0 flex-1">
-                    <p className="font-medium">{w.facility_name}</p>
-                    <p className="text-xs text-ink-dim">
+                    <p className="hed-sm font-display uppercase">
+                      {w.facility_name}
+                    </p>
+                    <p className="fig mt-1 text-[11px] text-ink-3">
                       {istDayLabel(istDateKey(new Date(w.starts_at)))} ·{" "}
                       {istClock(new Date(w.starts_at))}–
                       {istClock(new Date(w.ends_at))}
                     </p>
                   </div>
                   {offered ? (
-                    <ClaimButton
-                      waitlistId={w.id}
-                      expiresAt={w.claim_expires_at}
-                    />
+                    <ClaimButton waitlistId={w.id} expiresAt={w.claim_expires_at} />
                   ) : (
-                    <span className="rounded-full bg-raised px-3 py-1 font-mono text-[10px] uppercase tracking-wider text-ink-dim">
+                    <span className="tag text-ink-3">
                       #{w.position} in queue
                     </span>
                   )}
@@ -117,106 +112,110 @@ export default async function BookingsPage() {
         </section>
       )}
 
-      <section>
-        <h2 className="mb-3 text-lg font-semibold">Upcoming</h2>
+      <section className="pt-10">
+        <SectionHead
+          index={queue.length > 0 ? "02" : "01"}
+          rule={queue.length > 0}
+          title="Upcoming"
+          note="Cancelling releases the slot and offers it to the next student in the same transaction."
+        />
+
         {upcoming.length === 0 ? (
-          <div className="rounded-xl border border-dashed border-line p-10 text-center">
-            <CalendarX className="mx-auto h-8 w-8 text-ink-faint" />
-            <p className="mt-3 text-sm text-ink-dim">Nothing booked yet.</p>
-            <Link
-              href="/"
-              className="mt-4 inline-block rounded-xl bg-flame px-5 py-2 text-sm font-semibold text-ground"
-            >
+          <div className="mt-5 border border-dashed border-rule-2 px-6 py-14 text-center">
+            <p className="hed-md font-display uppercase text-ink-3">
+              Nothing booked
+            </p>
+            <p className="prose-news mx-auto mt-3 max-w-[38ch] text-[15px]">
+              Twelve facilities are listed and most of them have space before
+              five in the afternoon.
+            </p>
+            <Link href="/" className="btn btn-solid mt-6">
               Find a court
             </Link>
           </div>
         ) : (
-          <div className="space-y-2">
+          <div className="mt-5 border-t border-ink">
             {upcoming.map((b) => (
-              <div
+              <article
                 key={b.id}
-                className="flex flex-wrap items-center gap-4 rounded-xl border border-line bg-raised/40 p-4"
-                style={{ borderLeftColor: b.color, borderLeftWidth: 3 }}
+                className="flex flex-wrap items-center gap-x-5 gap-y-3 border-b border-rule px-1 py-4"
               >
-                <span
-                  className="grid h-10 w-10 shrink-0 place-items-center rounded-xl border"
-                  style={{
-                    color: b.color,
-                    borderColor: `${b.color}44`,
-                    background: `${b.color}18`,
-                  }}
-                >
-                  <SportIcon sport={b.sport} size={20} />
-                </span>
+                <SportIcon
+                  sport={b.sport}
+                  size={20}
+                  className="shrink-0 text-ink-3"
+                />
 
                 <div className="min-w-0 flex-1">
                   <Link
                     href={`/facility/${b.facility_slug}`}
-                    className="font-semibold hover:text-flame"
+                    className="hed-sm font-display uppercase underline-offset-4 hover:text-signal hover:underline"
                   >
                     {b.facility_name}
                   </Link>
-                  <p className="mt-0.5 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-ink-dim">
-                    <span className="flex items-center gap-1">
-                      <Clock className="h-3 w-3" />
-                      {istDayLabel(istDateKey(new Date(b.starts_at)))} ·{" "}
-                      {istClock(new Date(b.starts_at))}–
-                      {istClock(new Date(b.ends_at))}
-                    </span>
-                    <span className="flex items-center gap-1">
-                      <MapPin className="h-3 w-3" />
-                      {b.location}
-                    </span>
+                  <p className="fig mt-1 text-[11px] uppercase tracking-wide text-ink-3">
+                    {istDayLabel(istDateKey(new Date(b.starts_at)))} ·{" "}
+                    {istClock(new Date(b.starts_at))}–
+                    {istClock(new Date(b.ends_at))} · {b.location}
                   </p>
                   {b.note && (
-                    <p className="mt-1 text-xs italic text-ink-faint">
+                    <p className="prose-news mt-1 text-[14px] italic">
                       “{b.note}”
                     </p>
                   )}
                 </div>
 
-                <span className="rounded-lg bg-ground px-3 py-1.5 font-mono text-sm font-bold tracking-wider text-go">
+                <span className="fig border border-ink px-2.5 py-1 text-sm font-bold">
                   {b.booking_code}
                 </span>
 
                 <CancelButton bookingId={b.id} />
-              </div>
+              </article>
             ))}
           </div>
         )}
       </section>
 
       {history.length > 0 && (
-        <section>
-          <h2 className="mb-3 text-lg font-semibold">History</h2>
-          <div className="overflow-hidden rounded-xl border border-line">
-            <table className="w-full text-sm">
-              <thead className="bg-raised/60">
-                <tr className="text-left font-mono text-[10px] uppercase tracking-wider text-ink-faint">
-                  <th className="px-4 py-2 font-normal">Facility</th>
-                  <th className="px-4 py-2 font-normal">When</th>
-                  <th className="px-4 py-2 font-normal">Code</th>
-                  <th className="px-4 py-2 font-normal">Status</th>
+        <section className="pt-10">
+          <SectionHead
+            index={queue.length > 0 ? "03" : "02"}
+            title="History"
+            note="Every booking ever written for this account, newest first."
+          />
+
+          <div className="mt-5 overflow-x-auto">
+            <table className="w-full min-w-[36rem] border-collapse text-sm">
+              <thead>
+                <tr className="border-y border-ink text-left">
+                  <Th>Facility</Th>
+                  <Th>When</Th>
+                  <Th>Code</Th>
+                  <Th align="right">Status</Th>
                 </tr>
               </thead>
               <tbody>
                 {history.slice(0, 20).map((b) => (
-                  <tr key={b.id} className="border-t border-line-soft">
-                    <td className="px-4 py-2">
-                      <span className="flex items-center gap-1.5">
-                        <SportIcon sport={b.sport} size={14} className="shrink-0 text-ink-faint" />
+                  <tr key={b.id} className="border-b border-rule">
+                    <td className="py-2.5 pr-4">
+                      <span className="flex items-center gap-2">
+                        <SportIcon
+                          sport={b.sport}
+                          size={14}
+                          className="shrink-0 text-ink-3"
+                        />
                         {b.facility_name}
                       </span>
                     </td>
-                    <td className="px-4 py-2 text-xs text-ink-dim">
+                    <td className="fig py-2.5 pr-4 text-[12px] text-ink-2">
                       {istDayLabel(istDateKey(new Date(b.starts_at)))} ·{" "}
                       {istClock(new Date(b.starts_at))}
                     </td>
-                    <td className="px-4 py-2 font-mono text-xs text-ink-faint">
+                    <td className="fig py-2.5 pr-4 text-[12px] text-ink-3">
                       {b.booking_code}
                     </td>
-                    <td className="px-4 py-2">
-                      <StatusPill status={b.status} />
+                    <td className="py-2.5 text-right">
+                      <StatusTag status={b.status} />
                     </td>
                   </tr>
                 ))}
@@ -229,18 +228,35 @@ export default async function BookingsPage() {
   );
 }
 
-function StatusPill({ status }: { status: string }) {
-  const map: Record<string, string> = {
-    completed: "bg-go/15 text-go",
-    no_show: "bg-stop/15 text-stop",
-    cancelled: "bg-raised text-ink-faint",
-    confirmed: "bg-violet/20 text-violet-soft",
-  };
+function Th({
+  children,
+  align,
+}: {
+  children: React.ReactNode;
+  align?: "right";
+}) {
+  return (
+    <th
+      className={cn(
+        "kicker py-2 font-normal",
+        align === "right" ? "text-right" : "pr-4",
+      )}
+    >
+      {children}
+    </th>
+  );
+}
+
+function StatusTag({ status }: { status: string }) {
+  const signal = status === "no_show";
+  const solid = status === "completed" || status === "confirmed";
   return (
     <span
       className={cn(
-        "rounded-full px-2 py-0.5 font-mono text-[10px] uppercase tracking-wider",
-        map[status] ?? "bg-raised text-ink-faint",
+        "tag",
+        signal && "border-signal text-signal",
+        solid && "border-ink bg-ink text-paper",
+        !signal && !solid && "text-ink-3",
       )}
     >
       {status.replace("_", " ")}
@@ -248,36 +264,29 @@ function StatusPill({ status }: { status: string }) {
   );
 }
 
-function StatCard({
-  icon,
+function Standing({
   label,
   value,
-  hint,
-  tone,
+  note,
+  accent,
 }: {
-  icon: React.ReactNode;
   label: string;
   value: string;
-  hint: string;
-  tone?: "go" | "warn" | "stop";
+  note: string;
+  accent?: boolean;
 }) {
   return (
-    <div className="rounded-xl border border-line bg-raised/40 p-4">
-      <p className="flex items-center gap-1.5 font-mono text-[10px] uppercase tracking-wider text-ink-faint">
-        {icon}
-        {label}
-      </p>
-      <p
+    <div className="border-r border-rule py-4 pr-4 last:border-r-0">
+      <dt className="kicker">{label}</dt>
+      <dd
         className={cn(
-          "mt-2 text-2xl font-bold tabular-nums",
-          tone === "go" && "text-go",
-          tone === "warn" && "text-warn",
-          tone === "stop" && "text-stop",
+          "fig mt-2 text-[1.75rem] font-bold leading-none",
+          accent ? "text-signal" : "text-ink",
         )}
       >
         {value}
-      </p>
-      <p className="text-[11px] text-ink-faint">{hint}</p>
+      </dd>
+      <p className="mt-1.5 text-[11px] text-ink-3">{note}</p>
     </div>
   );
 }
