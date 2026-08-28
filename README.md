@@ -101,20 +101,56 @@ individually valid. The client stamps each booking intent with a UUID, held in a
 second one. This is the double-tap / flaky-network case that transactions alone
 do not cover.
 
-### 4. Deterministic lock ordering
+### 4. One lock, and where it is measured
 
-The booking transaction takes a per-user advisory lock (the quota check is a
-read-then-write) and a per-slot advisory lock. **Both are acquired in sorted key
-order**, giving every transaction in the system one global lock order, which
-makes a deadlock cycle impossible to construct.
+The booking transaction takes exactly one advisory lock, keyed on the **user**,
+because the quota check is a genuine read-then-write: one student firing ten
+parallel requests would otherwise pass ten quota checks and commit ten
+bookings. Different students hash to different keys, so in a race between fifty
+students that lock is uncontended.
 
-This was not theoretical. Measured on a 200-way burst:
+There is deliberately **no per-slot lock**. An earlier version took one, in
+sorted key order alongside the user lock, and on a co-located database it was
+faster — contenders queued on a cheap lock instead of piling into the
+constraint's wait-for-uncommitted-row path.
 
-| | before ordering | after |
-|---|---|---|
-| wall clock | 104,214 ms | **347 ms** |
-| `40P01` deadlock failures | **27** | **0** |
-| bookings confirmed | 1 | 1 |
+Over a network it is a disaster. It serialises every contender, so each one
+pays a full round-trip budget in turn. Measured in production, Vercel functions
+in `iad1` (Washington DC) against Neon in Singapore:
+
+| n | with slot lock |
+|---|---|
+| 2 | 6.3 s |
+| 5 | 10.6 s |
+| 10 | 19.2 s |
+| 20 | 36.4 s |
+| 50 | function timeout |
+
+Dead linear at ~1.8 s per contender. Correctness was never in question — every
+run confirmed exactly one booking — but throughput collapsed.
+
+Two changes fixed it. The slot lock was removed, so all contenders attempt the
+insert at once: one wins, the rest block on its uncommitted row and are
+released together the instant it commits, each getting `23P01`. Total time is
+one transaction plus a round trip, whatever *n* is. Then `vercel.json` pinned
+the functions to `sin1`, next to the database, turning a ~250 ms round trip
+into a ~1 ms one.
+
+Same production deployment, after both:
+
+| n | wall clock | confirmed | overlapping pairs |
+|---|---|---|---|
+| 10 | 702 ms | 1 | 0 |
+| 20 | 350 ms | 1 | 0 |
+| 50 | 555 ms | 1 | 0 |
+| 100 | 529 ms | 1 | 0 |
+| 200 | **1,244 ms** | 1 | 0 |
+
+Flat, not linear — which is the shape you want when the whole campus opens the
+app at 6:00 PM.
+
+Removing the slot lock also removed the deadlock it used to guard against: a
+cycle needs two locks taken in varying order, and there is now only one.
 
 Partial-range overlaps (a maintenance block spanning several slots) can still
 deadlock legitimately, so `withDeadlockRetry` remains — a deadlock victim rolls
