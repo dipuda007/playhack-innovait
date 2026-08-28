@@ -15,7 +15,7 @@ export default async function RacePage() {
     <div className="space-y-6">
       <section className="rail pl-5">
         <p className="eyebrow">Core Challenge · Proof</p>
-        <h1 className="mt-2 text-3xl font-bold tracking-tight sm:text-4xl">
+        <h1 className="display mt-3 text-[clamp(1.9rem,4.4vw,2.9rem)]">
           Concurrency is the real opponent.
         </h1>
         <p className="mt-2 max-w-3xl text-ink-dim">

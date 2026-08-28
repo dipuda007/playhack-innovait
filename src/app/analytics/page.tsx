@@ -3,6 +3,7 @@ import {
   headline, peakHours, noShowRates, utilisationHeatmap, underusedPeakSlots,
 } from "@/lib/analytics";
 import { cn } from "@/lib/cn";
+import { SportIcon } from "@/components/SportIcon";
 
 export const dynamic = "force-dynamic";
 
@@ -33,7 +34,7 @@ export default async function AnalyticsPage() {
     <div className="space-y-8">
       <section className="rail pl-5">
         <p className="eyebrow">Operations · Insights</p>
-        <h1 className="mt-2 text-3xl font-bold tracking-tight">
+        <h1 className="display mt-3 text-[clamp(1.8rem,4vw,2.5rem)]">
           Where the campus actually plays.
         </h1>
         <p className="mt-2 max-w-2xl text-ink-dim">
@@ -133,7 +134,10 @@ export default async function AnalyticsPage() {
               {facilities.map((f) => (
                 <tr key={f.facility_id}>
                   <td className="pr-3 text-right text-xs text-ink-dim">
-                    {f.emoji} {f.facility_name}
+                    <span className="flex items-center justify-end gap-1.5">
+                      <SportIcon sport={f.sport} size={14} className="shrink-0 text-ink-faint" />
+                      {f.facility_name}
+                    </span>
                   </td>
                   {hours.map((h) => {
                     const v = cell.get(`${f.facility_id}:${h}`) ?? 0;
@@ -174,7 +178,10 @@ export default async function AnalyticsPage() {
             {noShows.slice(0, 8).map((n) => (
               <div key={n.facility_name} className="flex items-center gap-3">
                 <span className="w-40 shrink-0 truncate text-xs">
-                  {n.emoji} {n.facility_name}
+                  <span className="flex items-center gap-1.5">
+                    <SportIcon sport={n.sport} size={14} className="shrink-0 text-ink-faint" />
+                    {n.facility_name}
+                  </span>
                 </span>
                 <div className="h-2 flex-1 overflow-hidden rounded-full bg-line">
                   <div
@@ -212,7 +219,10 @@ export default async function AnalyticsPage() {
                   className="flex items-center justify-between rounded-lg border border-line bg-raised/40 px-3 py-2"
                 >
                   <span className="text-sm">
-                    {u.emoji} {u.facility_name}
+                    <span className="flex items-center gap-1.5">
+                      <SportIcon sport={u.sport} size={14} className="shrink-0 text-ink-faint" />
+                      {u.facility_name}
+                    </span>
                     <span className="ml-2 font-mono text-xs text-flame">
                       {hourLabel(u.hour)}
                     </span>

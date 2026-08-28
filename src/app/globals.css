@@ -1,26 +1,46 @@
 @import "tailwindcss";
 
 /*
- * Palette lifted from the PlayHack problem-statement deck: deep indigo ground,
- * orange for action, violet for structural labels. Using the organisers' own
- * visual language means the product looks like it belongs to the event.
+ * PlayHack design system.
+ *
+ * Ground rules, in the order they matter:
+ *
+ * 1. Never pure black. #000 smears on OLED and kills the sense of depth that
+ *    makes a dark interface feel built rather than merely unlit. The ground is
+ *    a very dark indigo, and every surface above it is a *lighter* step, so
+ *    elevation reads without a single drop shadow.
+ * 2. One motion curve. Everything eases on cubic-bezier(0.16, 1, 0.3, 1) —
+ *    a fast out, long settle. Shared easing is most of what makes separate
+ *    animations feel like one product.
+ * 3. Colour carries meaning, never decoration. Flame = act on this.
+ *    Violet = structure and identity. Go/warn/stop = state of a slot.
+ *
+ * Palette descends from the PlayHack problem-statement deck: deep indigo
+ * ground, orange for action, violet for structure.
  */
 @theme {
-  --color-ground: #0d0a1f;
-  --color-surface: #16123180;
-  --color-surface-solid: #161231;
-  --color-raised: #1e1940;
-  --color-line: #2b2456;
-  --color-line-soft: #221d47;
+  /* ── Ground and surfaces ─────────────────────────────────────────────── */
+  --color-void: #05040e;
+  --color-ground: #0a0818;
+  --color-surface: #14112c99;
+  --color-surface-solid: #14112c;
+  --color-raised: #1c1740;
+  --color-raised-high: #241e52;
+  --color-line: #2e2760;
+  --color-line-soft: #241e4c;
 
-  --color-ink: #f4f2ff;
-  --color-ink-dim: #a9a2ce;
-  --color-ink-faint: #6f6795;
+  /* ── Ink ─────────────────────────────────────────────────────────────── */
+  --color-ink: #f5f3ff;
+  --color-ink-dim: #b3accf;
+  --color-ink-faint: #7a719f;
 
+  /* ── Brand ───────────────────────────────────────────────────────────── */
   --color-flame: #f97316;
   --color-flame-soft: #fb923c;
+  --color-flame-deep: #c2410c;
   --color-violet: #8b5cf6;
   --color-violet-soft: #a78bfa;
+  --color-violet-deep: #6d28d9;
 
   /*
    * Chart-mark variants of the brand hues.
@@ -35,6 +55,7 @@
   --color-chart-1: #e2620a;
   --color-chart-2: #8b5cf6;
 
+  /* ── State ───────────────────────────────────────────────────────────── */
   --color-go: #22c55e;
   --color-go-dim: #16a34a;
   --color-stop: #ef4444;
@@ -43,6 +64,10 @@
 
   --font-display: "Space Grotesk", ui-sans-serif, system-ui, sans-serif;
   --font-mono: "JetBrains Mono", ui-monospace, "SF Mono", Menlo, monospace;
+
+  /* One curve for the whole product. */
+  --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-in-quick: cubic-bezier(0.4, 0, 1, 1);
 }
 
 @layer base {
@@ -52,6 +77,8 @@
 
   html {
     scroll-behavior: smooth;
+    /* Prices, counts and clock times must not jitter as digits change. */
+    font-variant-numeric: tabular-nums;
   }
 
   body {
@@ -59,21 +86,45 @@
     color: var(--color-ink);
     font-family: var(--font-display);
     -webkit-font-smoothing: antialiased;
-    /* Faint vertical banding, echoing the deck cover. */
-    background-image:
-      radial-gradient(
-        ellipse 80% 50% at 50% -20%,
-        rgb(139 92 246 / 0.16),
-        transparent
-      ),
-      repeating-linear-gradient(
-        90deg,
-        rgb(255 255 255 / 0.012) 0px,
-        rgb(255 255 255 / 0.012) 1px,
-        transparent 1px,
-        transparent 44px
-      );
-    background-attachment: fixed;
+    text-rendering: optimizeLegibility;
+  }
+
+  /*
+   * Ambient light.
+   *
+   * Two slow, enormous, very low-opacity blobs behind everything. They are
+   * what stops a dark page reading as a flat sheet of dark grey: the eye
+   * picks up the gradient long before it notices any movement. Fixed and
+   * pointer-events-none, painted once, never reflowing.
+   */
+  body::before {
+    content: "";
+    position: fixed;
+    inset: -20%;
+    z-index: -2;
+    pointer-events: none;
+    background:
+      radial-gradient(45rem 32rem at 12% -8%, rgb(139 92 246 / 0.20), transparent 60%),
+      radial-gradient(38rem 30rem at 92% 4%, rgb(249 115 22 / 0.10), transparent 60%),
+      radial-gradient(50rem 40rem at 60% 100%, rgb(109 40 217 / 0.14), transparent 65%);
+    animation: drift 34s var(--ease-out-expo) infinite alternate;
+  }
+
+  /* Hairline vertical rhythm, echoing the deck cover. Sits above the blobs. */
+  body::after {
+    content: "";
+    position: fixed;
+    inset: 0;
+    z-index: -1;
+    pointer-events: none;
+    background-image: repeating-linear-gradient(
+      90deg,
+      rgb(255 255 255 / 0.014) 0px,
+      rgb(255 255 255 / 0.014) 1px,
+      transparent 1px,
+      transparent 46px
+    );
+    mask-image: linear-gradient(to bottom, black, transparent 70%);
   }
 
   ::selection {
@@ -85,7 +136,7 @@
   :focus-visible {
     outline: 2px solid var(--color-flame);
     outline-offset: 2px;
-    border-radius: 4px;
+    border-radius: 6px;
   }
 
   ::-webkit-scrollbar {
@@ -93,14 +144,15 @@
     height: 10px;
   }
   ::-webkit-scrollbar-track {
-    background: var(--color-ground);
+    background: transparent;
   }
   ::-webkit-scrollbar-thumb {
     background: var(--color-line);
     border-radius: 6px;
+    border: 2px solid var(--color-ground);
   }
   ::-webkit-scrollbar-thumb:hover {
-    background: var(--color-violet);
+    background: var(--color-violet-deep);
   }
 }
 
@@ -113,19 +165,191 @@
     color: var(--color-flame);
   }
 
+  /*
+   * The one card primitive.
+   *
+   * Glass over the ambient light rather than a solid fill, plus a single
+   * hairline highlight along the top edge — the cheapest possible cue that a
+   * surface is lit from above, and the thing that separates "dark theme" from
+   * "designed in the dark".
+   */
   .panel {
+    position: relative;
     background: var(--color-surface);
     border: 1px solid var(--color-line);
     border-radius: 1rem;
-    backdrop-filter: blur(12px);
+    backdrop-filter: blur(14px) saturate(1.2);
   }
 
+  .panel::before {
+    content: "";
+    position: absolute;
+    inset: 0 0 auto;
+    height: 1px;
+    border-radius: inherit;
+    background: linear-gradient(
+      90deg,
+      transparent,
+      rgb(255 255 255 / 0.14) 22%,
+      rgb(255 255 255 / 0.14) 78%,
+      transparent
+    );
+    pointer-events: none;
+  }
+
+  /* An interactive panel: lifts, brightens, and picks up a violet rim. */
+  .panel-hover {
+    transition:
+      transform 0.4s var(--ease-out-expo),
+      border-color 0.3s var(--ease-out-expo),
+      box-shadow 0.4s var(--ease-out-expo);
+  }
+  .panel-hover:hover {
+    transform: translateY(-3px);
+    border-color: rgb(139 92 246 / 0.55);
+    box-shadow:
+      0 18px 40px -22px rgb(0 0 0 / 0.9),
+      0 0 0 1px rgb(139 92 246 / 0.12),
+      0 0 44px -18px rgb(139 92 246 / 0.5);
+  }
+  .panel-hover:active {
+    transform: translateY(-1px) scale(0.995);
+  }
+
+  /*
+   * Section rail: a lit edge, brightest at the eyebrow and falling away down
+   * the block, so it points at where reading starts instead of drawing a
+   * uniform stripe beside it.
+   */
   .rail {
-    border-left: 3px solid var(--color-flame);
+    position: relative;
+    padding-left: 1.25rem;
+  }
+  .rail::before {
+    content: "";
+    position: absolute;
+    left: 0;
+    top: 0.15rem;
+    bottom: 0.15rem;
+    width: 3px;
+    border-radius: 3px;
+    background: linear-gradient(
+      180deg,
+      var(--color-flame) 0%,
+      var(--color-flame) 24%,
+      var(--color-violet) 62%,
+      transparent 100%
+    );
+    box-shadow: 0 0 18px -2px rgb(249 115 22 / 0.5);
+  }
+
+  /* Display type: large, tight, and optically balanced. */
+  .display {
+    font-weight: 700;
+    letter-spacing: -0.035em;
+    line-height: 0.98;
+  }
+
+  /*
+   * Headline text that fades from solid to translucent white. Reads as
+   * lighting rather than as a colour, which keeps it legible where a
+   * two-colour gradient would not be.
+   */
+  .text-lit {
+    background: linear-gradient(
+      170deg,
+      #ffffff 0%,
+      #ffffff 42%,
+      rgb(245 243 255 / 0.62) 100%
+    );
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+
+  /* Primary action. One per screen. */
+  .btn-primary {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    border-radius: 0.75rem;
+    background: linear-gradient(180deg, var(--color-flame-soft), var(--color-flame));
+    color: #1a0d02;
+    font-weight: 600;
+    box-shadow:
+      0 1px 0 0 rgb(255 255 255 / 0.25) inset,
+      0 10px 26px -12px rgb(249 115 22 / 0.85);
+    transition:
+      transform 0.22s var(--ease-out-expo),
+      box-shadow 0.22s var(--ease-out-expo),
+      filter 0.22s var(--ease-out-expo);
+  }
+  .btn-primary:hover:not(:disabled) {
+    filter: brightness(1.06);
+    box-shadow:
+      0 1px 0 0 rgb(255 255 255 / 0.3) inset,
+      0 14px 34px -12px rgb(249 115 22 / 1);
+  }
+  .btn-primary:active:not(:disabled) {
+    transform: scale(0.975);
+  }
+  .btn-primary:disabled {
+    opacity: 0.45;
+    box-shadow: none;
+    cursor: not-allowed;
+  }
+
+  /* Secondary action: glass, no fill. */
+  .btn-ghost {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    border-radius: 0.75rem;
+    border: 1px solid var(--color-line);
+    background: rgb(255 255 255 / 0.03);
+    color: var(--color-ink-dim);
+    transition:
+      border-color 0.22s var(--ease-out-expo),
+      color 0.22s var(--ease-out-expo),
+      background-color 0.22s var(--ease-out-expo),
+      transform 0.22s var(--ease-out-expo);
+  }
+  .btn-ghost:hover:not(:disabled) {
+    border-color: rgb(139 92 246 / 0.6);
+    background: rgb(139 92 246 / 0.1);
+    color: var(--color-ink);
+  }
+  .btn-ghost:active:not(:disabled) {
+    transform: scale(0.975);
+  }
+
+  /* Monospace metric label — used across ops, race and insights. */
+  .metric-label {
+    font-family: var(--font-mono);
+    font-size: 0.625rem;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--color-ink-faint);
+  }
+
+  /* Full-bleed section inside the max-width main column. */
+  .bleed {
+    margin-left: calc(50% - 50vw);
+    margin-right: calc(50% - 50vw);
+    width: 100vw;
   }
 }
 
-/* Respect a stated preference for less motion, including the race waterfall. */
+/*
+ * Respect a stated preference for less motion.
+ *
+ * Note what stays: colour, contrast and layout are never carried by animation
+ * alone, so switching motion off costs the user no information — the race
+ * waterfall still fills in, it simply arrives rather than travels.
+ */
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,
@@ -135,6 +359,14 @@
     transition-duration: 0.001ms !important;
     scroll-behavior: auto !important;
   }
+  .panel-hover:hover {
+    transform: none;
+  }
+}
+
+@keyframes drift {
+  from { transform: translate3d(0, 0, 0) scale(1); }
+  to { transform: translate3d(2.5%, -2%, 0) scale(1.08); }
 }
 
 @keyframes pulse-ring {
@@ -153,6 +385,12 @@
   50% { background-color: rgb(34 197 94 / 0.42); }
 }
 
+/* Sweeps a highlight across a skeleton or a loading bar. */
+@keyframes shimmer {
+  from { transform: translateX(-100%); }
+  to { transform: translateX(100%); }
+}
+
 .animate-pulse-ring { animation: pulse-ring 1.6s ease-out infinite; }
-.animate-slide-up { animation: slide-up 0.28s ease-out both; }
+.animate-slide-up { animation: slide-up 0.28s var(--ease-out-expo) both; }
 .animate-flash-green { animation: flash-green 0.9s ease-in-out 2; }

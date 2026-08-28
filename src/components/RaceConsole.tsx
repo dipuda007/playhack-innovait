@@ -156,7 +156,7 @@ export function RaceConsole({
             >
               {facilities.map((f) => (
                 <option key={f.id} value={f.id}>
-                  {f.emoji} {f.name}
+                  {f.name}
                 </option>
               ))}
             </select>
