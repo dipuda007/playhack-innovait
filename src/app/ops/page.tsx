@@ -4,6 +4,7 @@ import { listFacilities } from "@/lib/availability";
 import { currentUser } from "@/lib/session";
 import { istClock, istDateKey, istDayLabel, todayKey, addDaysToKey } from "@/lib/time";
 import { OpsConsole } from "@/components/OpsConsole";
+import { ReopenButton } from "@/components/ReopenButton";
 import { cn } from "@/lib/cn";
 
 export const dynamic = "force-dynamic";
@@ -101,17 +102,22 @@ export default async function OpsPage() {
                   key={b.id}
                   className="rounded-lg border border-warn/30 bg-warn/10 px-3 py-2.5"
                 >
-                  <p className="text-sm font-medium">
-                    {b.emoji} {b.facility_name}
-                  </p>
-                  <p className="mt-0.5 text-xs text-ink-dim">
-                    {istDayLabel(istDateKey(new Date(b.starts_at)))} ·{" "}
-                    {istClock(new Date(b.starts_at))}–
-                    {istClock(new Date(b.ends_at))}
-                  </p>
-                  {b.note && (
-                    <p className="mt-1 text-xs text-warn">{b.note}</p>
-                  )}
+                  <div className="flex items-start gap-2">
+                    <div className="min-w-0 flex-1">
+                      <p className="text-sm font-medium">
+                        {b.emoji} {b.facility_name}
+                      </p>
+                      <p className="mt-0.5 text-xs text-ink-dim">
+                        {istDayLabel(istDateKey(new Date(b.starts_at)))} ·{" "}
+                        {istClock(new Date(b.starts_at))}–
+                        {istClock(new Date(b.ends_at))}
+                      </p>
+                      {b.note && (
+                        <p className="mt-1 text-xs text-warn">{b.note}</p>
+                      )}
+                    </div>
+                    <ReopenButton blockId={b.id} disabled={!isManager} />
+                  </div>
                 </div>
               ))}
             </div>

@@ -21,7 +21,12 @@ const Toggle = z.object({
   isActive: z.boolean(),
 });
 
-const Body = z.discriminatedUnion("action", [Block, Toggle]);
+const Unblock = z.object({
+  action: z.literal("unblock"),
+  blockId: z.string().uuid(),
+});
+
+const Body = z.discriminatedUnion("action", [Block, Toggle, Unblock]);
 
 export async function POST(req: Request) {
   const user = await currentUser();
@@ -46,6 +51,38 @@ export async function POST(req: Request) {
     `;
     publish({ type: "booking", facilityId: parsed.data.facilityId });
     return NextResponse.json({ ok: true });
+  }
+
+  if (parsed.data.action === "unblock") {
+    /**
+     * Reopening is a status flip, not a delete.
+     *
+     * `bookings_no_overlap` is a PARTIAL exclusion constraint — it only indexes
+     * rows where status = 'confirmed'. Setting the closure to 'cancelled'
+     * therefore drops it out of the index and the slot is instantly bookable
+     * again, with the row left behind as history. The `kind = 'block'` guard
+     * means this endpoint can never be used to cancel a student's booking.
+     */
+    const [row] = await sql<{ id: string; facility_id: string }[]>`
+      UPDATE bookings
+      SET status = 'cancelled', cancelled_at = now()
+      WHERE id = ${parsed.data.blockId}
+        AND kind = 'block'
+        AND status = 'confirmed'
+      RETURNING id, facility_id
+    `;
+    if (!row) {
+      return NextResponse.json(
+        { ok: false, code: "NOT_FOUND", message: "That closure is no longer open." },
+        { status: 404 },
+      );
+    }
+    await sql`
+      INSERT INTO booking_events (booking_id, facility_id, user_id, type, payload)
+      VALUES (${row.id}, ${row.facility_id}, ${user.id}, 'block.lifted', '{}'::jsonb)
+    `;
+    publish({ type: "booking", facilityId: row.facility_id });
+    return NextResponse.json({ ok: true, id: row.id });
   }
 
   const { facilityId, startsAt, endsAt, note } = parsed.data;
