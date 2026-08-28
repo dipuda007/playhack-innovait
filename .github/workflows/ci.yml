@@ -1,0 +1,60 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+
+    # The concurrency suite is the point of this project, so CI runs it against
+    # a real Postgres rather than a mock. btree_gist ships with the official
+    # image; the migration creates the extension itself.
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_PASSWORD: playhack
+          POSTGRES_DB: playhack
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+
+    env:
+      DATABASE_URL: postgresql://postgres:playhack@localhost:5432/playhack
+      SESSION_SECRET: ci-secret-not-used-outside-ci
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - run: npm ci
+
+      - name: Typecheck
+        run: npx tsc --noEmit
+
+      - name: Apply schema
+        run: npm run db:push
+
+      - name: Seed
+        run: npm run db:seed
+
+      - name: Concurrency and lottery suites
+        run: npm test
+
+      - name: Whole-table invariant sweep
+        run: npm run invariant
+
+      # Builds with the database reachable, and would also build without it —
+      # the pool is created on first use, not on import.
+      - name: Production build
+        run: npm run build

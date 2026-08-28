@@ -1,180 +1,241 @@
-# PlayHack — Sports Facility Booking
+<div align="center">
 
-**Team InnovAIT** · IIT Guwahati Sports Board × Tech Board · SDE Track
+# PlayHack
 
-A booking system for IIT Guwahati's sports facilities, built around one claim:
+### Campus sports facility booking for IIT Guwahati
 
-> **Two students cannot book the same court at the same time. Not "usually" — not
-> "we use transactions". The database will not physically store it.**
+**Fifty students tap “Book” on the same court at 6:00 PM.
+Exactly one gets it — and that decision is made by Postgres, not by our code.**
 
----
+[**▶ Live demo**](https://innovait-hackathon.vercel.app) · [Run the race yourself](https://innovait-hackathon.vercel.app/race) · [Architecture](docs/ARCHITECTURE.md) · [Deploying](docs/DEPLOY.md)
 
-## Quickstart
+[![CI](https://github.com/dipuda007/playhack-innovait/actions/workflows/ci.yml/badge.svg)](https://github.com/dipuda007/playhack-innovait/actions/workflows/ci.yml)
+![Next.js](https://img.shields.io/badge/Next.js-15.5-12100e?style=flat-square&labelColor=12100e&color=faf8f3)
+![Postgres](https://img.shields.io/badge/Postgres-17-12100e?style=flat-square&labelColor=12100e&color=faf8f3)
+![TypeScript](https://img.shields.io/badge/TypeScript-strict-12100e?style=flat-square&labelColor=12100e&color=faf8f3)
+![Tests](https://img.shields.io/badge/tests-19%20unit%20%2B%2011%20browser-cf2e17?style=flat-square&labelColor=12100e)
+![Overlaps](https://img.shields.io/badge/overlapping%20bookings-0-cf2e17?style=flat-square&labelColor=12100e)
+![Audit](https://img.shields.io/badge/npm%20audit-0%20vulnerabilities-12100e?style=flat-square&labelColor=12100e&color=faf8f3)
 
-```bash
-npm install
-cp .env.example .env.local     # set DATABASE_URL to any Postgres 14+
-npm run setup                  # migrate + seed
-npm run dev                    # http://localhost:3000
-```
+<br>
 
-Prove the claim before you look at anything else:
+![The browse page](docs/media/home.png)
 
-```bash
-npm run test:race
-```
-
-That fires 50, then 200 genuinely simultaneous booking attempts at a single
-slot and asserts exactly one row survives, every time.
-
-**Postgres is required, not incidental.** The entire design rests on an
-`EXCLUDE USING gist` constraint over a range type. MySQL, MongoDB and Firebase
-cannot express it. Postgres 14+ works; the app is developed on 17.
+</div>
 
 ---
 
-## The problem, precisely
+## The problem, stated exactly
 
-At 6:00 PM many students submit a request for the same facility and the same
-slot. A correct system must confirm exactly one and reject the rest without
-corrupting anything.
+> At 6:00 PM, many students request the same facility and time slot at once. The
+> system must confirm **exactly one** and reject the rest, without corrupting
+> data.
+>
+> — PlayHack SDE Track brief
 
-The usual implementation looks like this, and it is wrong:
+Almost every booking system answers this the same way, and almost every one of
+them is wrong:
 
 ```ts
-const taken = await db.query("SELECT 1 FROM bookings WHERE ...");
-if (!taken) await db.query("INSERT INTO bookings ...");   // ← the bug
+const taken = await isSlotTaken(court, slot);   // ← the question
+if (!taken) await insertBooking(court, slot);   // ← the answer
 ```
 
-Nothing in those two lines is individually incorrect. The bug lives in the gap
-*between* them: another request commits there, and the answer the first request
-is acting on has already gone stale. Wrapping both lines in a transaction does
-not close the gap under `READ COMMITTED` — the read simply does not see the
-other transaction's uncommitted row, and both go on to insert.
+Both lines are individually reasonable. Between them is a gap, and under load
+another request commits inside it. Two students walk to the same court.
 
-You can watch this happen, on demand, at **`/race`** in naive mode.
-
----
-
-## The answer
-
-### 1. The constraint
+## The answer, in one statement
 
 ```sql
-CREATE EXTENSION btree_gist;
-
 ALTER TABLE bookings ADD CONSTRAINT bookings_no_overlap
   EXCLUDE USING gist (facility_id WITH =, during WITH &&)
   WHERE (status = 'confirmed');
 ```
 
-`during` is a single `tstzrange`, not two loose timestamps.
+There is no question and no answer — **the write *is* the decision.** A booking
+carries a time range, and the database physically cannot store two overlapping
+ranges for the same facility. The loser is rejected with SQLSTATE `23P01`
+before it ever becomes a row.
 
-**Why this rather than `UNIQUE (facility_id, starts_at)`:**
+Three things follow from that, and they are why this beats a `UNIQUE` key:
 
-| | unique index | exclusion constraint |
+| | `UNIQUE (facility_id, starts_at)` | `EXCLUDE … WITH &&` |
 |---|---|---|
-| 18:00–19:00 twice | blocked | blocked |
-| 18:00–19:00 vs **18:30–19:30** | **allowed — the bug** | blocked |
-| 18:00–19:00 vs 19:00–20:00 | allowed | allowed (correct — adjacent) |
-| 2-hour maintenance over 4 slots | needs separate logic | same constraint |
+| Two bookings at 18:00 | rejected | rejected |
+| 18:00–19:00 vs **18:30–19:30** | **both stored** | rejected |
+| Two-hour maintenance block over four slots | not expressible | one row |
+| Cancelling frees the slot | needs a delete | status flip, free |
 
-A unique key only catches byte-identical slots. Overlap is the actual bug, and
-a unique index cannot see it.
-
-The partial `WHERE status = 'confirmed'` makes cancellation free: flipping the
-status drops the row out of the index and releases the slot instantly, with no
-deletes and full history retained.
-
-### 2. No read-modify-write on the write path
-
-There is no "is this slot free?" query anywhere in
-[`createBooking`](src/lib/booking.ts). The insert *is* the decision. Losers get
-SQLSTATE `23P01`, mapped to a typed `SLOT_TAKEN` outcome with three suggested
-alternatives — never a 500.
-
-### 3. Idempotency keys
-
-Transactions cannot distinguish a retry from a second intent — both requests are
-individually valid. The client stamps each booking intent with a UUID, held in a
-`UNIQUE` column, and a replay returns the original booking instead of creating a
-second one. This is the double-tap / flaky-network case that transactions alone
-do not cover.
-
-### 4. One lock, and where it is measured
-
-The booking transaction takes exactly one advisory lock, keyed on the **user**,
-because the quota check is a genuine read-then-write: one student firing ten
-parallel requests would otherwise pass ten quota checks and commit ten
-bookings. Different students hash to different keys, so in a race between fifty
-students that lock is uncontended.
-
-There is deliberately **no per-slot lock**. An earlier version took one, in
-sorted key order alongside the user lock, and on a co-located database it was
-faster — contenders queued on a cheap lock instead of piling into the
-constraint's wait-for-uncommitted-row path.
-
-Over a network it is a disaster. It serialises every contender, so each one
-pays a full round-trip budget in turn. Measured in production, Vercel functions
-in `iad1` (Washington DC) against Neon in Singapore:
-
-| n | with slot lock |
-|---|---|
-| 2 | 6.3 s |
-| 5 | 10.6 s |
-| 10 | 19.2 s |
-| 20 | 36.4 s |
-| 50 | function timeout |
-
-Dead linear at ~1.8 s per contender. Correctness was never in question — every
-run confirmed exactly one booking — but throughput collapsed.
-
-Two changes fixed it. The slot lock was removed, so all contenders attempt the
-insert at once: one wins, the rest block on its uncommitted row and are
-released together the instant it commits, each getting `23P01`. Total time is
-one transaction plus a round trip, whatever *n* is. Then `vercel.json` pinned
-the functions to `sin1`, next to the database, turning a ~250 ms round trip
-into a ~1 ms one.
-
-Same production deployment, after both:
-
-| n | wall clock | confirmed | overlapping pairs |
-|---|---|---|---|
-| 10 | 702 ms | 1 | 0 |
-| 20 | 350 ms | 1 | 0 |
-| 50 | 555 ms | 1 | 0 |
-| 100 | 529 ms | 1 | 0 |
-| 200 | **1,244 ms** | 1 | 0 |
-
-Flat, not linear — which is the shape you want when the whole campus opens the
-app at 6:00 PM.
-
-Removing the slot lock also removed the deadlock it used to guard against: a
-cycle needs two locks taken in varying order, and there is now only one.
-
-Partial-range overlaps (a maintenance block spanning several slots) can still
-deadlock legitimately, so `withDeadlockRetry` remains — a deadlock victim rolls
-back cleanly, so retrying is always safe. Exclusion violations are *never*
-retried: that is a settled result.
+Partial overlap is the case that actually happens, and it is the case a unique
+index cannot see.
 
 ---
 
-## Proof
+## Watch it happen
 
-```
-npm run test:race     # the concurrency suite
-npm test              # everything
-npm run invariant     # whole-table sweep, standalone
+The same burst, fired twice: once at a textbook check-then-write, once at the
+constrained path. Nothing is simulated — both write to real Postgres tables
+through a real HTTP endpoint.
+
+![The race demo running](docs/media/race-demo.gif)
+
+<table>
+<tr>
+<td width="50%"><img src="docs/media/verdict-naive.png" alt="Naive mode: 50 bookings for one court"></td>
+<td width="50%"><img src="docs/media/verdict-safe.png" alt="Safe mode: exactly one survives"></td>
+</tr>
+<tr>
+<td align="center"><b>Naive.</b> Every request succeeded. Nothing errored.<br>Fifty students hold the same court.</td>
+<td align="center"><b>Constrained.</b> One row. 199 typed rejections,<br>each carrying alternatives the student can act on.</td>
+</tr>
+</table>
+
+### Measured on the deployed app
+
+Vercel functions in `sin1`, Neon Postgres in `ap-southeast-1`, one clean run of
+each straight after a reset:
+
+| Mode | Requests | Server time | Confirmed | Rows in DB | Overlapping pairs |
+|---|---:|---:|---:|---:|---:|
+| naive | 50 | 305 ms | 50 | 50 | **1 225** |
+| safe | 10 | 56 ms | 1 | 1 | 0 |
+| safe | 50 | 144 ms | 1 | 1 | 0 |
+| safe | 100 | 320 ms | 1 | 1 | 0 |
+| safe | **200** | **652 ms** | **1** | **1** | **0** |
+
+Flat, not linear, because nothing in the write path serialises on *n*: all
+contenders attempt the insert at once, one wins, the rest block on its
+uncommitted row and are released together the moment it commits.
+
+The overlapping-pair count is not a check of the slot just tested — it is a
+whole-table sweep, every confirmed row against every other row on the same
+court, run after every single race.
+
+---
+
+## Beyond “it does not double-book”
+
+Correctness is the floor. Five things are built on top of it, each solving a
+problem the constraint alone does not.
+
+| | What it does | Why it is not obvious |
+|---|---|---|
+| **Idempotency keys** | A retried submit returns the original booking | Transactions cannot tell a retry from a second intent — both are valid requests. A double-tap on a flaky hostel connection is the common case, not the edge case |
+| **Typed rejections** | Losing returns `SLOT_TAKEN`, `QUOTA_EXCEEDED`, `OVERLAPS_OWN`… with three alternative slots | An error page tells a student nothing. A reason plus a next action is a product |
+| **Waitlist promotion** | Cancelling releases the slot *and* offers it to the next student in the **same transaction** | A background job leaves a window where the slot is free but unowned — precisely when a race would take it |
+| **Maintenance closures** | A closure is a `bookings` row with `kind='block'` | One invariant, two features. A manager cannot close a court out from under a student's confirmed booking, because the same constraint refuses it |
+| **Fair draw** | Peak slots go to a seeded, weighted, published lottery | Winning a race is not deserving the court. First-come-first-served rewards the best wifi. The seed is printed with the result so anyone can recompute the winner |
+
+---
+
+## How a booking is decided
+
+```mermaid
+sequenceDiagram
+    participant A as Student A
+    participant B as Student B (+198 more)
+    participant API as Route handler
+    participant PG as Postgres
+
+    Note over A,B: 18:00:00.000 — everyone taps Book
+    A->>API: POST /api/bookings (idempotency key)
+    B->>API: POST /api/bookings (idempotency key)
+
+    API->>PG: BEGIN · advisory lock on user · quota + self-clash check
+    API->>PG: BEGIN · advisory lock on user · quota + self-clash check
+
+    API->>PG: INSERT booking (facility, tstzrange)
+    API->>PG: INSERT booking (facility, tstzrange)
+
+    PG-->>API: A committed · PH-01042
+    Note over PG: bookings_no_overlap rejects the rest
+    PG-->>API: 23P01 exclusion_violation ×199
+
+    API-->>A: 201 CONFIRMED · PH-01042
+    API-->>B: 409 SLOT_TAKEN + 3 alternatives + queue position
 ```
 
-The suite asserts:
+No availability check on the write path. No application-level lock on the slot.
+The only lock taken is per **user**, because the quota check is a genuine
+read-then-write and one student firing ten parallel requests would otherwise
+pass ten quota checks.
+
+### Availability is derived, never stored
+
+```mermaid
+flowchart LR
+    F[facilities<br/>opens_at · closes_at · slot_minutes] -->|generate_series| G[slot grid<br/>computed per request]
+    B[bookings<br/>during: tstzrange] -->|NOT EXISTS … during &&| G
+    G --> V[what the student sees]
+```
+
+There is no `slots` table. A row per court per hour per day would be a *second*
+source of truth about occupancy, and the moment it disagrees with `bookings`
+the brief's consistency requirement is already lost.
+
+---
+
+## The interface
+
+Set as a broadsheet: ink on paper, one vermilion accent, hairline rules, and a
+serif for anything that argues a case. No gradients, no glass, no glow, no
+shadows — hierarchy comes from rule weight, type size and empty space, the way
+print has always done it.
+
+Slot state is carried by **fill, not hue** — open is paper, taken is solid ink,
+yours is vermilion, closed is hatched — so the grid stays readable in
+greyscale, to a colourblind reader, and through a badly calibrated projector.
+
+<table>
+<tr>
+<td width="50%"><img src="docs/media/facility.png" alt="A facility day grid"><br><sub><b>Booking.</b> The day as a fixture table, live over SSE.</sub></td>
+<td width="50%"><img src="docs/media/bookings.png" alt="A student's bookings"><br><sub><b>My bookings.</b> Standing, upcoming, and every booking on record.</sub></td>
+</tr>
+<tr>
+<td width="50%"><img src="docs/media/fair.png" alt="The fair draw page"><br><sub><b>Fair draw.</b> Rules and seed published before the draw.</sub></td>
+<td width="50%"><img src="docs/media/ops.png" alt="The ops console"><br><sub><b>Ops.</b> Closures refused by the same constraint.</sub></td>
+</tr>
+<tr>
+<td width="50%"><img src="docs/media/insights.png" alt="The insights page"><br><sub><b>Insights.</b> Aggregated from the booking table itself.</sub></td>
+<td width="50%" align="center"><img src="docs/media/mobile.png" width="260" alt="The browse page on a phone"><br><sub><b>Mobile.</b> Students book from phones, so this is not an afterthought.</sub></td>
+</tr>
+</table>
+
+---
+
+## Run it
+
+**Requirements:** Node 20+, and a Postgres 17 with `btree_gist` available
+(local, Neon, Supabase — all fine).
+
+```bash
+git clone https://github.com/dipuda007/playhack-innovait
+cd playhack-innovait
+npm install
+
+cp .env.example .env          # then set DATABASE_URL and SESSION_SECRET
+npm run db:reset              # migrate + seed 201 students and 12 facilities
+npm run dev                   # http://localhost:3000
+```
+
+`db:push` refuses to finish unless `bookings_no_overlap` exists afterwards, so
+a silently unconstrained database is not a state you can reach.
+
+### Prove it rather than trust it
+
+```bash
+npm test              # 19 unit tests — the concurrency suite included
+npm run invariant     # whole-table sweep, exits non-zero on any violation
+npx tsx scripts/e2e.mts   # 11 browser checks: book → confirm → cancel → reopen
+```
+
+What the concurrency suite actually asserts:
 
 - 50 simultaneous identical attempts → exactly 1 booking, 49 × `23P01`
 - staggered **partially overlapping** attempts → exactly 1 survives
 - six adjacent slots → all six succeed (half-open bounds are not overlaps)
-- five different courts, same instant → all five succeed (no false contention)
-- 40 concurrent product-level bookings → 1 confirmed, 39 typed rejections, each
-  carrying alternatives
+- five different courts at the same instant → all five succeed
+- 40 concurrent product-level bookings → 1 confirmed, 39 typed rejections
 - a replayed idempotency key → at most one row, ever
 - cancel → the next request wins the freed slot
 - 200 concurrent attempts across 10 slots → exactly 10 bookings
@@ -183,72 +244,31 @@ The suite asserts:
 
 ---
 
-## Beyond the reservation
+## Repository map
 
-Chosen to extend the concurrency thesis rather than decorate it.
-
-**Fair draw (`/fair`)** — the brief's own 6 PM scenario. The constraint decides
-*that* one booking wins; first-come-first-serve decides *who* badly, rewarding
-the best wifi. Peak slots instead open a short window where requests become
-entries, then one seeded, reliability-weighted draw picks the winner — whose
-booking still goes through the same constrained path. The seed is published when
-the window opens, before anyone enters, so the draw can be recomputed and
-audited. Weighting is compressed (a perfect record gets ~2× the pull, not 20×)
-so it tilts the draw without locking anyone out.
-
-**Waitlists** — cancellation and promotion commit in the *same transaction*, so
-a released slot is never briefly unowned, and `waitlist_one_offer_per_slot`
-enforces at most one outstanding offer per slot at the database level. Offers
-expire after 15 minutes and cascade.
-
-**Closures as bookings** — a maintenance window is a row with `kind = 'block'`.
-One invariant protects two features, and a manager cannot schedule a closure
-over a reservation a student is relying on. Try it at `/ops`.
-
-**Anti-hoarding & reliability** — a rolling weekly quota, and no-shows lower a
-reliability score that feeds the draw weighting.
-
-**Insights (`/analytics`)** — utilisation heatmap, peak hours, no-show rates,
-and under-used prime slots. Every figure aggregates the same `bookings` table the
-booking path writes to; there is no reporting copy that can drift.
+```
+migrations/0001_init.sql   the schema — and the constraint that is the product
+src/db/client.ts           pool, SQLSTATE constants, deadlock retry
+src/lib/booking.ts         the write path: create, cancel, promote, suggest
+src/lib/race.ts            the race harness and the whole-table invariant sweep
+src/lib/lottery.ts         seeded weighted draw, deterministic and auditable
+src/lib/availability.ts    derived availability — no slots table
+src/app/                   Next.js App Router: pages and route handlers
+src/components/            broadsheet UI, court diagrams, sport glyphs
+tests/                     vitest — concurrency and lottery suites
+scripts/                   migrate · seed · invariant · e2e · media capture
+docs/ARCHITECTURE.md       data model, trade-offs, what we would do next
+docs/DEPLOY.md             Neon + Vercel, and the region that matters
+```
 
 ---
 
-## Scale
+## Credits
 
-- **Contention is naturally sharded by `facility_id`.** Two courts never block
-  each other — a property the test suite asserts, not a hope.
-- **Correctness lives in the database**, so the app tier is stateless and scales
-  horizontally with zero coordination.
-- **Availability is derived, never stored.** No `slots` table to fall out of sync
-  with `bookings`; there is exactly one source of truth about occupancy.
-- Next: PgBouncer, a cached materialised day-view with tag revalidation, and
-  monthly partitioning of `bookings` with a GiST index per partition.
+Built by **Team InnovAIT** for PlayHack, IIT Guwahati Sports Board × Tech Board.
 
----
+Campus photography from Wikimedia Commons — Tihor lake by Ganesh Mohan T
+(CC BY-SA 4.0), academic complex by Satyadeep Karnati (public domain). Full
+details in [`public/campus/CREDITS.md`](public/campus/CREDITS.md).
 
-## Layout
-
-```
-migrations/0001_init.sql   the schema — read this first
-src/lib/booking.ts         the write path and the rejection taxonomy
-src/lib/race.ts            the race harness (safe and naive)
-src/lib/lottery.ts         seeded, weighted, auditable draw
-src/lib/availability.ts    derived slot grids
-src/app/race/              the live proof
-tests/race.test.ts         the concurrency suite
-docs/ARCHITECTURE.md       data model, sequence diagrams, trade-offs
-```
-
-## Scope, stated plainly
-
-Identity is a signed cookie over a seeded roster, not a credential system —
-there is no password. The brief is about booking correctness, and campus SSO
-would add setup cost without touching a judged criterion. Every write derives
-the acting user from the signed cookie server-side, never from the request body,
-and swapping in institute SSO means replacing `currentUser()` and nothing else.
-
-Live updates fan out in-process, which is right for one instance; the documented
-path to multi-instance is Postgres `LISTEN`/`NOTIFY` behind the same two
-functions. Clients reconcile against the database rather than the event payload,
-so a dropped event costs a stale screen, never a wrong booking.
+Code is MIT licensed. See [LICENSE](LICENSE).
