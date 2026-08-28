@@ -110,11 +110,12 @@ async function raceGif() {
   await hold(4, 260);
   await clickPrefix(page, "Fire ");
   await hold(6, 260);
-  await page
+  const sawNaive = await page
     .waitForFunction(() => document.body.innerText.includes("ONE COURT"), {
       timeout: 60_000,
     })
-    .catch(() => {});
+    .then(() => true)
+    .catch(() => false);
   await new Promise((r) => setTimeout(r, 400));
   await page.evaluate(() => window.scrollTo(0, 640));
   await hold(10, 300);
@@ -125,17 +126,27 @@ async function raceGif() {
   await hold(4, 260);
   await clickPrefix(page, "Fire ");
   await hold(5, 260);
-  await page
+  const sawSafe = await page
     .waitForFunction(() => document.body.innerText.includes("SURVIVES"), {
       timeout: 60_000,
     })
-    .catch(() => {});
+    .then(() => true)
+    .catch(() => false);
   await new Promise((r) => setTimeout(r, 400));
   await page.evaluate(() => window.scrollTo(0, 640));
   await hold(12, 300);
 
+  /*
+   * A GIF that quietly recorded a spinner because a verdict never rendered
+   * would be worse than no GIF at all — it is the README's central claim.
+   */
   await page.close();
-  console.log(`  captured ${frames.length} frames`);
+  console.log(
+    `  captured ${frames.length} frames · naive verdict ${sawNaive ? "seen" : "MISSING"} · safe verdict ${sawSafe ? "seen" : "MISSING"}`,
+  );
+  if (!sawNaive || !sawSafe) {
+    throw new Error("a verdict never appeared — not writing a misleading GIF");
+  }
 
   const encoder = GIFEncoder();
   for (const buf of frames) {
