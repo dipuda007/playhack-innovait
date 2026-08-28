@@ -65,19 +65,30 @@ export async function POST(req: Request) {
     return NextResponse.json({ ok: true, id: row.id, code: row.booking_code });
   } catch (e) {
     if (sqlstateOf(e) === PG.EXCLUSION_VIOLATION) {
-      const clashes = await sql<{ user_name: string; starts_at: string }[]>`
-        SELECT u.name AS user_name, lower(b.during) AS starts_at
+      const clashes = await sql<
+        { user_name: string | null; kind: string; note: string | null; starts_at: string }[]
+      >`
+        SELECT u.name AS user_name, b.kind, b.note,
+               lower(b.during) AS starts_at
         FROM bookings b LEFT JOIN users u ON u.id = b.user_id
         WHERE b.facility_id = ${facilityId} AND b.status = 'confirmed'
           AND b.during && tstzrange(${new Date(startsAt)}, ${new Date(endsAt)}, '[)')
         ORDER BY lower(b.during)
       `;
+
+      // The constraint does not care who is in the way, but the manager does.
+      // An existing closure is a duplicate action; a student booking is a
+      // conflict with a person, and the two need different next steps.
+      const students = clashes.filter((c) => c.kind !== "block");
+      const message = students.length
+        ? "Students already hold slots in that window. Cancel or contact them first."
+        : "That window is already closed for maintenance.";
+
       return NextResponse.json(
         {
           ok: false,
-          code: "CLASHES_WITH_BOOKINGS",
-          message:
-            "Students already hold slots in that window. Cancel or contact them first.",
+          code: students.length ? "CLASHES_WITH_BOOKINGS" : "ALREADY_CLOSED",
+          message,
           sqlstate: PG.EXCLUSION_VIOLATION,
           clashes,
         },
