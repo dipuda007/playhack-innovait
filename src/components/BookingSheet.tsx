@@ -2,6 +2,8 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
+import { motion, useReducedMotion } from "framer-motion";
+import { EASE } from "@/components/Motion";
 import {
   X, Check, AlertTriangle, Loader2, ListPlus, ArrowRight, Database,
 } from "lucide-react";
@@ -38,6 +40,7 @@ export function BookingSheet({
   }>({});
 
   const dialogRef = useRef<HTMLDivElement>(null);
+  const still = useReducedMotion();
 
   /**
    * One idempotency key per booking *intent*, created when the sheet opens and
@@ -118,13 +121,24 @@ export function BookingSheet({
   }
 
   return (
-    <div
-      className="fixed inset-0 z-50 flex items-end justify-center bg-ground/80 p-0 backdrop-blur-sm sm:items-center sm:p-4"
+    /*
+      The scrim fades and the sheet rises from below on a spring. Motion here
+      is doing real work: it says where the sheet came from and that the page
+      behind is still there, which a hard cut does not.
+    */
+    <motion.div
+      className="fixed inset-0 z-50 flex items-end justify-center bg-void/70 p-0 backdrop-blur-md sm:items-center sm:p-4"
       onClick={onClose}
       role="presentation"
+      initial={still ? false : { opacity: 0 }}
+      animate={{ opacity: 1 }}
+      transition={{ duration: 0.2, ease: EASE }}
     >
-      <div
+      <motion.div
         ref={dialogRef}
+        initial={still ? false : { opacity: 0, y: 28, scale: 0.97 }}
+        animate={{ opacity: 1, y: 0, scale: 1 }}
+        transition={{ type: "spring", stiffness: 320, damping: 30 }}
         tabIndex={-1}
         role="dialog"
         aria-modal="true"
@@ -135,7 +149,7 @@ export function BookingSheet({
           it is not itself an interactive control — the focus ring belongs on
           the buttons within, not around the whole sheet.
         */
-        className="animate-slide-up w-full max-w-md rounded-t-2xl border border-line bg-surface-solid p-6 focus:outline-none sm:rounded-2xl"
+        className="w-full max-w-md rounded-t-2xl border border-line bg-surface-solid/95 p-6 shadow-[0_40px_80px_-30px_rgb(0_0_0/0.9)] backdrop-blur-xl focus:outline-none sm:rounded-2xl"
       >
         <div className="flex items-start justify-between gap-4">
           <div>
@@ -158,7 +172,7 @@ export function BookingSheet({
         {phase === "confirm" && (
           <div className="mt-5 space-y-4">
             <div>
-              <label className="font-mono text-[10px] uppercase tracking-wider text-ink-faint">
+              <label className="metric-label">
                 Players
               </label>
               <div className="mt-1.5 flex gap-1.5">
@@ -182,7 +196,7 @@ export function BookingSheet({
             <div>
               <label
                 htmlFor="note"
-                className="font-mono text-[10px] uppercase tracking-wider text-ink-faint"
+                className="metric-label"
               >
                 Note (optional)
               </label>
@@ -192,7 +206,7 @@ export function BookingSheet({
                 onChange={(e) => setNote(e.target.value)}
                 maxLength={280}
                 placeholder="Inter-hostel practice"
-                className="mt-1.5 w-full rounded-lg border border-line bg-raised px-3 py-2 text-sm outline-none transition-colors placeholder:text-ink-faint focus:border-violet"
+                className="mt-1.5 w-full rounded-lg border border-line bg-void/50 px-3 py-2 text-sm outline-none transition-colors placeholder:text-ink-faint focus:border-violet"
               />
             </div>
 
@@ -205,7 +219,7 @@ export function BookingSheet({
 
             <button
               onClick={book}
-              className="w-full rounded-xl bg-flame py-3 font-semibold text-ground transition-colors hover:bg-flame-soft"
+              className="btn-primary w-full py-3"
             >
               Confirm booking
             </button>
@@ -227,7 +241,7 @@ export function BookingSheet({
           <div className="mt-5 space-y-4">
             <div className="flex flex-col items-center gap-3 rounded-xl border border-go/40 bg-go/10 py-6">
               <span className="grid h-12 w-12 place-items-center rounded-full bg-go">
-                <Check className="h-6 w-6 text-ground" strokeWidth={3} />
+                <Check className="h-6 w-6 text-void" strokeWidth={3} />
               </span>
               <div className="text-center">
                 <p className="font-mono text-2xl font-bold tracking-wider text-go">
@@ -249,7 +263,7 @@ export function BookingSheet({
 
             <button
               onClick={onDone}
-              className="w-full rounded-xl border border-line py-2.5 text-sm transition-colors hover:border-violet"
+              className="btn-ghost w-full py-2.5 text-sm"
             >
               Done
             </button>
@@ -270,7 +284,7 @@ export function BookingSheet({
             </div>
             <button
               onClick={onDone}
-              className="w-full rounded-xl border border-line py-2.5 text-sm transition-colors hover:border-violet"
+              className="btn-ghost w-full py-2.5 text-sm"
             >
               Done
             </button>
@@ -323,21 +337,21 @@ export function BookingSheet({
               {result.waitlistable && (
                 <button
                   onClick={joinQueue}
-                  className="flex flex-1 items-center justify-center gap-1.5 rounded-xl bg-info py-2.5 text-sm font-semibold text-ground transition-opacity hover:opacity-90"
+                  className="flex flex-1 items-center justify-center gap-1.5 rounded-xl bg-info py-2.5 text-sm font-semibold text-void transition-opacity hover:opacity-90"
                 >
                   <ListPlus className="h-4 w-4" /> Join queue
                 </button>
               )}
               <button
                 onClick={onDone}
-                className="flex-1 rounded-xl border border-line py-2.5 text-sm transition-colors hover:border-violet"
+                className="btn-ghost flex-1 py-2.5 text-sm"
               >
                 Close
               </button>
             </div>
           </div>
         )}
-      </div>
-    </div>
+      </motion.div>
+    </motion.div>
   );
 }

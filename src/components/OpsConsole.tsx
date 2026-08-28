@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { Loader2, Wrench, Check, AlertTriangle, Power } from "lucide-react";
 import { cn } from "@/lib/cn";
 import type { FacilityView } from "@/lib/availability";
+import { SportIcon } from "@/components/SportIcon";
 
 export function OpsConsole({
   facilities,
@@ -84,7 +85,7 @@ export function OpsConsole({
             >
               {facilities.map((f) => (
                 <option key={f.id} value={f.id}>
-                  {f.emoji} {f.name}
+                  {f.name}
                 </option>
               ))}
             </select>
@@ -219,7 +220,16 @@ export function OpsConsole({
                   : "border-stop/40 bg-stop/10",
               )}
             >
-              <span>{f.emoji}</span>
+              <span
+                className="grid h-7 w-7 shrink-0 place-items-center rounded-lg border"
+                style={{
+                  color: f.color,
+                  borderColor: `${f.color}44`,
+                  background: `${f.color}18`,
+                }}
+              >
+                <SportIcon sport={f.sport} size={15} />
+              </span>
               <span className="min-w-0 flex-1 truncate text-sm">{f.name}</span>
               <button
                 onClick={() => toggle(f.id, !f.isActive)}

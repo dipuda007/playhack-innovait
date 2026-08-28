@@ -6,6 +6,7 @@ import { istClock, istDateKey, istDayLabel, todayKey, addDaysToKey } from "@/lib
 import { OpsConsole } from "@/components/OpsConsole";
 import { ReopenButton } from "@/components/ReopenButton";
 import { cn } from "@/lib/cn";
+import { SportIcon } from "@/components/SportIcon";
 
 export const dynamic = "force-dynamic";
 
@@ -18,11 +19,11 @@ export default async function OpsPage() {
     sql<
       {
         id: string; note: string | null; starts_at: string; ends_at: string;
-        facility_name: string; emoji: string;
+        facility_name: string; sport: string;
       }[]
     >`
       SELECT b.id, b.note, lower(b.during) AS starts_at, upper(b.during) AS ends_at,
-             f.name AS facility_name, f.emoji
+             f.name AS facility_name, f.sport
       FROM bookings b JOIN facilities f ON f.id = b.facility_id
       WHERE b.kind = 'block' AND b.status = 'confirmed' AND upper(b.during) > now()
       ORDER BY lower(b.during)
@@ -41,13 +42,13 @@ export default async function OpsPage() {
       LIMIT 25
     `,
     sql<
-      { facility_name: string; emoji: string; starts_at: string; waiting: number }[]
+      { facility_name: string; sport: string; starts_at: string; waiting: number }[]
     >`
-      SELECT f.name AS facility_name, f.emoji,
+      SELECT f.name AS facility_name, f.sport,
              lower(w.during) AS starts_at, count(*)::int AS waiting
       FROM waitlist w JOIN facilities f ON f.id = w.facility_id
       WHERE w.state = 'waiting' AND lower(w.during) > now()
-      GROUP BY f.name, f.emoji, w.during
+      GROUP BY f.name, f.sport, w.during
       ORDER BY count(*) DESC
       LIMIT 10
     `,
@@ -57,7 +58,7 @@ export default async function OpsPage() {
     <div className="space-y-8">
       <section className="rail pl-5">
         <p className="eyebrow">Facility management</p>
-        <h1 className="mt-2 text-3xl font-bold tracking-tight">Ops console</h1>
+        <h1 className="display mt-3 text-[clamp(1.8rem,4vw,2.5rem)]">Ops console</h1>
         <p className="mt-2 max-w-3xl text-ink-dim">
           Closures are not a separate system. A maintenance window is a row in{" "}
           <code className="font-mono text-violet-soft">bookings</code> with{" "}
@@ -105,7 +106,10 @@ export default async function OpsPage() {
                   <div className="flex items-start gap-2">
                     <div className="min-w-0 flex-1">
                       <p className="text-sm font-medium">
-                        {b.emoji} {b.facility_name}
+                        <span className="flex items-center gap-1.5">
+                          <SportIcon sport={b.sport} size={15} className="shrink-0 text-warn" />
+                          {b.facility_name}
+                        </span>
                       </p>
                       <p className="mt-0.5 text-xs text-ink-dim">
                         {istDayLabel(istDateKey(new Date(b.starts_at)))} ·{" "}
@@ -137,7 +141,10 @@ export default async function OpsPage() {
                   className="flex items-center justify-between rounded-lg border border-line bg-raised/40 px-3 py-2 text-sm"
                 >
                   <span>
-                    {q.emoji} {q.facility_name}
+                    <span className="flex items-center gap-1.5">
+                      <SportIcon sport={q.sport} size={15} className="shrink-0 text-ink-faint" />
+                      {q.facility_name}
+                    </span>
                     <span className="ml-2 font-mono text-xs text-ink-faint">
                       {istClock(new Date(q.starts_at))}
                     </span>

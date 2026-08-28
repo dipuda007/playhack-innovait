@@ -340,11 +340,13 @@ export async function myWaitlist(userId: string) {
       id: string; state: string; claim_expires_at: string | null;
       starts_at: string; ends_at: string; position: number;
       facility_name: string; facility_slug: string; emoji: string;
+      sport_name: string;
     }[]
   >`
     SELECT w.id, w.state, w.claim_expires_at,
            lower(w.during) AS starts_at, upper(w.during) AS ends_at,
            f.name AS facility_name, f.slug AS facility_slug, f.emoji,
+           f.sport AS sport_name,
            (SELECT count(*)::int + 1 FROM waitlist w2
             WHERE w2.facility_id = w.facility_id AND w2.during = w.during
               AND w2.state = 'waiting' AND w2.enqueued_at < w.enqueued_at)

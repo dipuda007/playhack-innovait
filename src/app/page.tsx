@@ -1,11 +1,16 @@
 import Link from "next/link";
-import { ArrowRight, MapPin, Users, Clock } from "lucide-react";
+import Image from "next/image";
+import { Activity, ShieldCheck, Sparkles } from "lucide-react";
 import { listFacilities, daySummaries } from "@/lib/availability";
 import { currentUser } from "@/lib/session";
 import {
-  todayKey, addDaysToKey, istDayLabel, istClock, BOOKING_HORIZON_DAYS,
+  todayKey, istDayLabel, istClock, BOOKING_HORIZON_DAYS,
 } from "@/lib/time";
 import { DayPicker } from "@/components/DayPicker";
+import { Hero } from "@/components/Hero";
+import { FacilityCard } from "@/components/FacilityCard";
+import { Reveal, Stagger, StaggerItem } from "@/components/Motion";
+import { SportIcon } from "@/components/SportIcon";
 import { cn } from "@/lib/cn";
 
 export const dynamic = "force-dynamic";
@@ -32,135 +37,191 @@ export default async function BrowsePage({
   const totalFree = [...summaries.values()].reduce((a, s) => a + s.free, 0);
   const totalRemaining = [...summaries.values()].reduce((a, s) => a + s.remaining, 0);
   const dayIsOver = totalRemaining === 0;
+  const firstName = user?.name?.split(" ")[0];
 
   return (
-    <div className="space-y-8">
-      <section className="rail pl-5">
-        <p className="eyebrow">IIT Guwahati · Sports Board × Tech Board</p>
-        <h1 className="mt-2 text-3xl font-bold tracking-tight sm:text-4xl">
-          {user ? `Where are you playing, ${user.name.split(" ")[0]}?` : "Find a court."}
-        </h1>
-        <p className="mt-2 max-w-2xl text-ink-dim">
-          {dayIsOver ? (
-            <>
-              Today is done — every slot has already started. Pick another day
-              to book; slots open {BOOKING_HORIZON_DAYS} days ahead.
-            </>
-          ) : (
-            <>
-              {totalFree} of {totalRemaining} remaining slots are open on{" "}
-              {istDayLabel(dateKey)}. Pick a facility, take a slot, and it is
-              yours — confirmed the moment the database says so, never before.
-            </>
-          )}
-        </p>
+    <div className="space-y-14">
+      <Hero
+        greeting="IIT Guwahati · Sports Board × Tech Board"
+        headline={firstName ? `Where are you playing, ${firstName}?` : "Find a court."}
+        sub={
+          dayIsOver
+            ? `Today is done — every slot has already started. Pick another day below; the grid opens ${BOOKING_HORIZON_DAYS} days ahead.`
+            : `${totalFree} of ${totalRemaining} remaining slots are open on ${istDayLabel(dateKey)}. Take one and it is yours — confirmed the moment the database says so, never before.`
+        }
+        freeNow={totalFree}
+        facilities={facilities.length}
+        dayLabel={istDayLabel(dateKey).split(",")[0]}
+      />
+
+      <section id="courts" className="scroll-mt-24 space-y-6">
+        <Reveal>
+          <div className="flex flex-wrap items-end justify-between gap-4">
+            <div>
+              <p className="metric-label">Step 1 — pick a day</p>
+              <h2 className="display mt-1.5 text-2xl">
+                {istDayLabel(dateKey)}
+              </h2>
+            </div>
+            <p className="text-xs text-ink-faint">
+              Slots run on each facility&apos;s own grid, in IST.
+            </p>
+          </div>
+        </Reveal>
+
+        <Reveal delay={0.05}>
+          <DayPicker current={dateKey} today={today} sport={sport} />
+        </Reveal>
+
+        <Reveal delay={0.1}>
+          <div className="flex flex-wrap gap-2">
+            <FilterChip href={buildHref(dateKey, null)} active={!sport}>
+              <Sparkles className="h-3.5 w-3.5" />
+              All sports
+            </FilterChip>
+            {sports.map((s) => (
+              <FilterChip
+                key={s}
+                href={buildHref(dateKey, s)}
+                active={sport === s}
+              >
+                <SportIcon sport={s} size={14} />
+                {s}
+              </FilterChip>
+            ))}
+          </div>
+        </Reveal>
+
+        <Stagger
+          className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3"
+          delay={0.08}
+        >
+          {shown.map((f) => {
+            const s = summaries.get(f.id) ?? {
+              free: 0, remaining: 0, total: 0, nextFree: null,
+            };
+            return (
+              <StaggerItem key={f.id}>
+                <FacilityCard
+                  dateKey={dateKey}
+                  facility={{
+                    slug: f.slug,
+                    name: f.name,
+                    sport: f.sport,
+                    location: f.location,
+                    capacity: f.capacity,
+                    color: f.color,
+                  }}
+                  summary={{
+                    free: s.free,
+                    remaining: s.remaining,
+                    nextFreeLabel: s.nextFree
+                      ? istClock(new Date(s.nextFree))
+                      : null,
+                  }}
+                />
+              </StaggerItem>
+            );
+          })}
+        </Stagger>
+
+        {shown.length === 0 && (
+          <p className="panel p-8 text-center text-sm text-ink-dim">
+            No {sport} facilities are listed.{" "}
+            <Link href={buildHref(dateKey, null)} className="text-flame underline">
+              Show every sport
+            </Link>
+            .
+          </p>
+        )}
       </section>
 
-      <DayPicker current={dateKey} today={today} sport={sport} />
+      {/* Why this is not just a form over a table. */}
+      <Reveal>
+        <section className="panel relative overflow-hidden">
+          <div className="grid lg:grid-cols-[1.05fr_1fr]">
+            <div className="p-7 sm:p-9">
+              <p className="eyebrow">The hard part</p>
+              <h2 className="display mt-3 text-[clamp(1.6rem,3vw,2.2rem)]">
+                At 6:00 PM, fifty students want the same court.
+              </h2>
+              <p className="mt-4 max-w-[52ch] text-sm leading-relaxed text-ink-dim">
+                Exactly one has to win, and the rest need an answer they can
+                act on — not a spinner, and never a second confirmation for a
+                slot that is already gone. That decision is not made in
+                application code here. It is made by a single constraint inside
+                Postgres, on the write itself, where no code path can go around
+                it.
+              </p>
 
-      <div className="flex flex-wrap gap-2">
-        <FilterChip href={buildHref(dateKey, null)} active={!sport}>
-          All sports
-        </FilterChip>
-        {sports.map((s) => (
-          <FilterChip key={s} href={buildHref(dateKey, s)} active={sport === s}>
-            {s}
-          </FilterChip>
-        ))}
-      </div>
+              <div className="mt-6 overflow-x-auto">
+                <code className="block whitespace-pre rounded-xl border border-line bg-void/60 p-4 font-mono text-[11px] leading-relaxed text-violet-soft">
+{`EXCLUDE USING gist (
+  facility_id WITH =,
+  during      WITH &&
+) WHERE (status = 'confirmed')`}
+                </code>
+              </div>
 
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-        {shown.map((f) => {
-          const s = summaries.get(f.id) ??
-            { free: 0, remaining: 0, total: 0, nextFree: null };
-          const over = s.remaining === 0;
-          const pct = s.remaining ? Math.round((s.free / s.remaining) * 100) : 0;
-          const busy = !over && pct <= 25;
+              <div className="mt-6 flex flex-wrap gap-2.5">
+                <Link href="/race" className="btn-primary px-4 py-2 text-sm">
+                  <Activity className="h-4 w-4" />
+                  Run the race live
+                </Link>
+                <Link href="/fair" className="btn-ghost px-4 py-2 text-sm">
+                  See the fair draw
+                </Link>
+              </div>
+            </div>
 
-          return (
-            <Link
-              key={f.id}
-              href={`/facility/${f.slug}?date=${dateKey}`}
-              className="group panel relative overflow-hidden p-5 transition-all hover:-translate-y-0.5 hover:border-violet"
-            >
-              <div
-                className="absolute inset-x-0 top-0 h-1 opacity-70"
-                style={{ background: f.color }}
+            <div className="relative min-h-[15rem] border-t border-line lg:border-l lg:border-t-0">
+              <Image
+                src="/campus/academic-complex.jpg"
+                alt="The IIT Guwahati academic complex, with the Brahmaputra behind it"
+                fill
+                sizes="(max-width: 1024px) 100vw, 45vw"
+                className="object-cover opacity-45"
               />
-
-              <div className="flex items-start justify-between gap-3">
-                <div className="min-w-0">
-                  <div className="flex items-center gap-2">
-                    <span className="text-xl">{f.emoji}</span>
-                    <h2 className="truncate font-semibold">{f.name}</h2>
-                  </div>
-                  <p className="mt-1 flex items-center gap-1 text-xs text-ink-faint">
-                    <MapPin className="h-3 w-3" />
-                    <span className="truncate">{f.location}</span>
-                  </p>
-                </div>
-                <span
-                  className="shrink-0 rounded-full px-2 py-0.5 font-mono text-[10px] uppercase tracking-wider"
-                  style={{ background: `${f.color}22`, color: f.color }}
-                >
-                  {f.sport}
-                </span>
+              <div className="absolute inset-0 bg-[linear-gradient(120deg,var(--color-ground)_0%,rgba(10,8,24,0.55)_45%,rgba(10,8,24,0.75)_100%)]" />
+              <div className="absolute inset-0 flex items-end p-6">
+                <dl className="grid w-full grid-cols-3 gap-3">
+                  <Stat value="1" label="booking survives" tone="text-go" />
+                  <Stat value="199" label="typed rejections" tone="text-flame" />
+                  <Stat value="0" label="overlapping pairs" tone="text-violet-soft" />
+                </dl>
               </div>
+              <p className="absolute right-3 top-3 font-mono text-[9px] text-ink-faint/70">
+                Academic complex · public domain
+              </p>
+            </div>
+          </div>
+        </section>
+      </Reveal>
 
-              <div className="mt-4 flex items-baseline gap-1.5">
-                {over ? (
-                  <span className="text-sm text-ink-faint">
-                    No slots left today
-                  </span>
-                ) : (
-                  <>
-                    <span
-                      className={cn(
-                        "text-2xl font-bold tabular-nums",
-                        busy ? "text-warn" : "text-go",
-                      )}
-                    >
-                      {s.free}
-                    </span>
-                    <span className="text-sm text-ink-faint">
-                      of {s.remaining} left open
-                    </span>
-                  </>
-                )}
-              </div>
+      <Reveal>
+        <p className="flex items-center justify-center gap-2 text-center text-xs text-ink-faint">
+          <ShieldCheck className="h-3.5 w-3.5 text-go" />
+          Availability on this page is derived from live bookings on every
+          request — there is no slot table to fall out of sync.
+        </p>
+      </Reveal>
+    </div>
+  );
+}
 
-              <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-line">
-                <div
-                  className={cn(
-                    "h-full rounded-full transition-all",
-                    over ? "bg-line" : busy ? "bg-warn" : "bg-go",
-                  )}
-                  style={{ width: `${over ? 100 : pct}%` }}
-                />
-              </div>
-
-              <div className="mt-4 flex items-center justify-between text-xs">
-                <span className="flex items-center gap-1 text-ink-dim">
-                  <Clock className="h-3 w-3" />
-                  {s.nextFree
-                    ? `Next free ${istClock(new Date(s.nextFree))}`
-                    : over
-                      ? "Closed for today"
-                      : "Fully booked"}
-                </span>
-                <span className="flex items-center gap-1 text-ink-faint">
-                  <Users className="h-3 w-3" />
-                  {f.capacity}
-                </span>
-              </div>
-
-              <span className="mt-4 flex items-center gap-1 text-sm font-medium text-flame opacity-0 transition-opacity group-hover:opacity-100">
-                View slots <ArrowRight className="h-3.5 w-3.5" />
-              </span>
-            </Link>
-          );
-        })}
-      </div>
+function Stat({
+  value,
+  label,
+  tone,
+}: {
+  value: string;
+  label: string;
+  tone: string;
+}) {
+  return (
+    <div className="rounded-xl border border-line/80 bg-surface-solid/70 p-3 backdrop-blur">
+      <dd className={cn("display text-2xl tabular-nums", tone)}>{value}</dd>
+      <dt className="mt-1 text-[11px] leading-tight text-ink-faint">{label}</dt>
     </div>
   );
 }
@@ -184,10 +245,10 @@ function FilterChip({
     <Link
       href={href}
       className={cn(
-        "rounded-full border px-3.5 py-1.5 text-sm transition-colors",
+        "flex items-center gap-1.5 rounded-full border px-3.5 py-1.5 text-sm capitalize transition-all duration-300",
         active
-          ? "border-flame bg-flame/15 text-flame"
-          : "border-line text-ink-dim hover:border-violet hover:text-ink",
+          ? "border-flame/70 bg-flame/15 text-flame shadow-[0_0_20px_-8px_var(--color-flame)]"
+          : "border-line bg-white/[0.02] text-ink-dim hover:border-violet/60 hover:bg-violet/10 hover:text-ink",
       )}
     >
       {children}

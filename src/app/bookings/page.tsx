@@ -6,6 +6,7 @@ import { istClock, istDayLabel, istDateKey } from "@/lib/time";
 import { CancelButton } from "@/components/CancelButton";
 import { ClaimButton } from "@/components/ClaimButton";
 import { cn } from "@/lib/cn";
+import { SportIcon } from "@/components/SportIcon";
 
 export const dynamic = "force-dynamic";
 
@@ -32,7 +33,7 @@ export default async function BookingsPage() {
     <div className="space-y-8">
       <section className="rail pl-5">
         <p className="eyebrow">Your account</p>
-        <h1 className="mt-2 text-3xl font-bold tracking-tight">{user.name}</h1>
+        <h1 className="display mt-3 text-[clamp(1.8rem,4vw,2.5rem)]">{user.name}</h1>
         <p className="mt-1 text-sm text-ink-dim">
           {user.rollNumber} · {user.hostel}
         </p>
@@ -88,7 +89,9 @@ export default async function BookingsPage() {
                       : "border-line bg-raised/40",
                   )}
                 >
-                  <span className="text-xl">{w.emoji}</span>
+                  <span className="grid h-9 w-9 shrink-0 place-items-center rounded-xl border border-info/30 bg-info/10 text-info">
+                    <SportIcon sport={w.sport_name} size={18} />
+                  </span>
                   <div className="min-w-0 flex-1">
                     <p className="font-medium">{w.facility_name}</p>
                     <p className="text-xs text-ink-dim">
@@ -135,7 +138,16 @@ export default async function BookingsPage() {
                 className="flex flex-wrap items-center gap-4 rounded-xl border border-line bg-raised/40 p-4"
                 style={{ borderLeftColor: b.color, borderLeftWidth: 3 }}
               >
-                <span className="text-2xl">{b.emoji}</span>
+                <span
+                  className="grid h-10 w-10 shrink-0 place-items-center rounded-xl border"
+                  style={{
+                    color: b.color,
+                    borderColor: `${b.color}44`,
+                    background: `${b.color}18`,
+                  }}
+                >
+                  <SportIcon sport={b.sport} size={20} />
+                </span>
 
                 <div className="min-w-0 flex-1">
                   <Link
@@ -191,7 +203,10 @@ export default async function BookingsPage() {
                 {history.slice(0, 20).map((b) => (
                   <tr key={b.id} className="border-t border-line-soft">
                     <td className="px-4 py-2">
-                      {b.emoji} {b.facility_name}
+                      <span className="flex items-center gap-1.5">
+                        <SportIcon sport={b.sport} size={14} className="shrink-0 text-ink-faint" />
+                        {b.facility_name}
+                      </span>
                     </td>
                     <td className="px-4 py-2 text-xs text-ink-dim">
                       {istDayLabel(istDateKey(new Date(b.starts_at)))} ·{" "}

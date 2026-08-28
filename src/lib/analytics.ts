@@ -14,11 +14,12 @@ export async function utilisationHeatmap() {
       facility_id: string;
       facility_name: string;
       emoji: string;
+      sport: string;
       hour: number;
       bookings: number;
     }[]
   >`
-    SELECT f.id AS facility_id, f.name AS facility_name, f.emoji,
+    SELECT f.id AS facility_id, f.name AS facility_name, f.emoji, f.sport,
            extract(hour FROM lower(b.during) AT TIME ZONE 'Asia/Kolkata')::int
              AS hour,
            count(*)::int AS bookings
@@ -27,7 +28,7 @@ export async function utilisationHeatmap() {
     WHERE b.kind = 'booking'
       AND b.status IN ('confirmed', 'completed', 'no_show')
       AND lower(b.during) > now() - interval '14 days'
-    GROUP BY f.id, f.name, f.emoji, hour
+    GROUP BY f.id, f.name, f.emoji, f.sport, hour
     ORDER BY f.name, hour
   `;
 }
@@ -59,12 +60,13 @@ export async function noShowRates() {
     {
       facility_name: string;
       emoji: string;
+      sport: string;
       total: number;
       no_shows: number;
       rate: number;
     }[]
   >`
-    SELECT f.name AS facility_name, f.emoji,
+    SELECT f.name AS facility_name, f.emoji, f.sport,
            count(*)::int AS total,
            count(*) FILTER (WHERE b.status = 'no_show')::int AS no_shows,
            round(
@@ -76,7 +78,7 @@ export async function noShowRates() {
     WHERE b.kind = 'booking'
       AND b.status IN ('completed', 'no_show')
       AND lower(b.during) > now() - interval '30 days'
-    GROUP BY f.name, f.emoji
+    GROUP BY f.name, f.emoji, f.sport
     HAVING count(*) > 0
     ORDER BY rate DESC, total DESC
   `;
@@ -125,12 +127,13 @@ export async function underusedPeakSlots() {
     {
       facility_name: string;
       emoji: string;
+      sport: string;
       hour: number;
       free_days: number;
     }[]
   >`
     WITH grid AS (
-      SELECT f.id, f.name, f.emoji,
+      SELECT f.id, f.name, f.emoji, f.sport,
              gs AS slot_start,
              gs + make_interval(mins => f.slot_minutes) AS slot_end
       FROM facilities f
@@ -141,7 +144,7 @@ export async function underusedPeakSlots() {
         AND (gs AT TIME ZONE 'Asia/Kolkata')::time
               BETWEEN time '17:00' AND time '21:00'
     )
-    SELECT g.name AS facility_name, g.emoji,
+    SELECT g.name AS facility_name, g.emoji, g.sport,
            extract(hour FROM g.slot_start AT TIME ZONE 'Asia/Kolkata')::int AS hour,
            count(*)::int AS free_days
     FROM grid g
@@ -151,7 +154,7 @@ export async function underusedPeakSlots() {
         AND b.status IN ('confirmed', 'completed', 'no_show')
         AND b.during && tstzrange(g.slot_start, g.slot_end, '[)')
     )
-    GROUP BY g.name, g.emoji, hour
+    GROUP BY g.name, g.emoji, g.sport, hour
     HAVING count(*) >= 3
     ORDER BY free_days DESC
     LIMIT 8
