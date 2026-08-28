@@ -2,13 +2,29 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { motion, useReducedMotion } from "framer-motion";
-import { Check, Lock, Wrench, Clock, ListPlus } from "lucide-react";
-import { EASE } from "@/components/Motion";
 import { cn } from "@/lib/cn";
 import type { SlotView } from "@/lib/availability";
 import { BookingSheet } from "@/components/BookingSheet";
 
+/**
+ * The slot grid, set as a fixture table.
+ *
+ * State is carried by *fill*, not by hue:
+ *
+ *   open      paper, hairline rule
+ *   yours     solid vermilion
+ *   taken     solid ink, holder's name reversed out
+ *   closed    hatched — the way print marks unavailable space
+ *   past      paper, greyed, no rule weight
+ *
+ * That survives greyscale, colour blindness, a projector with the contrast
+ * wrong, and a photograph of a laptop screen — all four of which will happen
+ * during judging. A palette of pale tints would survive none of them.
+ *
+ * Cells share single-pixel gaps over a rule-coloured background, so adjacent
+ * borders collapse into one line and the whole thing reads as a printed table
+ * rather than as a row of buttons.
+ */
 export function SlotGrid({
   facilityId,
   facilitySlug,
@@ -28,7 +44,6 @@ export function SlotGrid({
   const [flashing, setFlashing] = useState<Set<string>>(new Set());
   const [live, setLive] = useState(false);
   const previous = useRef(initialSlots);
-  const still = useReducedMotion();
 
   // Server-rendered slots win whenever the route re-renders.
   useEffect(() => {
@@ -64,7 +79,7 @@ export function SlotGrid({
 
       if (changed.size) {
         setFlashing(changed);
-        setTimeout(() => setFlashing(new Set()), 1800);
+        setTimeout(() => setFlashing(new Set()), 1600);
       }
     } catch {
       /* transient; the poll will pick it up */
@@ -96,93 +111,82 @@ export function SlotGrid({
 
   return (
     <>
-      <div className="mb-3.5 flex flex-wrap items-center gap-x-4 gap-y-2 text-[11px] text-ink-faint">
-        <span className="flex items-center gap-1.5 rounded-full border border-line bg-white/[0.03] px-2.5 py-1">
+      <div className="flex flex-wrap items-center justify-between gap-x-6 gap-y-2 border-b border-rule pb-2.5">
+        <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5">
+          <Key className="border border-rule bg-paper" label="Open" />
+          <Key className="bg-signal" label="Yours" />
+          <Key className="bg-ink" label="Taken" />
+          <Key className="hatch border border-rule" label="Closed" />
+        </div>
+
+        <p className="flex items-center gap-2 font-mono text-[10px] uppercase tracking-[0.16em] text-ink-3">
           <span
             className={cn(
-              "h-1.5 w-1.5 rounded-full",
-              live ? "animate-pulse-ring bg-go" : "bg-ink-faint",
+              "inline-block h-1.5 w-1.5",
+              live ? "animate-blink bg-signal" : "bg-ink-3",
             )}
           />
           {live ? "Live" : "Polling"}
-        </span>
-        <Legend swatch="border-go/50 bg-go/15" label="Open" />
-        <Legend swatch="border-violet/60 bg-violet/25" label="Yours" />
-        <Legend swatch="border-line bg-raised" label="Taken" />
-        <Legend swatch="border-warn/40 bg-warn/10" label="Closed" />
+        </p>
       </div>
 
-      <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-3 lg:grid-cols-4">
-        {slots.map((slot, i) => {
+      <div className="mt-px grid grid-cols-2 gap-px bg-rule sm:grid-cols-3 lg:grid-cols-4">
+        {slots.map((slot) => {
           const isFlashing = flashing.has(slot.startsAt);
           const clickable =
             signedIn && (slot.state === "free" || slot.state === "taken");
 
+          const solid = slot.state === "mine" || slot.state === "taken";
+
           return (
-            <motion.button
+            <button
               key={slot.startsAt}
               disabled={!clickable}
               onClick={() => setSelected(slot)}
-              /*
-               * Entrance staggers across the grid so the day reads left to
-               * right, the way it is actually lived. Capped at 16 steps: past
-               * that the last cell arrives late enough to feel broken rather
-               * than choreographed.
-               */
-              initial={still ? false : { opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{
-                duration: 0.4,
-                ease: EASE,
-                delay: still ? 0 : Math.min(i, 16) * 0.025,
-              }}
-              whileTap={clickable && !still ? { scale: 0.97 } : undefined}
               className={cn(
-                "relative min-h-[4.75rem] rounded-xl border p-3 text-left transition-all duration-300",
-                isFlashing && "animate-flash-green",
+                "relative flex min-h-[5.25rem] flex-col justify-between p-3 text-left transition-colors duration-150",
                 clickable && "cursor-pointer",
-                slot.state === "free" &&
-                  "border-go/45 bg-go/10 hover:-translate-y-0.5 hover:border-go hover:bg-go/20 hover:shadow-[0_10px_28px_-16px_var(--color-go)]",
-                slot.state === "mine" &&
-                  "border-violet/60 bg-violet/25 shadow-[inset_0_1px_0_0_rgb(255_255_255/0.08)]",
-                slot.state === "taken" &&
-                  "border-line bg-raised/50 hover:-translate-y-0.5 hover:border-violet/60",
-                slot.state === "blocked" &&
-                  "cursor-not-allowed border-warn/40 bg-warn/10",
-                slot.state === "past" &&
-                  "cursor-not-allowed border-line-soft bg-transparent opacity-30",
-                slot.state === "waitlisted" && "border-info/50 bg-info/10",
+                slot.state === "free" && "bg-paper hover:bg-ink hover:text-paper",
+                slot.state === "mine" && "bg-signal text-paper",
+                slot.state === "taken" && "bg-ink text-paper hover:bg-ink-2",
+                slot.state === "blocked" && "hatch cursor-not-allowed bg-paper",
+                slot.state === "past" && "cursor-not-allowed bg-paper-2 text-ink-3",
+                slot.state === "waitlisted" &&
+                  "bg-paper ring-2 ring-inset ring-signal",
+                isFlashing && "outline outline-2 -outline-offset-2 outline-signal",
               )}
             >
-              <div className="flex items-center justify-between">
-                <span className="font-mono text-sm font-semibold tabular-nums">
+              <span className="flex items-start justify-between gap-2">
+                <span className="fig text-[1.35rem] font-bold leading-none">
                   {slot.label}
                 </span>
-                <SlotIcon state={slot.state} />
-              </div>
+                {slot.peak && slot.state !== "past" && (
+                  <span
+                    className={cn(
+                      "font-mono text-[8px] uppercase tracking-[0.14em]",
+                      solid ? "text-paper/70" : "text-signal",
+                    )}
+                  >
+                    Peak
+                  </span>
+                )}
+              </span>
 
-              <p className="mt-1.5 truncate text-[11px] text-ink-faint">
-                {slot.state === "free" && (slot.peak ? "Peak · open" : "Open")}
+              <span className="mt-2 block truncate text-[11px] uppercase tracking-[0.08em]">
+                {slot.state === "free" && "Open"}
                 {slot.state === "mine" && `Yours · ${slot.bookingCode}`}
                 {slot.state === "taken" && (slot.holder ?? "Booked")}
                 {slot.state === "blocked" && (slot.blockNote ?? "Closed")}
                 {slot.state === "past" && "Gone"}
-                {slot.state === "waitlisted" &&
-                  `Queued · #${slot.myQueuePosition}`}
-              </p>
+                {slot.state === "waitlisted" && `Queued · #${slot.myQueuePosition}`}
+              </span>
 
               {slot.waitlistCount > 0 && slot.state === "taken" && (
-                <span className="absolute right-2 top-8 rounded bg-info/20 px-1.5 py-0.5 font-mono text-[9px] text-info">
+                <span className="absolute right-3 top-9 font-mono text-[9px] uppercase tracking-wider text-paper/60">
                   {slot.waitlistCount} waiting
                 </span>
               )}
-
-              {slot.peak && slot.state === "free" && (
-                <span className="absolute -right-px -top-px rounded-bl-lg rounded-tr-xl bg-gradient-to-b from-flame-soft to-flame px-1.5 py-0.5 font-mono text-[8px] uppercase tracking-wider text-void">
-                  Peak
-                </span>
-              )}
-            </motion.button>
+            </button>
           );
         })}
       </div>
@@ -203,33 +207,11 @@ export function SlotGrid({
   );
 }
 
-function Legend({ swatch, label }: { swatch: string; label: string }) {
+function Key({ className, label }: { className: string; label: string }) {
   return (
-    <span className="hidden items-center gap-1.5 sm:flex">
-      <span className={cn("h-2.5 w-2.5 rounded-[3px] border", swatch)} />
+    <span className="flex items-center gap-1.5 font-mono text-[10px] uppercase tracking-[0.12em] text-ink-3">
+      <span className={cn("inline-block h-3 w-3", className)} />
       {label}
     </span>
   );
-}
-
-function SlotIcon({ state }: { state: SlotView["state"] }) {
-  const cls = "h-3.5 w-3.5";
-  switch (state) {
-    case "free":
-      return (
-        <span className={cn(cls, "grid place-items-center")}>
-          <span className="h-2 w-2 rounded-full bg-go shadow-[0_0_8px_1px_var(--color-go)]" />
-        </span>
-      );
-    case "mine":
-      return <Check className={cn(cls, "text-violet-soft")} />;
-    case "taken":
-      return <Lock className={cn(cls, "text-ink-faint")} />;
-    case "blocked":
-      return <Wrench className={cn(cls, "text-warn")} />;
-    case "past":
-      return <Clock className={cn(cls, "text-ink-faint")} />;
-    case "waitlisted":
-      return <ListPlus className={cn(cls, "text-info")} />;
-  }
 }

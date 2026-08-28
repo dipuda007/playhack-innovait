@@ -1,16 +1,14 @@
 import Link from "next/link";
 import Image from "next/image";
-import { Activity, ShieldCheck, Sparkles } from "lucide-react";
 import { listFacilities, daySummaries } from "@/lib/availability";
 import { currentUser } from "@/lib/session";
 import {
   todayKey, istDayLabel, istClock, BOOKING_HORIZON_DAYS,
 } from "@/lib/time";
-import { DayPicker } from "@/components/DayPicker";
-import { Hero } from "@/components/Hero";
-import { FacilityCard } from "@/components/FacilityCard";
-import { Reveal, Stagger, StaggerItem } from "@/components/Motion";
-import { SportIcon } from "@/components/SportIcon";
+import { DayRail } from "@/components/DayRail";
+import { LeadStory } from "@/components/LeadStory";
+import { FacilityEntry } from "@/components/FacilityEntry";
+import { SectionHead } from "@/components/SectionHead";
 import { cn } from "@/lib/cn";
 
 export const dynamic = "force-dynamic";
@@ -40,69 +38,76 @@ export default async function BrowsePage({
   const firstName = user?.name?.split(" ")[0];
 
   return (
-    <div className="space-y-14">
-      <Hero
-        greeting="IIT Guwahati · Sports Board × Tech Board"
+    <div>
+      <LeadStory
         headline={firstName ? `Where are you playing, ${firstName}?` : "Find a court."}
-        sub={
+        standfirst={
           dayIsOver
             ? `Today is done — every slot has already started. Pick another day below; the grid opens ${BOOKING_HORIZON_DAYS} days ahead.`
-            : `${totalFree} of ${totalRemaining} remaining slots are open on ${istDayLabel(dateKey)}. Take one and it is yours — confirmed the moment the database says so, never before.`
+            : `${totalFree} of ${totalRemaining} remaining slots are open across campus. Take one and it is yours — confirmed the moment the database says so, and never before.`
         }
-        freeNow={totalFree}
+        dateLabel={istDayLabel(dateKey)}
+        open={totalFree}
+        remaining={totalRemaining}
         facilities={facilities.length}
-        dayLabel={istDayLabel(dateKey).split(",")[0]}
       />
 
-      <section id="courts" className="scroll-mt-24 space-y-6">
-        <Reveal>
-          <div className="flex flex-wrap items-end justify-between gap-4">
-            <div>
-              <p className="metric-label">Step 1 — pick a day</p>
-              <h2 className="display mt-1.5 text-2xl">
-                {istDayLabel(dateKey)}
-              </h2>
-            </div>
-            <p className="text-xs text-ink-faint">
-              Slots run on each facility&apos;s own grid, in IST.
-            </p>
-          </div>
-        </Reveal>
+      <section id="index" className="scroll-mt-16 pt-10">
+        <SectionHead
+          index="01"
+          rule={false}
+          title="The grid"
+          note={`Slots run on each facility's own timetable, in IST. Booking opens ${BOOKING_HORIZON_DAYS} days ahead.`}
+        />
 
-        <Reveal delay={0.05}>
-          <DayPicker current={dateKey} today={today} sport={sport} />
-        </Reveal>
+        <div className="mt-5">
+          <DayRail current={dateKey} today={today} sport={sport} />
+        </div>
 
-        <Reveal delay={0.1}>
-          <div className="flex flex-wrap gap-2">
-            <FilterChip href={buildHref(dateKey, null)} active={!sport}>
-              <Sparkles className="h-3.5 w-3.5" />
-              All sports
-            </FilterChip>
-            {sports.map((s) => (
-              <FilterChip
-                key={s}
-                href={buildHref(dateKey, s)}
-                active={sport === s}
-              >
-                <SportIcon sport={s} size={14} />
-                {s}
-              </FilterChip>
-            ))}
-          </div>
-        </Reveal>
+        {/* Sport filter, set as a ruled index line rather than as chips. */}
+        <div className="mt-4 flex flex-wrap items-center gap-x-1 gap-y-2 border-b border-rule pb-4">
+          <span className="kicker mr-2">Filter</span>
+          <FilterLink href={buildHref(dateKey, null)} active={!sport}>
+            All
+          </FilterLink>
+          {sports.map((s) => (
+            <FilterLink
+              key={s}
+              href={buildHref(dateKey, s)}
+              active={sport === s}
+            >
+              {s}
+            </FilterLink>
+          ))}
+        </div>
 
-        <Stagger
-          className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3"
-          delay={0.08}
-        >
-          {shown.map((f) => {
-            const s = summaries.get(f.id) ?? {
-              free: 0, remaining: 0, total: 0, nextFree: null,
-            };
-            return (
-              <StaggerItem key={f.id}>
-                <FacilityCard
+        {shown.length === 0 ? (
+          <p className="prose-news border-b border-rule py-12 text-center">
+            No {sport} facilities are listed.{" "}
+            <Link
+              href={buildHref(dateKey, null)}
+              className="text-signal underline underline-offset-4"
+            >
+              Show every sport
+            </Link>
+            .
+          </p>
+        ) : (
+          /*
+           * A negative gap of one pixel collapses adjacent borders, so the
+           * grid reads as one ruled table rather than as twelve boxes with a
+           * doubled line between each. It is the oldest trick in table
+           * layout and it is why this looks printed.
+           */
+          <div className="mt-6 grid gap-px bg-rule sm:grid-cols-2 lg:grid-cols-3">
+            {shown.map((f, i) => {
+              const s = summaries.get(f.id) ?? {
+                free: 0, remaining: 0, total: 0, nextFree: null,
+              };
+              return (
+                <FacilityEntry
+                  key={f.id}
+                  index={i + 1}
                   dateKey={dateKey}
                   facility={{
                     slug: f.slug,
@@ -110,7 +115,6 @@ export default async function BrowsePage({
                     sport: f.sport,
                     location: f.location,
                     capacity: f.capacity,
-                    color: f.color,
                   }}
                   summary={{
                     free: s.free,
@@ -120,108 +124,103 @@ export default async function BrowsePage({
                       : null,
                   }}
                 />
-              </StaggerItem>
-            );
-          })}
-        </Stagger>
-
-        {shown.length === 0 && (
-          <p className="panel p-8 text-center text-sm text-ink-dim">
-            No {sport} facilities are listed.{" "}
-            <Link href={buildHref(dateKey, null)} className="text-flame underline">
-              Show every sport
-            </Link>
-            .
-          </p>
+              );
+            })}
+          </div>
         )}
       </section>
 
-      {/* Why this is not just a form over a table. */}
-      <Reveal>
-        <section className="panel relative overflow-hidden">
-          <div className="grid lg:grid-cols-[1.05fr_1fr]">
-            <div className="p-7 sm:p-9">
-              <p className="eyebrow">The hard part</p>
-              <h2 className="display mt-3 text-[clamp(1.6rem,3vw,2.2rem)]">
-                At 6:00 PM, fifty students want the same court.
-              </h2>
-              <p className="mt-4 max-w-[52ch] text-sm leading-relaxed text-ink-dim">
-                Exactly one has to win, and the rest need an answer they can
-                act on — not a spinner, and never a second confirmation for a
-                slot that is already gone. That decision is not made in
-                application code here. It is made by a single constraint inside
-                Postgres, on the write itself, where no code path can go around
-                it.
-              </p>
+      {/* The case, set as an opinion column with a picture. */}
+      <section className="pt-14">
+        <SectionHead
+          index="02"
+          title="Why this is hard"
+          note="The part of the brief that is not a form over a table."
+        />
 
-              <div className="mt-6 overflow-x-auto">
-                <code className="block whitespace-pre rounded-xl border border-line bg-void/60 p-4 font-mono text-[11px] leading-relaxed text-violet-soft">
-{`EXCLUDE USING gist (
-  facility_id WITH =,
-  during      WITH &&
-) WHERE (status = 'confirmed')`}
-                </code>
-              </div>
+        <div className="mt-6 grid gap-8 border-t border-ink pt-6 lg:grid-cols-[1fr_1.25fr_0.85fr]">
+          <div>
+            <h3 className="hed-md font-display uppercase">
+              At six, fifty students want the same court.
+            </h3>
+            <p className="mt-4 font-mono text-[10px] uppercase leading-relaxed tracking-[0.14em] text-signal">
+              Exactly one may win
+            </p>
+          </div>
 
-              <div className="mt-6 flex flex-wrap gap-2.5">
-                <Link href="/race" className="btn-primary px-4 py-2 text-sm">
-                  <Activity className="h-4 w-4" />
-                  Run the race live
-                </Link>
-                <Link href="/fair" className="btn-ghost px-4 py-2 text-sm">
-                  See the fair draw
-                </Link>
-              </div>
-            </div>
+          <div className="prose-news space-y-4 lg:columns-2 lg:gap-7 [&>p]:break-inside-avoid">
+            <p>
+              <strong>The decision is not made in application code.</strong> A
+              check-then-write leaves a gap, and under load another request
+              commits inside it. Both requests were individually correct; the
+              court is double-booked anyway.
+            </p>
+            <p>
+              Here the write <em>is</em> the decision. Every confirmed booking
+              is a row carrying a time range, and one exclusion constraint
+              forbids two overlapping ranges on the same facility. Postgres
+              rejects the loser with SQLSTATE <span className="fig">23P01</span>{" "}
+              before it ever becomes a row.
+            </p>
+            <p>
+              That also covers the case a unique key cannot see: a booking from
+              18:30 to 19:30 does not have the same start time as one from
+              18:00 to 19:00, but it does overlap it — and overlap is the thing
+              that actually matters to a student holding a racket.
+            </p>
+            <p>
+              Losing is a first-class outcome, not an error page. A rejected
+              request comes back typed, with three alternative slots on the
+              same grid, and the queue position if the student wants to wait.
+            </p>
+          </div>
 
-            <div className="relative min-h-[15rem] border-t border-line lg:border-l lg:border-t-0">
+          <figure>
+            <div className="relative aspect-[4/3] w-full border border-ink">
               <Image
                 src="/campus/academic-complex.jpg"
                 alt="The IIT Guwahati academic complex, with the Brahmaputra behind it"
                 fill
-                sizes="(max-width: 1024px) 100vw, 45vw"
-                className="object-cover opacity-45"
+                sizes="(max-width: 1024px) 100vw, 25vw"
+                className="halftone object-cover"
               />
-              <div className="absolute inset-0 bg-[linear-gradient(120deg,var(--color-ground)_0%,rgba(10,8,24,0.55)_45%,rgba(10,8,24,0.75)_100%)]" />
-              <div className="absolute inset-0 flex items-end p-6">
-                <dl className="grid w-full grid-cols-3 gap-3">
-                  <Stat value="1" label="booking survives" tone="text-go" />
-                  <Stat value="199" label="typed rejections" tone="text-flame" />
-                  <Stat value="0" label="overlapping pairs" tone="text-violet-soft" />
-                </dl>
-              </div>
-              <p className="absolute right-3 top-3 font-mono text-[9px] text-ink-faint/70">
-                Academic complex · public domain
-              </p>
             </div>
-          </div>
-        </section>
-      </Reveal>
+            <figcaption className="mt-2 text-[11px] leading-tight text-ink-3">
+              The academic complex. Six thousand students, twelve bookable
+              facilities.{" "}
+              <span className="font-mono uppercase tracking-wider">
+                Public domain
+              </span>
+            </figcaption>
 
-      <Reveal>
-        <p className="flex items-center justify-center gap-2 text-center text-xs text-ink-faint">
-          <ShieldCheck className="h-3.5 w-3.5 text-go" />
-          Availability on this page is derived from live bookings on every
-          request — there is no slot table to fall out of sync.
-        </p>
-      </Reveal>
+            <dl className="mt-5 border-t-2 border-ink">
+              <Result k="Confirmed" v="1" />
+              <Result k="Rejected, typed" v="199" />
+              <Result k="Overlapping pairs" v="0" accent />
+            </dl>
+
+            <Link href="/race" className="btn btn-signal mt-5 w-full">
+              Run it yourself
+            </Link>
+          </figure>
+        </div>
+      </section>
     </div>
   );
 }
 
-function Stat({
-  value,
-  label,
-  tone,
-}: {
-  value: string;
-  label: string;
-  tone: string;
-}) {
+function Result({ k, v, accent }: { k: string; v: string; accent?: boolean }) {
   return (
-    <div className="rounded-xl border border-line/80 bg-surface-solid/70 p-3 backdrop-blur">
-      <dd className={cn("display text-2xl tabular-nums", tone)}>{value}</dd>
-      <dt className="mt-1 text-[11px] leading-tight text-ink-faint">{label}</dt>
+    <div className="flex items-baseline justify-between border-b border-rule py-2">
+      <dt className="text-[11px] uppercase tracking-[0.1em] text-ink-3">{k}</dt>
+      <dd
+        className={cn(
+          "fig text-lg font-bold",
+          accent ? "text-signal" : "text-ink",
+        )}
+      >
+        {v}
+      </dd>
     </div>
   );
 }
@@ -232,7 +231,7 @@ function buildHref(date: string, sport: string | null) {
   return `/?${p}`;
 }
 
-function FilterChip({
+function FilterLink({
   href,
   active,
   children,
@@ -245,10 +244,10 @@ function FilterChip({
     <Link
       href={href}
       className={cn(
-        "flex items-center gap-1.5 rounded-full border px-3.5 py-1.5 text-sm capitalize transition-all duration-300",
+        "px-2.5 py-1 text-[12px] uppercase tracking-[0.08em] transition-colors",
         active
-          ? "border-flame/70 bg-flame/15 text-flame shadow-[0_0_20px_-8px_var(--color-flame)]"
-          : "border-line bg-white/[0.02] text-ink-dim hover:border-violet/60 hover:bg-violet/10 hover:text-ink",
+          ? "bg-ink text-paper"
+          : "text-ink-2 hover:bg-paper-2 hover:text-ink",
       )}
     >
       {children}
