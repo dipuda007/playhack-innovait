@@ -271,4 +271,5 @@ Campus photography from Wikimedia Commons — Tihor lake by Ganesh Mohan T
 (CC BY-SA 4.0), academic complex by Satyadeep Karnati (public domain). Full
 details in [`public/campus/CREDITS.md`](public/campus/CREDITS.md).
 
-Code is MIT licensed. See [LICENSE](LICENSE).
+Code is MIT licensed — see [LICENSE](LICENSE). The photographs and fonts
+keep their own terms, recorded in [NOTICE](NOTICE).
