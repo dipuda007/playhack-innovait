@@ -74,6 +74,23 @@ async function resetSlot(facilityId: string, start: Date, end: Date) {
  * individually reasonable. It is wrong only because another request can commit
  * in the gap between the question and the answer — which is precisely the
  * window the exclusion constraint removes.
+ *
+ * ── On making the failure deterministic ──────────────────────────────────
+ * This used to sleep 20 ms between the read and the write and hope that all
+ * contenders got their read in first. That held while the database was a
+ * continent away and every query cost ~250 ms; once the functions moved next
+ * to Postgres in `sin1`, round trips fell to about a millisecond, some reads
+ * landed *after* the first insert had committed, and a demo run could come
+ * back with one booking — from the implementation that has no protection at
+ * all. Right answer, no reasoning: exactly the kind of accident that teaches
+ * a team the wrong lesson.
+ *
+ * So the gap is now structural instead of temporal. `gap` resolves only once
+ * every contender has finished its read, which is the interleaving a
+ * read-then-write is *always* exposed to and hits sooner or later in
+ * production. Nothing about the unsafe code changed — it is still check,
+ * then write, with no constraint and no lock. What changed is that the
+ * scheduler no longer gets to hide the bug on a fast network.
  */
 async function naiveAttempt(
   facilityId: string,
@@ -82,6 +99,7 @@ async function naiveAttempt(
   start: Date,
   end: Date,
   runId: string,
+  gap: () => Promise<void>,
 ) {
   const existing = await sql`
     SELECT 1 FROM naive_bookings
@@ -90,14 +108,15 @@ async function naiveAttempt(
       AND during && tstzrange(${start}, ${end}, '[)')
     LIMIT 1
   `;
-  if (existing.length > 0) {
-    return { outcome: "SLOT_TAKEN", sqlstate: null as string | null };
-  }
+  const looksFree = existing.length === 0;
 
   // The gap. In production this is network latency, a validation call, or a
-  // payment hop. Here it is explicit so the failure is reproducible rather
-  // than dependent on machine speed.
-  await new Promise((r) => setTimeout(r, 20));
+  // payment hop.
+  await gap();
+
+  if (!looksFree) {
+    return { outcome: "SLOT_TAKEN", sqlstate: null as string | null };
+  }
 
   await sql`
     INSERT INTO naive_bookings (facility_id, user_id, user_name, during, run_id)
@@ -105,6 +124,29 @@ async function naiveAttempt(
             tstzrange(${start}, ${end}, '[)'), ${runId})
   `;
   return { outcome: "CONFIRMED", sqlstate: null as string | null };
+}
+
+/**
+ * A barrier that opens once `total` participants have arrived, or after
+ * `timeoutMs` regardless.
+ *
+ * The timeout matters: if one read fails or hangs, the run must still finish
+ * and report rather than deadlock the whole demo on a missing arrival.
+ */
+function makeBarrier(total: number, timeoutMs = 5_000) {
+  let arrived = 0;
+  let open!: () => void;
+  const gate = new Promise<void>((resolve) => {
+    open = resolve;
+  });
+  const timer = setTimeout(open, timeoutMs);
+  return async () => {
+    if (++arrived >= total) {
+      clearTimeout(timer);
+      open();
+    }
+    await gate;
+  };
 }
 
 export async function runRace(opts: {
@@ -163,6 +205,9 @@ export async function runRace(opts: {
 
   const attempts: RaceAttempt[] = [];
 
+  // Opens once every naive contender has read the slot — see naiveAttempt.
+  const gap = makeBarrier(count);
+
   const runners = contenders.map(async (contender, i) => {
     await gun;
     const startedAt = Date.now();
@@ -174,6 +219,7 @@ export async function runRace(opts: {
       if (mode === "naive") {
         const r = await naiveAttempt(
           facilityId, contender.id, contender.name, startsAt, endsAt, runId,
+          gap,
         );
         outcome = r.outcome;
         sqlstate = r.sqlstate;

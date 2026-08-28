@@ -7,7 +7,8 @@
 import puppeteer, { type Page } from "puppeteer-core";
 
 const CHROME = "C:/Program Files/Google/Chrome/Application/chrome.exe";
-const BASE = "http://localhost:3000";
+// Point at a deployment with E2E_BASE to smoke-test what is actually live.
+const BASE = process.env.E2E_BASE ?? "http://localhost:3000";
 const OUT = "C:/temp/playhack-shots";
 
 const results: { step: string; ok: boolean; detail: string }[] = [];
