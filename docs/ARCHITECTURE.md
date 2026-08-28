@@ -122,31 +122,68 @@ actually correct.
 |---|---|---|
 | Two students, one slot | `EXCLUDE` constraint | No lock needed; the constraint already decides it, in the storage engine |
 | One student, ten parallel taps (quota) | per-user advisory lock | Quota is a genuine read-then-write; different users never contend |
-| Thundering herd on one slot | per-slot advisory lock | Queueing on a plain lock is far cheaper than constraint-waits tangled with FK row locks |
+| Thundering herd on one slot | *nothing* — let them all hit the constraint | One winner commits, the rest are released together with `23P01`; a queue-forming lock would serialise them across the network instead |
 | Retry vs. second intent | unique idempotency key | Transactions cannot tell these apart — both are valid requests |
 | Cancellation → promotion | same transaction + partial unique index | A separate job leaves a window where the slot is free but unowned |
 | Concurrent promoters | `FOR UPDATE SKIP LOCKED` | Promoters take different rows instead of blocking |
 | Who *deserves* a peak slot | seeded weighted draw | Correctness ≠ fairness; FCFS rewards the best wifi |
 
-### The deadlock, and why lock ordering fixes it
+### Why there is no per-slot lock
 
-Taking two locks in an order that varies between transactions is the textbook
-way to build a deadlock: A holds the user lock and waits for the slot lock while
-B holds the slot lock and waits for the user lock. Postgres breaks the cycle
-after `deadlock_timeout` (1 s default) by killing one side with `40P01`.
+There used to be one, taken alongside the per-user lock in sorted key order.
+Against a database on the same machine it was faster: contenders queued on a
+cheap lock instead of piling into the constraint's wait-for-uncommitted-row
+path, and sorting the keys made a deadlock cycle impossible to construct.
 
-Sorting the two keys gives every transaction one global lock order, which makes
-a cycle impossible to *construct*. Measured on a 200-way burst at one slot:
+Deployed, it inverted. The lock serialises every contender, so each one pays a
+full network round trip in turn. Measured in production with functions in
+`iad1` (Washington DC) and Neon in Singapore — about 250 ms per round trip:
 
-| | unordered | sorted |
-|---|---|---|
-| wall clock | 104,214 ms | **347 ms** |
-| `40P01` failures | 27 | **0** |
-| p95 per request | — | 335 ms |
-| bookings confirmed | 1 | 1 |
+| n | wall clock |
+|---|---|
+| 2 | 6.3 s |
+| 5 | 10.6 s |
+| 10 | 19.2 s |
+| 20 | 36.4 s |
+| 50 | function timeout |
 
-Correctness never changed — the constraint held throughout. What changed is that
-the system stopped falling over while being correct.
+Linear at ~1.8 s per contender. Note what did *not* break: every one of those
+runs confirmed exactly one booking, with zero overlapping pairs. The constraint
+was never the problem. The lock in front of it was.
+
+Two changes, and the round trips behind them:
+
+1. **Drop the slot lock.** All contenders now attempt the insert
+   simultaneously. One wins; the others block on its uncommitted row and are
+   released the moment it commits, each receiving `23P01`. Cost is one
+   transaction plus one round trip, independent of *n*. The same commit folded
+   the quota and self-clash checks into a single query and the insert plus
+   audit-event write into a second, taking the request from seven round trips
+   to three.
+2. **`vercel.json` → `"regions": ["sin1"]`.** Co-locating the functions with
+   the database turns each of those round trips from ~250 ms into ~1 ms. A
+   response now shows `x-vercel-id: bom1::sin1::…` — Mumbai edge, Singapore
+   compute.
+
+Same production deployment, after both:
+
+| n | wall clock | confirmed | overlapping pairs |
+|---|---|---|---|
+| 10 | 702 ms | 1 | 0 |
+| 20 | 350 ms | 1 | 0 |
+| 50 | 555 ms | 1 | 0 |
+| 100 | 529 ms | 1 | 0 |
+| 200 | **1,244 ms** | 1 | 0 |
+
+Flat rather than linear, because nothing in the write path serialises on *n*
+any more.
+
+The deadlock the sorted ordering used to prevent is gone with it: a cycle needs
+two locks acquired in varying order, and each transaction now takes one.
+`withDeadlockRetry` stays for the residual case — *partially* overlapping
+ranges can still deadlock inside the constraint itself, and a deadlock victim
+rolls back cleanly, so retrying it is always safe. Exclusion violations are
+never retried; that is a settled result.
 
 ---
 
@@ -234,7 +271,8 @@ award the slot.
 - The app tier is stateless; correctness lives in the database, so horizontal
   scaling needs no coordination.
 - Availability has no second source of truth to keep in sync.
-- 200 concurrent requests at one slot resolve in ~350 ms on a laptop Postgres.
+- 200 concurrent requests at one slot resolve in ~1.2 s in production, and
+  ~350 ms against a local Postgres — flat in *n*, not linear.
 
 **Next, in order**
 
@@ -256,7 +294,8 @@ award the slot.
 | Postgres-only | No Mongo/Firebase option | The invariant is the product; no other store expresses it |
 | Constraint over app-level locking | Ties us to the DB | The DB is the only place no code path can bypass |
 | Derived availability | Recomputed per request | One source of truth beats a fast lie |
-| Advisory locks in sorted order | Slightly more code | Turned 27 deadlocks into 0 and 104 s into 347 ms |
+| One advisory lock, on the user only | Contenders wait inside the constraint, not on a lock | Removing the per-slot lock took a 200-way burst from a function timeout to 1.2 s, and removed the only deadlock cycle we could construct |
+| Functions pinned to `sin1` | Slower for a hypothetical US user | Every request is database-bound; ~250 ms per round trip dominated everything else |
 | Signed-cookie identity | Not a credential system | The brief judges booking correctness, not auth; swap point is one function |
 | In-process event fan-out | Single instance only | Correct now, documented path out, cannot cause a wrong booking |
 | Sequence-based booking codes | Gaps in numbering | Gaps are harmless; duplicate codes are a 500 on a valid booking |
