@@ -19,7 +19,7 @@ Exactly one gets it — and that decision is made by Postgres, not by our code.*
 
 <br>
 
-![The browse page](docs/media/home.png)
+![The browse page](docs/media/home.jpg)
 
 </div>
 
@@ -69,6 +69,12 @@ Three things follow from that, and they are why this beats a `UNIQUE` key:
 Partial overlap is the case that actually happens, and it is the case a unique
 index cannot see.
 
+![How a booking is decided](docs/media/how-it-decides.png)
+
+<sub>Every figure above was measured against the deployed app. Source:
+<a href="docs/infographic/how-it-decides.html">docs/infographic/how-it-decides.html</a> —
+re-render with <code>npm run infographic</code>.</sub>
+
 ---
 
 ## Watch it happen
@@ -92,20 +98,25 @@ through a real HTTP endpoint.
 
 ### Measured on the deployed app
 
-Vercel functions in `sin1`, Neon Postgres in `ap-southeast-1`, one clean run of
-each straight after a reset:
+Vercel functions in `sin1`, Neon Postgres in `ap-southeast-1`. Server time is
+the median of three warm runs, each after a reset:
 
 | Mode | Requests | Server time | Confirmed | Rows in DB | Overlapping pairs |
 |---|---:|---:|---:|---:|---:|
-| naive | 50 | 305 ms | 50 | 50 | **1 225** |
-| safe | 10 | 56 ms | 1 | 1 | 0 |
-| safe | 50 | 144 ms | 1 | 1 | 0 |
-| safe | 100 | 320 ms | 1 | 1 | 0 |
-| safe | **200** | **652 ms** | **1** | **1** | **0** |
+| naive | 50 | 37 ms | 50 | 50 | **1 225** |
+| safe | 10 | 47 ms | 1 | 1 | 0 |
+| safe | 50 | 116 ms | 1 | 1 | 0 |
+| safe | 100 | 251 ms | 1 | 1 | 0 |
+| safe | **200** | **546 ms** | **1** | **1** | **0** |
 
-Flat, not linear, because nothing in the write path serialises on *n*: all
-contenders attempt the insert at once, one wins, the rest block on its
-uncommitted row and are released together the moment it commits.
+Sub-linear, not linear: twenty times the load for about ten times the time.
+Nothing in the write path serialises on *n* — all contenders attempt the
+insert at once, one wins, the rest block on its uncommitted row and are
+released together the moment it commits.
+
+**Cold start is real.** The first race fired after an idle period runs about
+three times slower than the numbers above while the function and the
+connection pool warm up. Fire one before demoing.
 
 The overlapping-pair count is not a check of the slot just tested — it is a
 whole-table sweep, every confirmed row against every other row on the same
@@ -308,10 +319,24 @@ src/lib/availability.ts    derived availability — no slots table
 src/app/                   Next.js App Router: pages and route handlers
 src/components/            UI, court diagrams, sport glyphs
 tests/                     vitest — concurrency and lottery suites
-scripts/                   migrate · seed · invariant · e2e · media capture
+scripts/                   migrate · seed · invariant · e2e · media · infographic
 docs/ARCHITECTURE.md       data model, trade-offs, what we would do next
 docs/DEPLOY.md             Neon + Vercel, and the region that matters
+docs/infographic/          the README graphic, as editable HTML rather than a bitmap
 ```
+
+### Checking it yourself
+
+```bash
+npm run test          # 19 unit tests — concurrency and the lottery
+npm run invariant     # whole-table sweep for any overlapping confirmed pair
+npm run e2e           # 11 browser checks; E2E_BASE=<url> to point at a deployment
+npm run media         # re-capture the README screenshots and the race GIF
+npm run infographic   # re-render the graphic above from its HTML source
+```
+
+`npm run e2e` books a real slot and cancels it again, so it is safe to run
+against the live app — and it is how the numbers in this README were checked.
 
 ---
 

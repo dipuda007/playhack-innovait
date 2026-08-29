@@ -1,0 +1,319 @@
+<!doctype html>
+<!--
+  PlayHack — "The gap between the question and the answer"
+
+  Composition pattern: EDITORIAL SPREAD (asymmetric 1/3 : 2/3).
+  The thin left column carries the two hero figures; the wide right column
+  carries the two timing lanes. The 50 request traces bleed off the right
+  edge so the canvas reads as a window onto a longer strip.
+
+  The scene: a timing trace pulled off the database and printed on the same
+  paper the product is set on — graph grid, registration crosses, a ghosted
+  SQLSTATE watermark. Every colour is a product token; nothing is decorative.
+
+  Every number on this canvas was measured against the deployed app. None of
+  it is illustrative.
+
+  Render:  npx tsx scripts/infographic.mts
+-->
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&family=Inter:wght@400;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet" />
+<style>
+  :root {
+    --ink: #22201e;
+    --ink-2: #55504a;
+    --ink-3: #837c73;
+    --paper: #f7f4ee;
+    --paper-2: #f2eee6;
+    --rule: #e2dcd1;
+    --rust: #b4512a;
+    --brass: #c29a4b;
+    --open: #2e6b3e;
+    --taken: #8c2f22;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    width: 1600px; height: 900px;
+    font-family: Inter, system-ui, sans-serif;
+    color: var(--ink);
+    background: var(--paper);
+    overflow: hidden;
+    position: relative;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* The background participates: graph paper, never a flat void. */
+  .grid {
+    position: absolute; inset: 0;
+    background-image:
+      linear-gradient(to right, rgba(34,32,30,.055) 1px, transparent 1px),
+      linear-gradient(to bottom, rgba(34,32,30,.055) 1px, transparent 1px);
+    background-size: 32px 32px;
+  }
+  .grid-fine {
+    position: absolute; inset: 0;
+    background-image:
+      linear-gradient(to right, rgba(34,32,30,.028) 1px, transparent 1px),
+      linear-gradient(to bottom, rgba(34,32,30,.028) 1px, transparent 1px);
+    background-size: 8px 8px;
+  }
+  /* Paper grain — the difference between "white" and "paper". */
+  .grain {
+    position: absolute; inset: 0;
+    background-image: radial-gradient(circle at 1px 1px, rgba(34,32,30,.05) 1px, transparent 0);
+    background-size: 4px 4px;
+  }
+
+  /* A giant ghosted SQLSTATE. The villain, watermarked into the sheet. */
+  .watermark {
+    position: absolute; right: -30px; bottom: -78px;
+    font-family: "JetBrains Mono", monospace; font-weight: 700;
+    font-size: 300px; letter-spacing: -.02em;
+    color: rgba(34,32,30,.045);
+    line-height: 1;
+  }
+
+  .reg { position: absolute; width: 22px; height: 22px; }
+  .reg::before, .reg::after {
+    content: ""; position: absolute; background: var(--ink-3); opacity: .5;
+  }
+  .reg::before { left: 0; right: 0; top: 10px; height: 1px; }
+  .reg::after { top: 0; bottom: 0; left: 10px; width: 1px; }
+
+  .frame { position: absolute; inset: 40px; border: 1px solid var(--rule); }
+
+  .stage { position: relative; height: 100%; padding: 46px 60px 38px; display: flex; flex-direction: column; }
+
+  header { display: flex; align-items: flex-start; justify-content: space-between; gap: 40px; }
+
+  .kicker {
+    font-size: 12px; font-weight: 700; letter-spacing: .18em;
+    text-transform: uppercase; color: var(--rust);
+  }
+  h1 {
+    font-family: "Playfair Display", Georgia, serif; font-weight: 700;
+    font-size: 43px; line-height: 1.04; letter-spacing: .004em;
+    margin-top: 10px; max-width: 22ch; text-transform: uppercase;
+  }
+  .standfirst { margin-top: 11px; font-size: 13.5px; line-height: 1.5; color: var(--ink-2); max-width: 52ch; }
+
+  .stamp {
+    border: 1.5px solid var(--ink); padding: 12px 16px;
+    font-family: "JetBrains Mono", monospace; font-size: 12.5px; line-height: 1.65;
+    white-space: pre; flex: none; background: var(--paper-2);
+  }
+  .stamp b { color: var(--rust); font-weight: 700; }
+
+  /* ── Editorial spread: 1/3 anchor, 2/3 evidence ─────────────────────── */
+  .spread { display: grid; grid-template-columns: 300px 1fr; gap: 46px; margin-top: 24px; flex: 1; min-height: 0; }
+
+  .anchor { display: flex; flex-direction: column; justify-content: center; gap: 26px; border-right: 1px solid var(--rule); padding-right: 40px; }
+
+  .figure .n {
+    font-family: "JetBrains Mono", monospace; font-weight: 700;
+    font-size: 88px; line-height: .84; letter-spacing: -.045em;
+    font-variant-numeric: tabular-nums;
+  }
+  .figure .n.bad { color: var(--taken); }
+  .figure .n.good { color: var(--ink); }
+  .figure .cap { margin-top: 12px; font-size: 13.5px; line-height: 1.45; color: var(--ink-2); max-width: 26ch; }
+  .figure .cap b { color: var(--ink); }
+  .under { height: 3px; width: 62px; background: var(--brass); margin-top: 16px; }
+
+  .lanes { display: flex; flex-direction: column; gap: 18px; justify-content: center; }
+
+  .lane-head { display: flex; align-items: baseline; gap: 12px; margin-bottom: 9px; }
+  .lane-head .num {
+    font-family: "JetBrains Mono", monospace; font-size: 12px; color: var(--ink-3); font-weight: 500;
+  }
+  .lane-head h2 {
+    font-family: "Playfair Display", Georgia, serif; font-size: 23px; font-weight: 700;
+    text-transform: uppercase; letter-spacing: .015em;
+  }
+  .lane-head .verdict {
+    margin-left: auto; font-size: 12px; font-weight: 700; letter-spacing: .1em;
+    text-transform: uppercase;
+  }
+  .verdict.bad { color: var(--taken); }
+  .verdict.good { color: var(--open); }
+
+  .trace { position: relative; height: 112px; overflow: visible; }
+  .trace svg { display: block; overflow: visible; }
+
+  .lane-note { margin-top: 8px; font-size: 12.5px; color: var(--ink-2); }
+  .lane-note code { font-family: "JetBrains Mono", monospace; font-size: 12px; color: var(--rust); }
+
+  footer {
+    margin-top: 20px; padding-top: 16px; border-top: 1px solid var(--rule);
+    display: flex; align-items: flex-end; justify-content: space-between; gap: 40px;
+  }
+  .steps { display: flex; align-items: flex-end; gap: 26px; }
+  .step .bar { width: 46px; background: var(--ink); }
+  .step .ms { font-family: "JetBrains Mono", monospace; font-size: 13px; font-weight: 700; margin-bottom: 6px; }
+  .step .n { font-size: 11px; color: var(--ink-3); margin-top: 7px; letter-spacing: .08em; }
+  .footnote { font-size: 12px; color: var(--ink-3); text-align: right; line-height: 1.6; max-width: 40ch; }
+  .footnote b { color: var(--ink-2); }
+</style>
+</head>
+<body>
+  <div class="grid"></div>
+  <div class="grid-fine"></div>
+  <div class="grain"></div>
+  <div class="watermark">23P01</div>
+  <div class="frame"></div>
+  <div class="reg" style="top:24px;left:24px"></div>
+  <div class="reg" style="top:24px;right:24px"></div>
+  <div class="reg" style="bottom:24px;left:24px"></div>
+  <div class="reg" style="bottom:24px;right:24px"></div>
+
+  <div class="stage">
+    <header>
+      <div>
+        <p class="kicker">PlayHack · IIT Guwahati · SDE Track</p>
+        <h1>The gap between the question and the answer</h1>
+        <p class="standfirst">
+          Fifty students tap Book on the same court at 18:00. The same burst,
+          fired twice at the deployed app — once at a textbook availability
+          check, once at a database that refuses to store the overlap.
+        </p>
+      </div>
+      <div class="stamp">ALTER TABLE bookings
+  ADD CONSTRAINT bookings_no_overlap
+  <b>EXCLUDE USING gist (</b>
+    facility_id WITH <b>=</b>,
+    during      WITH <b>&amp;&amp;</b>
+  <b>)</b> WHERE (status = 'confirmed');</div>
+    </header>
+
+    <div class="spread">
+      <div class="anchor">
+        <div class="figure">
+          <div class="n bad">1225</div>
+          <div class="under" style="background:var(--taken)"></div>
+          <p class="cap">overlapping pairs left behind by <b>check-then-write</b>, swept across the whole table</p>
+        </div>
+        <div class="figure">
+          <div class="n good">0</div>
+          <div class="under"></div>
+          <p class="cap">from the identical burst, once the constraint is carrying the decision</p>
+        </div>
+      </div>
+
+      <div class="lanes">
+        <section>
+          <div class="lane-head">
+            <span class="num">01</span>
+            <h2>Check, then write</h2>
+            <span class="verdict bad">50 confirmed · nothing errored</span>
+          </div>
+          <div class="trace" id="lane-naive"></div>
+          <p class="lane-note">
+            Every request reads “free”, then writes. The shaded interval is the gap
+            between the question and the answer — and fifty answers commit inside it.
+          </p>
+        </section>
+
+        <section>
+          <div class="lane-head">
+            <span class="num">02</span>
+            <h2>The write is the decision</h2>
+            <span class="verdict good">1 confirmed · 49 rejected</span>
+          </div>
+          <div class="trace" id="lane-safe"></div>
+          <p class="lane-note">
+            No read. Fifty inserts race one exclusion constraint; Postgres rejects
+            forty-nine with <code>SQLSTATE 23P01</code> before they can become rows.
+          </p>
+        </section>
+      </div>
+    </div>
+
+    <footer>
+      <div class="steps" id="steps"></div>
+      <p class="footnote">
+        Measured on the deployed app — Vercel <b>sin1</b>, Neon Postgres
+        <b>ap-southeast-1</b>, warm, median of three. Server time is
+        <b>sub-linear in n</b>: twenty times the load for ten times the time.
+        The overlap count is a whole-table sweep after every run, not a check
+        of the slot just tested.
+      </p>
+    </footer>
+  </div>
+
+<script>
+  const NS = "http://www.w3.org/2000/svg";
+  const el = (n, a) => { const e = document.createElementNS(NS, n); for (const k in a) e.setAttribute(k, a[k]); return e; };
+
+  const W = 900, H = 112, N = 50;
+  const y = i => 4 + i * ((H - 8) / (N - 1));
+
+  /* Lane 01 — fifty traces, each with a read tick, a shaded gap, a write that
+     lands. They all reach the right edge and bleed past it. */
+  {
+    const svg = el("svg", { width: W, height: H, viewBox: `0 0 ${W} ${H}` });
+    svg.appendChild(el("rect", { x: 250, y: 0, width: 150, height: H, fill: "#b4512a", opacity: ".10" }));
+    svg.appendChild(el("line", { x1: 250, y1: 0, x2: 250, y2: H, stroke: "#b4512a", "stroke-width": 1, "stroke-dasharray": "3 3", opacity: ".65" }));
+    svg.appendChild(el("line", { x1: 400, y1: 0, x2: 400, y2: H, stroke: "#b4512a", "stroke-width": 1, "stroke-dasharray": "3 3", opacity: ".65" }));
+    for (let i = 0; i < N; i++) {
+      const yy = y(i);
+      // Deterministic scatter. A modular offset lines the marks up into
+      // diagonal moire; multiplying by a co-prime and wrapping does not.
+      const jitter = ((i * 37) % 23) - 11;
+      svg.appendChild(el("line", { x1: 0, y1: yy, x2: W, y2: yy, stroke: "#22201e", "stroke-width": .6, opacity: ".30" }));
+      svg.appendChild(el("rect", { x: 249 + jitter, y: yy - 1.6, width: 1.6, height: 3.2, fill: "#837c73" }));
+      svg.appendChild(el("rect", { x: 399 + jitter, y: yy - 2.2, width: 2.2, height: 4.4, fill: "#2e6b3e" }));
+    }
+    const t = el("text", { x: 258, y: -8, fill: "#b4512a", "font-size": "11", "font-family": "JetBrains Mono, monospace", "font-weight": "700", "letter-spacing": "1.4" });
+    t.textContent = "THE GAP";
+    svg.appendChild(t);
+    document.getElementById("lane-naive").appendChild(svg);
+  }
+
+  /* Lane 02 — the same fifty converge on one gate. One passes. */
+  {
+    const svg = el("svg", { width: W, height: H, viewBox: `0 0 ${W} ${H}` });
+    const GATE = 430, mid = H / 2;
+    for (let i = 0; i < N; i++) {
+      const yy = y(i), winner = i === 23;
+      const stroke = winner ? "#2e6b3e" : "#22201e";
+      svg.appendChild(el("path", {
+        d: `M0 ${yy} L${GATE - 130} ${yy} Q${GATE - 40} ${yy} ${GATE} ${mid + (winner ? 0 : (yy - mid) * .06)}`,
+        fill: "none", stroke, "stroke-width": winner ? 2.2 : .7, opacity: winner ? "1" : ".34",
+      }));
+      if (!winner) svg.appendChild(el("circle", { cx: GATE + 4, cy: mid + (yy - mid) * .06, r: 1.6, fill: "#8c2f22", opacity: ".75" }));
+    }
+    svg.appendChild(el("line", { x1: GATE, y1: 8, x2: GATE, y2: H - 8, stroke: "#22201e", "stroke-width": 2.5 }));
+    svg.appendChild(el("path", { d: `M${GATE} ${mid} L${W} ${mid}`, fill: "none", stroke: "#2e6b3e", "stroke-width": 2.2 }));
+    svg.appendChild(el("circle", { cx: W - 26, cy: mid, r: 5, fill: "#2e6b3e" }));
+    const g = el("text", { x: GATE + 14, y: mid - 14, fill: "#22201e", "font-size": "11", "font-family": "JetBrains Mono, monospace", "font-weight": "700", "letter-spacing": "1.2" });
+    g.textContent = "bookings_no_overlap";
+    svg.appendChild(g);
+    const r = el("text", { x: GATE + 14, y: mid + 26, fill: "#8c2f22", "font-size": "11", "font-family": "JetBrains Mono, monospace", "font-weight": "700", "letter-spacing": "1.2" });
+    r.textContent = "49 x 23P01";
+    svg.appendChild(r);
+    document.getElementById("lane-safe").appendChild(svg);
+  }
+
+  /* The measured ladder — four steps, height proportional to server time. */
+  {
+    const data = [[10, 47], [50, 116], [100, 251], [200, 546]];
+    const max = 546, maxH = 64;
+    const host = document.getElementById("steps");
+    for (const [n, ms] of data) {
+      const d = document.createElement("div");
+      d.className = "step";
+      d.innerHTML = `<div class="ms">${ms} ms</div>
+        <div class="bar" style="height:${Math.round((ms / max) * maxH)}px"></div>
+        <div class="n">n = ${n}</div>`;
+      host.appendChild(d);
+    }
+  }
+</script>
+</body>
+</html>

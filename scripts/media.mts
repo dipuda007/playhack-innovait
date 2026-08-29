@@ -42,7 +42,15 @@ async function settle(page: Page, ms = 900) {
 async function shot(
   name: string,
   route: string,
-  opts: { width?: number; height?: number; full?: boolean; scrollTo?: number } = {},
+  opts: {
+    width?: number; height?: number; full?: boolean; scrollTo?: number;
+    /**
+     * JPEG for the hero only. It is a photograph, and PNG stores a
+     * photograph at roughly eight times the size for no visible gain in a
+     * README rendered under 1000px wide.
+     */
+    jpeg?: boolean;
+  } = {},
 ) {
   const page = await browser.newPage();
   await page.setViewport({
@@ -53,13 +61,16 @@ async function shot(
   await page.goto(`${BASE}/${route}`, { waitUntil: "networkidle2", timeout: 90_000 });
   if (opts.scrollTo) await page.evaluate((y) => window.scrollTo(0, y), opts.scrollTo);
   await settle(page);
-  await page.screenshot({
-    path: path.join(OUT, `${name}.png`) as `${string}.png`,
-    fullPage: Boolean(opts.full),
-  });
+  const ext = opts.jpeg ? "jpg" : "png";
+  const file = path.join(OUT, `${name}.${ext}`);
+  await page.screenshot(
+    opts.jpeg
+      ? { path: file as `${string}.jpg`, type: "jpeg", quality: 86, fullPage: Boolean(opts.full) }
+      : { path: file as `${string}.png`, fullPage: Boolean(opts.full) },
+  );
   await page.close();
-  const { size } = await fs.stat(path.join(OUT, `${name}.png`));
-  console.log(`  ${name}.png  ${Math.round(size / 1024)} KB`);
+  const { size } = await fs.stat(file);
+  console.log(`  ${name}.${ext}  ${Math.round(size / 1024)} KB`);
 }
 
 /** Click a button by its exact trimmed label. */
@@ -171,7 +182,7 @@ async function raceGif() {
 if (what === "shots" || what === "all") {
   console.log("stills:");
   const tomorrow = new Date(Date.now() + 864e5).toISOString().slice(0, 10);
-  await shot("home", "", { height: 980 });
+  await shot("home", "", { height: 980, jpeg: true });
   await shot("facility", `facility/tennis-court-a?date=${tomorrow}`, { height: 1040 });
   await shot("bookings", "bookings", { height: 900 });
   await shot("fair", "fair", { height: 900 });
