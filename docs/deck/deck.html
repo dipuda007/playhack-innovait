@@ -1,0 +1,325 @@
+<!doctype html>
+<!--
+  PlayHack — pitch deck source.
+
+  One <section class="slide"> per slide, 1600x900. Rendered to PNG and
+  assembled into docs/PlayHack.pptx by scripts/deck.mts + scripts/deck.py.
+  Editing this file and re-running `npm run deck` regenerates the deck.
+
+  Every number here was measured against the deployed app.
+-->
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;1,600&family=Inter:wght@400;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet" />
+<style>
+  :root{--ink:#22201e;--ink-2:#55504a;--ink-3:#837c73;--paper:#f7f4ee;--paper-2:#f2eee6;
+        --rule:#e2dcd1;--rust:#b4512a;--brass:#c29a4b;--open:#2e6b3e;--taken:#8c2f22;}
+  *{margin:0;padding:0;box-sizing:border-box}
+  body{background:#111;font-family:Inter,system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+
+  .slide{
+    position:relative;width:1600px;height:900px;background:var(--paper);color:var(--ink);
+    padding:74px 86px;overflow:hidden;display:flex;flex-direction:column;
+  }
+  .slide + .slide{margin-top:40px}
+  .slide::before{ /* paper, never flat white */
+    content:"";position:absolute;inset:0;
+    background-image:radial-gradient(circle at 1px 1px,rgba(34,32,30,.05) 1px,transparent 0);
+    background-size:4px 4px;pointer-events:none;
+  }
+  .slide > *{position:relative}
+
+  .kicker{font-size:14px;font-weight:700;letter-spacing:.2em;text-transform:uppercase;color:var(--rust)}
+  h1{font-family:"Playfair Display",Georgia,serif;font-weight:700;font-size:88px;line-height:1.02;letter-spacing:.004em;text-transform:uppercase}
+  h2{font-family:"Playfair Display",Georgia,serif;font-weight:700;font-size:52px;line-height:1.06;letter-spacing:.008em;text-transform:uppercase}
+  .rule{height:3px;width:84px;background:var(--brass);margin:22px 0 0}
+  .lede{font-size:24px;line-height:1.5;color:var(--ink-2);max-width:44ch;margin-top:26px}
+  .body{font-size:20px;line-height:1.6;color:var(--ink-2)}
+  .body b{color:var(--ink)}
+  em{font-family:"Playfair Display",serif;font-style:italic;font-weight:600}
+
+  .num{font-family:"JetBrains Mono",monospace;font-weight:700;font-variant-numeric:tabular-nums;letter-spacing:-.04em}
+
+  pre{font-family:"JetBrains Mono",monospace;font-size:21px;line-height:1.65;
+      background:var(--paper-2);border:1.5px solid var(--ink);padding:24px 28px;white-space:pre}
+  pre .c{color:var(--ink-3)}
+  pre .k{color:var(--rust);font-weight:700}
+  pre .bad{color:var(--taken);font-weight:700}
+
+  table{border-collapse:collapse;width:100%;font-size:20px}
+  th{font-size:13px;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-3);
+     text-align:left;font-weight:700;padding:0 18px 12px 0;border-bottom:1px solid var(--rule)}
+  td{padding:15px 18px 15px 0;border-bottom:1px solid var(--rule);color:var(--ink-2)}
+  td b{color:var(--ink)}
+  td.n{font-family:"JetBrains Mono",monospace;text-align:right;font-variant-numeric:tabular-nums}
+  .good{color:var(--open);font-weight:700}
+  .bad{color:var(--taken);font-weight:700}
+
+  .foot{position:absolute;left:86px;right:86px;bottom:40px;display:flex;justify-content:space-between;
+        font-size:13px;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-3);
+        border-top:1px solid var(--rule);padding-top:16px}
+
+  .cols{display:grid;gap:56px;flex:1;min-height:0}
+  .c2{grid-template-columns:1fr 1fr}
+  .c37{grid-template-columns:.62fr 1fr}
+  .mid{display:flex;flex-direction:column;justify-content:center}
+
+  .shots{display:grid;grid-template-columns:repeat(3,1fr);gap:22px;margin-top:34px}
+  .shots figure{border:1px solid var(--rule);background:#fff;overflow:hidden}
+  .shots img{width:100%;display:block}
+  .shots figcaption{font-size:14px;color:var(--ink-2);padding:12px 14px;border-top:1px solid var(--rule)}
+  .shots figcaption b{color:var(--ink)}
+
+  .stat{display:flex;align-items:baseline;gap:16px;margin-bottom:26px}
+  .stat .v{font-family:"JetBrains Mono",monospace;font-weight:700;font-size:62px;line-height:.9;letter-spacing:-.04em}
+  .stat .l{font-size:18px;line-height:1.35;color:var(--ink-2);max-width:24ch}
+
+  ul{list-style:none}
+  li{padding:16px 0;border-bottom:1px solid var(--rule);font-size:19px;line-height:1.5;color:var(--ink-2)}
+  li b{color:var(--ink)}
+  li:last-child{border-bottom:0}
+
+  /* Title slide: the photograph carries it. */
+  .title{padding:0;justify-content:flex-end}
+  .title img.bg{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+  .title .scrim{position:absolute;inset:0;
+    background:linear-gradient(88deg,rgba(26,25,23,.96) 0%,rgba(26,25,23,.86) 40%,rgba(26,25,23,.52) 72%,rgba(26,25,23,.30) 100%)}
+  .title .inner{padding:0 86px 92px;color:var(--paper)}
+  .title h1{color:var(--paper);max-width:17ch}
+  .title .lede{color:rgba(247,244,238,.82);max-width:52ch;font-size:23px}
+  .title .meta{margin-top:40px;display:flex;gap:44px;font-size:15px;letter-spacing:.12em;text-transform:uppercase;color:rgba(247,244,238,.62)}
+  .title .meta b{color:var(--paper)}
+
+  .full{padding:0}
+  .full img{width:100%;height:100%;object-fit:contain;background:var(--paper)}
+</style>
+</head>
+<body>
+
+<!-- 01 ───────────────────────────────────────────────────────────────── -->
+<section class="slide title">
+  <img class="bg" src="../../public/campus/tihor-lake.jpg" alt="" />
+  <div class="scrim"></div>
+  <div class="inner">
+    <p class="kicker" style="color:#e0a267">PlayHack · SDE Track · IIT Guwahati</p>
+    <h1 style="margin-top:20px">PlayHack</h1>
+    <p class="lede">Campus sports facility booking where the winner of a race for
+      one court is decided by Postgres, not by our code.</p>
+    <div class="meta">
+      <span>Team <b>InnovAIT</b></span>
+      <span>innovait-hackathon.vercel.app</span>
+      <span><b>0</b> overlapping bookings, ever</span>
+    </div>
+  </div>
+</section>
+
+<!-- 02 ───────────────────────────────────────────────────────────────── -->
+<section class="slide">
+  <p class="kicker">The problem, in the brief's own words</p>
+  <h2 style="margin-top:18px;max-width:22ch">At 6 PM, fifty students want the same court</h2>
+  <div class="rule"></div>
+  <div class="cols c2" style="margin-top:44px">
+    <div class="mid">
+      <p class="body">“The system must confirm <b>exactly one</b> and reject the
+        rest, without corrupting data.”</p>
+      <p class="body" style="margin-top:28px">Almost every booking system answers
+        this the same way — and almost every one of them is wrong.</p>
+    </div>
+    <div class="mid">
+<pre><span class="c">// the question</span>
+const taken = await isSlotTaken(court, slot);
+
+<span class="c">// the answer</span>
+if (!taken) await insertBooking(court, slot);</pre>
+      <p class="body" style="margin-top:24px;font-size:19px">Both lines are
+        individually correct. Between them is a <b>gap</b> — and under load
+        another request commits inside it.</p>
+    </div>
+  </div>
+  <div class="foot"><span>PlayHack · Team InnovAIT</span><span>02</span></div>
+</section>
+
+<!-- 03 ───────────────────────────────────────────────────────────────── -->
+<section class="slide">
+  <p class="kicker">The answer</p>
+  <h2 style="margin-top:18px">The write <em>is</em> the decision</h2>
+  <div class="rule"></div>
+  <div style="margin-top:46px">
+<pre>ALTER TABLE bookings ADD CONSTRAINT bookings_no_overlap
+  <span class="k">EXCLUDE USING gist (</span>facility_id <span class="k">WITH =</span>, during <span class="k">WITH &amp;&amp;</span><span class="k">)</span>
+  WHERE (status = 'confirmed');</pre>
+  </div>
+  <p class="body" style="margin-top:38px;max-width:88ch">
+    There is no question and no answer. A booking carries a time range, and the
+    database <b>physically cannot store two overlapping ranges</b> for the same
+    facility. The loser is rejected with SQLSTATE <b>23P01</b> before it ever
+    becomes a row — no availability check on the write path, and no application
+    lock on the slot.
+  </p>
+  <div class="foot"><span>PlayHack · Team InnovAIT</span><span>03</span></div>
+</section>
+
+<!-- 04 ───────────────────────────────────────────────────────────────── -->
+<section class="slide">
+  <p class="kicker">Why not a unique key</p>
+  <h2 style="margin-top:18px">Partial overlap is the case that happens</h2>
+  <div class="rule"></div>
+  <table style="margin-top:44px">
+    <tr><th style="width:46%"></th><th>UNIQUE (facility, starts_at)</th><th>EXCLUDE … WITH &amp;&amp;</th></tr>
+    <tr><td>Two bookings at 18:00</td><td class="good">rejected</td><td class="good">rejected</td></tr>
+    <tr><td><b>18:00–19:00 vs 18:30–19:30</b></td><td class="bad">both stored</td><td class="good">rejected</td></tr>
+    <tr><td>A two-hour closure over four slots</td><td class="bad">not expressible</td><td class="good">one row</td></tr>
+    <tr><td>Cancelling frees the slot</td><td>needs a delete</td><td class="good">status flip</td></tr>
+  </table>
+  <p class="body" style="margin-top:34px">A booking from 18:30 does not share a
+    start time with one from 18:00 — but it <b>overlaps</b> it, and overlap is
+    what matters to a student holding a racket.</p>
+  <div class="foot"><span>PlayHack · Team InnovAIT</span><span>04</span></div>
+</section>
+
+<!-- 05 ───────────────────────────────────────────────────────────────── -->
+<section class="slide full">
+  <img src="../media/how-it-decides.png" alt="The gap between the question and the answer" />
+</section>
+
+<!-- 06 ───────────────────────────────────────────────────────────────── -->
+<section class="slide">
+  <p class="kicker">The same burst, fired twice at production</p>
+  <h2 style="margin-top:18px">Fifty requests. One court.</h2>
+  <div class="rule"></div>
+  <div class="cols c2" style="margin-top:40px">
+    <div>
+      <p class="kicker" style="color:var(--taken)">Check, then write</p>
+      <div class="stat" style="margin-top:20px">
+        <span class="v bad">50</span><span class="l">bookings confirmed. Nothing errored.</span>
+      </div>
+      <div class="stat">
+        <span class="v bad">1225</span><span class="l">overlapping pairs, swept across the whole table</span>
+      </div>
+      <p class="body" style="font-size:18px">Fifty students walk to the same court.</p>
+    </div>
+    <div>
+      <p class="kicker" style="color:var(--open)">The write is the decision</p>
+      <div class="stat" style="margin-top:20px">
+        <span class="v good">1</span><span class="l">confirmed — 49 rejected with 23P01</span>
+      </div>
+      <div class="stat">
+        <span class="v">0</span><span class="l">overlapping pairs, across 380+ confirmed rows</span>
+      </div>
+      <p class="body" style="font-size:18px">Every rejection is typed and carries
+        three alternative slots.</p>
+    </div>
+  </div>
+  <div class="foot"><span>Measured live · not simulated</span><span>06</span></div>
+</section>
+
+<!-- 07 ───────────────────────────────────────────────────────────────── -->
+<section class="slide">
+  <p class="kicker">Measured on the deployed app</p>
+  <h2 style="margin-top:18px">Sub-linear, not linear</h2>
+  <div class="rule"></div>
+  <div class="cols c37" style="margin-top:40px">
+    <div class="mid">
+      <p class="body">All contenders attempt the insert at once. One wins; the
+        rest block on its uncommitted row and are released together the moment
+        it commits. <b>Nothing in the write path serialises on n.</b></p>
+      <p class="body" style="margin-top:26px;font-size:18px">Vercel <b>sin1</b>,
+        Neon <b>ap-southeast-1</b>. Median of three warm runs.</p>
+    </div>
+    <div class="mid">
+      <table>
+        <tr><th>Mode</th><th class="n" style="text-align:right">Requests</th><th class="n" style="text-align:right">Server</th><th class="n" style="text-align:right">Confirmed</th><th class="n" style="text-align:right">Overlaps</th></tr>
+        <tr><td>naive</td><td class="n">50</td><td class="n">37 ms</td><td class="n bad">50</td><td class="n bad">1225</td></tr>
+        <tr><td>safe</td><td class="n">10</td><td class="n">47 ms</td><td class="n">1</td><td class="n good">0</td></tr>
+        <tr><td>safe</td><td class="n">50</td><td class="n">116 ms</td><td class="n">1</td><td class="n good">0</td></tr>
+        <tr><td>safe</td><td class="n">100</td><td class="n">251 ms</td><td class="n">1</td><td class="n good">0</td></tr>
+        <tr><td><b>safe</b></td><td class="n"><b>200</b></td><td class="n"><b>546 ms</b></td><td class="n"><b>1</b></td><td class="n good"><b>0</b></td></tr>
+      </table>
+    </div>
+  </div>
+  <div class="foot"><span>Twenty times the load, about ten times the time</span><span>07</span></div>
+</section>
+
+<!-- 08 ───────────────────────────────────────────────────────────────── -->
+<section class="slide">
+  <p class="kicker">Beyond “it does not double-book”</p>
+  <h2 style="margin-top:18px">Correctness is the floor</h2>
+  <div class="rule"></div>
+  <ul style="margin-top:30px">
+    <li><b>Idempotency keys.</b> A retried submit returns the original booking. A double-tap on hostel wifi is the common case, not the edge case.</li>
+    <li><b>Typed rejections.</b> Losing returns <span class="num">SLOT_TAKEN</span>, <span class="num">QUOTA_EXCEEDED</span>, <span class="num">OVERLAPS_OWN</span> — with three alternative slots and a queue position.</li>
+    <li><b>Waitlist promotion.</b> Cancelling frees the slot <em>and</em> offers it to the next student in the same transaction — no window where it is free but unowned.</li>
+    <li><b>Maintenance closures.</b> A closure is a booking row. One invariant, two features: a manager cannot close a court out from under a confirmed reservation.</li>
+    <li><b>Fair draw.</b> Peak slots go to a seeded, weighted, published lottery. First-come-first-served rewards the best wifi, not the keenest player.</li>
+  </ul>
+  <div class="foot"><span>PlayHack · Team InnovAIT</span><span>08</span></div>
+</section>
+
+<!-- 09 ───────────────────────────────────────────────────────────────── -->
+<section class="slide">
+  <p class="kicker">The product</p>
+  <h2 style="margin-top:18px">Built for a student on a phone at 5:58 PM</h2>
+  <div class="rule"></div>
+  <div class="shots">
+    <figure><img src="../media/facility.png" alt="" /><figcaption><b>Booking.</b> The day as a fixture table, live over SSE.</figcaption></figure>
+    <figure><img src="../media/fair.png" alt="" /><figcaption><b>Fair draw.</b> Rules and seed published before the draw.</figcaption></figure>
+    <figure><img src="../media/insights.png" alt="" /><figcaption><b>Insights.</b> Aggregated from the booking table itself.</figcaption></figure>
+  </div>
+  <div class="foot"><span>Twelve facilities · availability derived, never stored</span><span>09</span></div>
+</section>
+
+<!-- 10 ───────────────────────────────────────────────────────────────── -->
+<section class="slide">
+  <p class="kicker">Verified, not asserted</p>
+  <h2 style="margin-top:18px">Every claim on these slides is reproducible</h2>
+  <div class="rule"></div>
+  <div class="cols c2" style="margin-top:42px">
+    <div>
+      <div class="stat"><span class="v good">11/11</span><span class="l">browser journey against production — book, confirm, cancel, slot returns</span></div>
+      <div class="stat"><span class="v good">19</span><span class="l">unit tests, run in CI against a real Postgres 17</span></div>
+      <div class="stat"><span class="v good">0</span><span class="l">npm audit vulnerabilities</span></div>
+    </div>
+    <div class="mid">
+<pre style="font-size:18px">npm run test        <span class="c"># concurrency + lottery</span>
+npm run invariant   <span class="c"># whole-table sweep</span>
+npm run e2e         <span class="c"># 11 browser checks</span></pre>
+      <p class="body" style="margin-top:26px;font-size:18px">The overlap count is
+        never a check of the slot just tested — it is <b>every confirmed row
+        against every other row</b> on the same court, run after every race.</p>
+    </div>
+  </div>
+  <div class="foot"><span>PlayHack · Team InnovAIT</span><span>10</span></div>
+</section>
+
+<!-- 11 ───────────────────────────────────────────────────────────────── -->
+<section class="slide">
+  <p class="kicker">Stated plainly</p>
+  <h2 style="margin-top:18px">What is deliberately out of scope</h2>
+  <div class="rule"></div>
+  <ul style="margin-top:30px">
+    <li><b>No passwords.</b> Identity is a signed cookie over a seeded roster, with a “switch reader” control — so a judge can race two students without two browser profiles. <span style="color:var(--ink-3)">Swapping in SSO replaces one function.</span></li>
+    <li><b>The demo endpoints are unauthenticated</b> and rate limited rather than gated, because the race demo has to stay one click away.</li>
+    <li><b>What is enforced:</b> ownership scoped inside every UPDATE, zod on every request body, bind parameters on every query, no <span class="num">sql.unsafe</span> anywhere.</li>
+    <li><b>Next:</b> institute SSO, push notifications for waitlist offers, and a real limiter keyed on identity rather than on a header the client controls.</li>
+  </ul>
+  <div class="foot"><span>PlayHack · Team InnovAIT</span><span>11</span></div>
+</section>
+
+<!-- 12 ───────────────────────────────────────────────────────────────── -->
+<section class="slide" style="justify-content:center;align-items:center;text-align:center">
+  <p class="kicker">One platform. Zero clashes.</p>
+  <h1 style="margin-top:26px;max-width:20ch">Fifty students. One court. One winner.</h1>
+  <div class="rule" style="margin:30px auto 0"></div>
+  <p class="lede" style="margin:30px auto 0;max-width:58ch;text-align:center">
+    Run the race yourself — the burst is fired at a real Postgres table through
+    a real HTTP endpoint, and the whole table is swept afterwards.
+  </p>
+  <p class="num" style="margin-top:44px;font-size:30px;color:var(--rust)">innovait-hackathon.vercel.app/race</p>
+  <p style="margin-top:16px;font-size:16px;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-3)">Team InnovAIT · PlayHack SDE Track</p>
+</section>
+
+</body>
+</html>

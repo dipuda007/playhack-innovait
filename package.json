@@ -16,7 +16,8 @@
     "invariant": "tsx scripts/invariant.ts",
     "e2e": "tsx scripts/e2e.mts",
     "media": "tsx scripts/media.mts",
-    "infographic": "tsx scripts/infographic.mts"
+    "infographic": "tsx scripts/infographic.mts",
+    "deck": "tsx scripts/deck.mts && python scripts/deck.py"
   },
   "dependencies": {
     "clsx": "^2.1.1",

@@ -127,7 +127,19 @@ const RETRYABLE = new Set<string>([
  */
 export async function withDeadlockRetry<T>(
   fn: () => Promise<T>,
-  attempts = 3,
+  /*
+   * Six, not three.
+   *
+   * Partially-overlapping ranges can deadlock inside the exclusion
+   * constraint itself — two transactions each holding a tuple the other
+   * needs to check. That is the residual case this wrapper exists for, and
+   * three attempts with a 15/30/60 ms backoff was measurably not enough: the
+   * load test escaped it in CI while eighteen of nineteen tests passed.
+   *
+   * Six attempts backs off to about a second in total, which is far cheaper
+   * than surfacing a deadlock to a student who did nothing wrong.
+   */
+  attempts = 6,
 ): Promise<T> {
   let lastErr: unknown;
   for (let i = 0; i < attempts; i++) {
@@ -138,7 +150,7 @@ export async function withDeadlockRetry<T>(
       if (!state || !RETRYABLE.has(state)) throw err;
       lastErr = err;
       // Jittered backoff so the retrying pair does not re-collide in lockstep.
-      const backoff = 15 * 2 ** i + Math.floor(Math.random() * 25);
+      const backoff = 15 * 2 ** i + Math.floor(Math.random() * 40);
       await new Promise((r) => setTimeout(r, backoff));
     }
   }
