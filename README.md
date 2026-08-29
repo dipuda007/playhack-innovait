@@ -340,13 +340,6 @@ against the live app — and it is how the numbers in this README were checked.
 
 ---
 
-## Credits
-
-Built by **Team InnovAIT** for PlayHack, IIT Guwahati Sports Board × Tech Board.
-
-Campus photography from Wikimedia Commons — Tihor lake by Ganesh Mohan T
-(CC BY-SA 4.0), academic complex by Satyadeep Karnati (public domain). Full
-details in [`public/campus/CREDITS.md`](public/campus/CREDITS.md).
-
-Code is MIT licensed — see [LICENSE](LICENSE). The photographs and fonts
-keep their own terms, recorded in [NOTICE](NOTICE).
+<sub>MIT — see [LICENSE](LICENSE). The campus photographs, the institute
+emblem and the fonts are not covered by it and keep their own terms; those are
+recorded in [NOTICE](NOTICE).</sub>
