@@ -209,6 +209,46 @@ dropped entirely under `prefers-reduced-motion`.
 
 ---
 
+## Identity, and what is deliberately out of scope
+
+**There are no passwords.** Identity is a signed cookie over a seeded roster,
+and the header carries a "switch reader" control that swaps between the
+seeded students and managers in two clicks.
+
+That is a deliberate trade, not an oversight. The judged criteria are booking
+correctness under concurrency; campus SSO would add real setup cost and touch
+none of them. Racing two students against one slot — the thing the brief asks
+to see demonstrated — has to be doable in front of a judge without two browser
+profiles.
+
+What that costs, stated plainly rather than left to be discovered:
+
+| | |
+|---|---|
+| `POST /api/session` | Takes a user id and issues that identity. No credential is required, and the roster ids are in the page HTML, so **anyone can become a manager.** The role check on `/api/ops` is therefore a demo guard, not a security boundary. |
+| `POST /api/race`, `/api/race/reset` | Unauthenticated. The race writes up to 200 rows per call; the reset deletes only rows keyed `race-%` plus the two demo tables, so it cannot touch a student booking — but both are open to anyone with the URL. |
+| Rate limiting | None. |
+
+Swapping in real auth is a contained change: every write path already derives
+the acting user from the signed cookie on the server and never from the
+request body, and no call site reads the cookie directly. Replacing
+`currentUser()` in `src/lib/session.ts` is the whole job.
+
+What *is* enforced, and is not a demo guard:
+
+- **Ownership.** Cancelling scopes to `user_id` inside the `UPDATE`, and
+  claiming a waitlist offer scopes to `user_id` inside a `SELECT … FOR UPDATE`.
+  A forged booking id matches no row rather than cancelling someone else's.
+- **Input.** Every route body is parsed by a zod schema before it reaches SQL.
+- **SQL.** Every query is a `postgres` tagged template, so every value is a
+  bind parameter. There is no `sql.unsafe` in the codebase.
+- **Headers.** `X-Frame-Options: DENY`, `nosniff`, a referrer policy and a
+  permissions policy on every response. There is no CSP yet — Next's inline
+  bootstrap needs per-request nonces, which is a change to the rendering path
+  rather than a config line.
+
+---
+
 ## Run it
 
 **Requirements:** Node 20+, and a Postgres 17 with `btree_gist` available

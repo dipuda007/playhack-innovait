@@ -143,6 +143,15 @@ export function SlotGrid({
               key={slot.startsAt}
               disabled={!clickable}
               onClick={() => setSelected(slot)}
+              /*
+               * Test hooks. The smoke test used to find a slot by looking for
+               * a button whose text contained "Open", which silently started
+               * matching the mobile menu toggle ("Open menu") the moment the
+               * header gained one. State and start time are what the test
+               * actually means, so it addresses them directly.
+               */
+              data-slot-state={slot.state}
+              data-slot-start={slot.startsAt}
               className={cn(
                 "relative flex min-h-[5.25rem] flex-col justify-between p-3 text-left transition-colors duration-150",
                 clickable && "cursor-pointer",

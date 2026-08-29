@@ -51,18 +51,19 @@ await page.goto(`${BASE}/facility/badminton-sac-1?date=${tomorrow}`, {
   waitUntil: "networkidle2",
 });
 
-const freeBefore = await page.$$eval("button", (btns) =>
-  btns.filter((b) => b.textContent?.includes("Open")).length,
-);
+/*
+ * Slots are addressed by data-slot-state, never by their label. The previous
+ * version counted buttons whose text contained "Open", which quietly began
+ * matching the header's "Open menu" toggle and clicked that instead.
+ */
+const FREE_SLOT = "button[data-slot-state='free']";
+const freeBefore = await page.$$eval(FREE_SLOT, (btns) => btns.length);
 check("slot grid renders open slots", freeBefore > 0, `${freeBefore} open`);
 
 // ── 3. Open the booking sheet ────────────────────────────────────────
-await page.evaluate(() => {
-  const btn = [...document.querySelectorAll("button")].find((b) =>
-    b.textContent?.includes("Open"),
-  );
-  (btn as HTMLButtonElement)?.click();
-});
+await page.evaluate((sel) => {
+  document.querySelector<HTMLButtonElement>(sel)?.click();
+}, FREE_SLOT);
 await page.waitForSelector("[role='dialog']", { timeout: 10_000 });
 
 const sheetText = await page.$eval("[role='dialog']", (d) => d.textContent ?? "");
@@ -163,9 +164,7 @@ check(
 await page.goto(`${BASE}/facility/badminton-sac-1?date=${tomorrow}`, {
   waitUntil: "networkidle2",
 });
-const freeAfter = await page.$$eval("button", (btns) =>
-  btns.filter((b) => b.textContent?.includes("Open")).length,
-);
+const freeAfter = await page.$$eval(FREE_SLOT, (btns) => btns.length);
 check(
   "cancelled slot returns to the grid as open",
   freeAfter === freeBefore,
