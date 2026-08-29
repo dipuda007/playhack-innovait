@@ -134,10 +134,10 @@ export default async function BrowsePage({
 
           <div className="mt-8 grid gap-10 lg:grid-cols-[1.35fr_0.9fr]">
             <div data-reveal>
-              <h3 className="hed-md text-navy">
+              <h3 className="hed-md text-ink">
                 At six, fifty students want the same court. Exactly one may win.
               </h3>
-              <div className="gold-rule mt-4" />
+              <div className="brass-rule mt-4" />
 
               <div className="prose-news mt-6 space-y-4 md:columns-2 md:gap-8 [&>p]:break-inside-avoid">
                 <p>
@@ -208,7 +208,7 @@ function Result({ k, v, accent }: { k: string; v: string; accent?: boolean }) {
       <dd
         className={cn(
           "fig text-3xl font-bold leading-none",
-          accent ? "text-signal" : "text-navy",
+          accent ? "text-signal" : "text-ink",
         )}
       >
         {v}
@@ -247,10 +247,10 @@ function FilterLink({
       aria-current={active ? "true" : undefined}
       className={cn(
         "relative px-2.5 py-1.5 text-[14px] capitalize transition-colors duration-200",
-        "after:absolute after:inset-x-2.5 after:bottom-0 after:h-0.5 after:origin-center after:bg-burgundy after:transition-transform after:duration-300 after:ease-[cubic-bezier(0.16,1,0.3,1)]",
+        "after:absolute after:inset-x-2.5 after:bottom-0 after:h-0.5 after:origin-center after:bg-rust after:transition-transform after:duration-300 after:ease-[cubic-bezier(0.16,1,0.3,1)]",
         active
-          ? "font-semibold text-burgundy after:scale-x-100"
-          : "text-ink-2 hover:text-burgundy after:scale-x-0 hover:after:scale-x-100",
+          ? "font-semibold text-rust after:scale-x-100"
+          : "text-ink-2 hover:text-rust after:scale-x-0 hover:after:scale-x-100",
       )}
     >
       {children}

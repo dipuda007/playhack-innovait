@@ -18,7 +18,7 @@ export default async function RacePage() {
         <p className="kicker kicker-signal">Core challenge · Proof</p>
 
         <div className="mt-4 grid gap-8 lg:grid-cols-[1.1fr_1fr] lg:gap-12">
-          <h2 className="hed-xl font-display uppercase text-navy">
+          <h2 className="hed-xl font-display uppercase text-ink">
             Concurrency is the real opponent
           </h2>
 

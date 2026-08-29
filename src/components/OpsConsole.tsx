@@ -145,7 +145,7 @@ export function OpsConsole({
       </div>
 
       {result?.ok && (
-        <p className="animate-ink-in mt-4 rounded-r-md border-l-2 border-gold bg-paper-2 px-4 py-3 text-[14px]">
+        <p className="animate-ink-in mt-4 rounded-r-md border-l-2 border-brass bg-paper-2 px-4 py-3 text-[14px]">
           <strong>Closure filed.</strong> Those slots are now unbookable and
           appear as closed on the student grid.
         </p>

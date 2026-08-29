@@ -3,62 +3,64 @@
 /*
  * PlayHack — IIT Guwahati.
  *
- * The model is an institutional site, not a dashboard and not a newspaper.
- * Universities present themselves with a deep navy chrome, a warm accent
- * reserved for action, real photography of the place, and generous space
- * between blocks of content. That is the register a student expects from a
- * page carrying the name of the institute on it.
+ * The model is a printed institutional prospectus, not a dashboard.
  *
- * Three colours do the work:
+ * There is deliberately NO brand hue. Chrome is charcoal, paper is a warm
+ * off-white, and the only saturated colours on a screen are the ones that
+ * mean something: rust for the single action, brass for a hairline, and the
+ * status pair. A page whose colours are all load-bearing cannot look like a
+ * theme picked from a palette generator, which is what a wash of navy and
+ * violet always looks like.
  *
- *   navy      chrome — header, footer, statistics band, primary action
- *   burgundy  the single call to action, and the live/urgent state
- *   gold      hairline emphasis; never a fill, never a background
+ * Every grey here is WARM — mixed toward the paper, never toward blue. Cool
+ * grey text on a cool grey background is the single strongest tell of a
+ * generated interface, and it is invisible until you put it beside the
+ * warm version.
  *
- * Status has its own pair (forest / crimson) because availability is a fact
- * about the world, not a brand decision, and it must not be confused with
- * the accent that means "press this".
+ *   ink      chrome — header, footer, primary action, headings
+ *   rust     the one call to action, and the live/urgent state
+ *   brass    hairline emphasis; never a fill, never a background
  *
- * The token names below (paper / ink / signal / rule) are the ones the rest
- * of the app already addresses. They are kept and re-pointed rather than
- * renamed, so every page inherits the new identity without a rewrite.
+ * Status keeps its own pair (forest / brick) because availability is a fact
+ * about the world, not a brand decision. Brick is set darker than rust so
+ * "booked" and "press this" cannot be confused at a glance — and every
+ * status is carried by a dot, a word AND a count, so hue is never the only
+ * channel.
  */
 @theme {
-  /* ── Institutional palette ───────────────────────────────────────────── */
-  --color-navy: #002147;
-  --color-navy-2: #0b3767;
-  --color-navy-3: #17497f;
-  --color-burgundy: #6b1414;
-  --color-burgundy-2: #4d0e0e;
-  --color-gold: #c5a059;
+  /* ── Chrome and text. Warm charcoal through to warm mid-grey. ────────── */
+  --color-ink: #22201e;
+  --color-ink-soft: #34302b;
+  --color-ink-2: #55504a;
+  --color-ink-3: #837c73;
+
+  /* ── The two accents ─────────────────────────────────────────────────── */
+  --color-rust: #b4512a;
+  --color-rust-2: #93401f;
+  --color-brass: #c29a4b;
 
   /* ── Surfaces ────────────────────────────────────────────────────────── */
   --color-paper: #ffffff;
-  --color-paper-2: #f5f7f9;
-  --color-paper-3: #e9edf1;
-  --color-canvas: #faf9fd;
-
-  /* ── Text ────────────────────────────────────────────────────────────── */
-  --color-ink: #002147;
-  --color-ink-2: #44474e;
-  --color-ink-3: #6f737b;
+  --color-paper-2: #f2eee6;
+  --color-paper-3: #e4ded2;
+  --color-canvas: #f7f4ee;
 
   /* ── Lines ───────────────────────────────────────────────────────────── */
-  --color-rule: #e0e4e8;
-  --color-rule-2: #c4c6cf;
+  --color-rule: #e2dcd1;
+  --color-rule-2: #c8c0b2;
 
-  /* ── The one accent ──────────────────────────────────────────────────── */
-  --color-signal: #6b1414;
-  --color-signal-ink: #4d0e0e;
+  /* ── The one accent, under the name the rest of the app addresses. ───── */
+  --color-signal: #b4512a;
+  --color-signal-ink: #93401f;
 
   /* ── Status. Independent of brand, distinguishable in greyscale. ─────── */
-  --color-open: #1b5e20;
-  --color-taken: #b71c1c;
-  --color-field: #1b5e20;
+  --color-open: #2e6b3e;
+  --color-taken: #8c2f22;
+  --color-field: #2e6b3e;
 
-  --color-chart-1: #002147;
-  --color-chart-2: #6b1414;
-  --color-chart-3: #c5a059;
+  --color-chart-1: #22201e;
+  --color-chart-2: #b4512a;
+  --color-chart-3: #c29a4b;
 
   --font-display: var(--font-playfair), Georgia, "Times New Roman", serif;
   --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
@@ -75,9 +77,9 @@
   --ease-out-soft: cubic-bezier(0.16, 1, 0.3, 1);
   --ease-state: cubic-bezier(0.4, 0, 0.2, 1);
 
-  --shadow-card: 0 1px 2px rgb(0 33 71 / 0.06), 0 4px 14px -6px rgb(0 33 71 / 0.12);
-  --shadow-card-hover: 0 2px 4px rgb(0 33 71 / 0.08), 0 16px 32px -12px rgb(0 33 71 / 0.22);
-  --shadow-panel: 0 24px 60px -20px rgb(0 33 71 / 0.32);
+  --shadow-card: none;
+  --shadow-card-hover: 0 1px 2px rgb(34 32 30 / 0.05), 0 12px 26px -16px rgb(34 32 30 / 0.30);
+  --shadow-panel: 0 20px 50px -22px rgb(34 32 30 / 0.38);
 }
 
 @layer base {
@@ -96,7 +98,7 @@
 
   body {
     background: var(--color-canvas);
-    color: #1a1b1e;
+    color: #1a1917;
     font-family: var(--font-sans);
     -webkit-font-smoothing: antialiased;
 
@@ -118,12 +120,12 @@
   }
 
   ::selection {
-    background: var(--color-navy);
+    background: var(--color-ink);
     color: #ffffff;
   }
 
   :focus-visible {
-    outline: 2px solid var(--color-burgundy);
+    outline: 2px solid var(--color-rust);
     outline-offset: 2px;
     border-radius: 2px;
   }
@@ -239,7 +241,7 @@
     line-height: 1.65;
     color: var(--color-ink-2);
   }
-  .prose-news strong { color: #1a1b1e; font-weight: 600; }
+  .prose-news strong { color: #1a1917; font-weight: 600; }
 
   /** The paragraph directly under a headline. */
   .standfirst {
@@ -259,14 +261,14 @@
   .box {
     background: var(--color-paper);
     border: 1px solid var(--color-rule);
-    border-radius: 0.75rem;
+    border-radius: 0.25rem;
     box-shadow: var(--shadow-card);
   }
 
   .box-ink {
-    background: var(--color-navy);
-    border: 1px solid var(--color-navy);
-    border-radius: 0.75rem;
+    background: var(--color-ink);
+    border: 1px solid var(--color-ink);
+    border-radius: 0.25rem;
     color: #ffffff;
   }
 
@@ -285,11 +287,11 @@
   .box-link:active { transform: translateY(0); }
 
   /**
-   * A gold rule that draws itself across the top edge on hover.
+   * A brass rule that draws itself across the top edge on hover.
    *
    * The lift alone says "this is a target"; the rule says *which* target, and
    * it survives on a touch screen where there is no hover to lift anything —
-   * the same gold is what marks the active section in the header, so the
+   * the same brass is what marks the active section in the header, so the
    * vocabulary is consistent rather than decorative.
    */
   .box-link::before {
@@ -299,7 +301,7 @@
     top: 0;
     height: 2px;
     border-radius: 2px 2px 0 0;
-    background: var(--color-gold);
+    background: var(--color-brass);
     transform: scaleX(0);
     transform-origin: left;
     transition: transform 0.4s var(--ease-out-soft);
@@ -318,7 +320,7 @@
     justify-content: center;
     gap: 0.5rem;
     padding: 0.75rem 1.35rem;
-    border-radius: 0.375rem;
+    border-radius: 0.1875rem;
     border: 1px solid transparent;
     font-family: var(--font-sans);
     font-size: 0.8125rem;
@@ -337,35 +339,35 @@
   .btn:active:not(:disabled) { transform: translateY(0); }
 
   .btn-solid {
-    background: var(--color-navy);
-    border-color: var(--color-navy);
+    background: var(--color-ink);
+    border-color: var(--color-ink);
     color: #ffffff;
   }
   .btn-solid:hover:not(:disabled) {
-    background: var(--color-navy-2);
-    border-color: var(--color-navy-2);
-    box-shadow: 0 8px 20px -8px rgb(0 33 71 / 0.55);
+    background: var(--color-ink-soft);
+    border-color: var(--color-ink-soft);
+    box-shadow: 0 8px 18px -10px rgb(34 32 30 / 0.55);
   }
 
   .btn-signal {
-    background: var(--color-burgundy);
-    border-color: var(--color-burgundy);
+    background: var(--color-rust);
+    border-color: var(--color-rust);
     color: #ffffff;
   }
   .btn-signal:hover:not(:disabled) {
-    background: var(--color-burgundy-2);
-    border-color: var(--color-burgundy-2);
-    box-shadow: 0 8px 20px -8px rgb(107 20 20 / 0.6);
+    background: var(--color-rust-2);
+    border-color: var(--color-rust-2);
+    box-shadow: 0 8px 18px -10px rgb(180 81 42 / 0.55);
   }
 
   .btn-outline {
     background: transparent;
     border-color: var(--color-rule-2);
-    color: var(--color-navy);
+    color: var(--color-ink);
   }
   .btn-outline:hover:not(:disabled) {
     background: var(--color-paper-2);
-    border-color: var(--color-navy);
+    border-color: var(--color-ink);
   }
 
   .btn-sm { padding: 0.45rem 0.85rem; font-size: 0.75rem; letter-spacing: 0.04em; }
@@ -432,17 +434,17 @@
     width: 100%;
     padding: 0.65rem 0.85rem;
     border: 1px solid var(--color-rule-2);
-    border-radius: 0.375rem;
+    border-radius: 0.1875rem;
     background: var(--color-paper);
-    color: #1a1b1e;
+    color: #1a1917;
     font-family: var(--font-sans);
     font-size: 0.875rem;
     transition: border-color 0.18s var(--ease-state), box-shadow 0.18s var(--ease-state);
   }
   .field:focus {
     outline: none;
-    border-color: var(--color-navy);
-    box-shadow: 0 0 0 3px rgb(0 33 71 / 0.12);
+    border-color: var(--color-ink);
+    box-shadow: 0 0 0 3px rgb(180 81 42 / 0.16);
   }
 
   /* ── Data ────────────────────────────────────────────────────────────── */
@@ -459,8 +461,8 @@
     display: inline-flex;
     align-items: center;
     gap: 0.35rem;
-    padding: 0.2rem 0.55rem;
-    border-radius: 999px;
+    padding: 0.2rem 0.5rem;
+    border-radius: 0.125rem;
     background: var(--color-paper-2);
     border: 1px solid var(--color-rule);
     color: var(--color-ink-3);
@@ -511,33 +513,33 @@
   /**
    * Photography treatment. The campus is the subject, so colour stays — but
    * a small lift in contrast keeps a dusk photograph from going muddy under
-   * the navy scrim that sits on top of it.
+   * the ink scrim that sits on top of it.
    */
   .halftone { filter: saturate(1.04) contrast(1.06); }
 
-  /** The navy scrim over a hero photograph. Left-weighted, so type reads. */
-  .scrim-navy {
+  /** The ink scrim over a hero photograph. Left-weighted, so type reads. */
+  .scrim-ink {
     background: linear-gradient(
       100deg,
-      rgb(0 33 71 / 0.94) 0%,
-      rgb(0 33 71 / 0.76) 34%,
-      rgb(0 33 71 / 0.36) 62%,
-      rgb(0 33 71 / 0.10) 100%
+      rgb(26 25 23 / 0.90) 0%,
+      rgb(26 25 23 / 0.68) 36%,
+      rgb(26 25 23 / 0.30) 64%,
+      rgb(26 25 23 / 0.06) 100%
     );
   }
 
-  /** A gold hairline. Used once per band, under a heading or over a footer. */
-  .gold-rule {
+  /** A brass hairline. Used once per band, under a heading or over a footer. */
+  .brass-rule {
     height: 3px;
     width: 3.5rem;
-    background: var(--color-gold);
+    background: var(--color-brass);
     border-radius: 2px;
   }
 
   /* ── Navigation ──────────────────────────────────────────────────────── */
 
   /**
-   * A nav link on the navy bar. The underline grows from the centre rather
+   * A nav link on the charcoal bar. The underline grows from the centre rather
    * than fading in, which reads as a deliberate movement instead of a glow.
    */
   .navlink {
@@ -558,7 +560,7 @@
     right: 0;
     bottom: 0;
     height: 2px;
-    background: var(--color-gold);
+    background: var(--color-brass);
     transform: scaleX(0);
     transform-origin: center;
     transition: transform 0.28s var(--ease-out-soft);
@@ -566,10 +568,10 @@
   .navlink:hover::after { transform: scaleX(1); }
 
   .navlink-active {
-    background: var(--color-burgundy);
+    background: var(--color-rust);
     color: #ffffff;
     padding: 0.5rem 0.9rem;
-    border-radius: 0.375rem;
+    border-radius: 0.1875rem;
   }
   .navlink-active::after { display: none; }
 }
@@ -649,7 +651,7 @@
   .box-link:hover { transform: none; }
 
   /*
-   * The hover cues stay; only their motion goes. A gold rule that is simply
+   * The hover cues stay; only their motion goes. A brass rule that is simply
    * present on hover still says "this one", and the sweep is pure decoration
    * with nothing to say, so it is removed outright rather than made instant.
    */

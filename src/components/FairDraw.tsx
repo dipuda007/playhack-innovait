@@ -180,7 +180,7 @@ export function FairDraw({
           </div>
 
           {lottery.drawnAt && lottery.winnerName && (
-            <section className="animate-ink-in mt-5 rounded-xl border border-navy bg-navy px-6 py-7 text-paper sm:px-8">
+            <section className="animate-ink-in mt-5 rounded-xl border border-ink bg-ink px-6 py-7 text-paper sm:px-8">
               <p className="font-mono text-[10px] uppercase tracking-[0.3em] text-paper/60">
                 Drawn from {lottery.entries.length} entrants
               </p>

@@ -20,8 +20,8 @@ const NAV = [
  * The header.
  *
  * Two bands, the way an institution presents itself: a thin utility strip
- * naming the body that runs the service, and under it the navy bar that
- * carries the seal, the sections, and who you are reading as. Only the navy
+ * naming the body that runs the service, and under it the charcoal bar that
+ * carries the seal, the sections, and who you are reading as. Only the charcoal
  * bar sticks — the utility strip has said its piece by the time you scroll.
  *
  * The bar gains a shadow once the page has moved. That is the only cue that
@@ -102,7 +102,7 @@ export function Masthead({
   return (
     <header className="sticky top-0 z-50">
       {/* Utility strip. Who runs this, and what time it is where the courts are. */}
-      <div className="hidden bg-[#00152e] text-white/70 md:block">
+      <div className="hidden bg-[#171512] text-white/70 md:block">
         <div className="shell flex items-center justify-between py-1.5">
           <p className="text-[11px] tracking-[0.1em]">
             Indian Institute of Technology Guwahati
@@ -117,7 +117,7 @@ export function Masthead({
 
       <div
         className={cn(
-          "bg-navy text-white transition-shadow duration-300",
+          "bg-ink text-white transition-shadow duration-300",
           stuck && "shadow-[0_10px_30px_-12px_rgb(0_0_0/0.55)]",
         )}
       >
@@ -180,7 +180,7 @@ export function Masthead({
                   disabled={pending}
                   aria-haspopup="listbox"
                   aria-expanded={open}
-                  className="mt-1 rounded-sm bg-burgundy px-2 py-0.5 text-[9px] font-bold uppercase tracking-[0.1em] text-white transition-colors duration-200 hover:bg-burgundy-2 disabled:opacity-50"
+                  className="mt-1 rounded-sm bg-rust px-2 py-0.5 text-[9px] font-bold uppercase tracking-[0.1em] text-white transition-colors duration-200 hover:bg-rust-2 disabled:opacity-50"
                 >
                   Switch reader
                 </button>
@@ -209,7 +209,7 @@ export function Masthead({
                         className={cn(
                           "flex w-full items-center gap-2 border-b border-rule px-3 py-2.5 text-left text-sm transition-colors duration-150 last:border-b-0",
                           r.id === user?.id
-                            ? "bg-navy text-white"
+                            ? "bg-ink text-white"
                             : "hover:bg-paper-2",
                         )}
                       >
@@ -284,7 +284,7 @@ export function Masthead({
                     className={cn(
                       "rounded-md px-3 py-2.5 text-sm font-semibold uppercase tracking-[0.08em] transition-colors duration-200",
                       active
-                        ? "bg-burgundy text-white"
+                        ? "bg-rust text-white"
                         : "text-white/75 hover:bg-white/10 hover:text-white",
                     )}
                   >
@@ -304,7 +304,7 @@ export function Masthead({
                     className={cn(
                       "rounded-full px-2.5 py-1 text-[11px] transition-colors duration-200",
                       r.id === user?.id
-                        ? "bg-white text-navy"
+                        ? "bg-white text-ink"
                         : "bg-white/10 text-white/80 hover:bg-white/20",
                     )}
                   >

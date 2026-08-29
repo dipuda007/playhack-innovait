@@ -60,7 +60,7 @@ export default async function OpsPage() {
         <p className="kicker kicker-signal">Facility management</p>
 
         <div className="mt-4 grid gap-8 lg:grid-cols-[1.05fr_1fr] lg:gap-12">
-          <h2 className="hed-xl font-display uppercase text-navy">Ops console</h2>
+          <h2 className="hed-xl font-display uppercase text-ink">Ops console</h2>
 
           <div className="prose-news space-y-4 self-end">
             <p>

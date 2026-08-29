@@ -69,13 +69,13 @@ export function FacilityEntry({
     >
       <div className="flex flex-1 flex-col p-5">
         <div className="flex items-start justify-between gap-3">
-          <h3 className="hed-sm uppercase text-navy transition-colors duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] group-hover:text-burgundy">
+          <h3 className="hed-sm uppercase text-ink transition-colors duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] group-hover:text-rust">
             {facility.name}
           </h3>
           <SportIcon
             sport={facility.sport}
             size={22}
-            className="mt-0.5 shrink-0 text-navy transition-transform duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] group-hover:scale-110"
+            className="mt-0.5 shrink-0 text-ink transition-transform duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] group-hover:scale-110"
           />
         </div>
 
@@ -110,7 +110,7 @@ export function FacilityEntry({
                 <span
                   className={cn(
                     "fig text-[2.25rem] font-bold leading-none",
-                    full ? "text-ink-3" : tight ? "text-signal" : "text-navy",
+                    full ? "text-ink-3" : tight ? "text-signal" : "text-ink",
                   )}
                 >
                   {String(free).padStart(2, "0")}
@@ -123,7 +123,7 @@ export function FacilityEntry({
           </p>
 
           {!dayOver && !full && (
-            <span className="btn btn-signal btn-sm ml-auto">Quick book</span>
+            <span className="btn btn-solid btn-sm ml-auto">Quick book</span>
           )}
         </div>
 
@@ -139,7 +139,7 @@ export function FacilityEntry({
                 key={i}
                 className={cn(
                   "h-1.5 flex-1",
-                  i < remaining - free ? "bg-navy" : "bg-paper-3",
+                  i < remaining - free ? "bg-ink" : "bg-paper-3",
                 )}
               />
             ))}
@@ -167,7 +167,7 @@ export function FacilityEntry({
         ) : (
           <div
             aria-hidden
-            className="absolute inset-0 p-2.5 text-navy opacity-40 transition-[opacity,transform] duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] group-hover:scale-[1.07] group-hover:opacity-65"
+            className="absolute inset-0 p-2.5 text-ink opacity-40 transition-[opacity,transform] duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] group-hover:scale-[1.07] group-hover:opacity-65"
           >
             <CourtArt sport={facility.sport} className="h-full w-full" />
           </div>

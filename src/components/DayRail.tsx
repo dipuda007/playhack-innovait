@@ -9,7 +9,7 @@ import { cn } from "@/lib/cn";
  * The day rail.
  *
  * Eight days as one scrollable strip of tiles. The selected day inverts to
- * solid navy — the same fill the slot grid uses for a taken slot, so the
+ * solid ink — the same fill the slot grid uses for a taken slot, so the
  * language of "this cell is claimed" is identical everywhere in the product.
  *
  * The strip scrolls horizontally on a phone rather than wrapping. A wrapped
@@ -49,9 +49,9 @@ export function DayRail({
             role="tab"
             aria-selected={active}
             className={cn(
-              "min-w-[6.25rem] flex-1 rounded-lg border px-3 py-3 text-center transition-all duration-250 ease-[cubic-bezier(0.16,1,0.3,1)]",
+              "min-w-[6.25rem] flex-1 rounded-sm border px-3 py-3 text-center transition-all duration-250 ease-[cubic-bezier(0.16,1,0.3,1)]",
               active
-                ? "border-navy bg-navy text-white shadow-[0_8px_20px_-10px_rgb(0_33_71/0.6)]"
+                ? "border-ink bg-ink text-white shadow-[0_6px_16px_-10px_rgb(34_32_30/0.55)]"
                 : "border-rule bg-paper text-ink hover:-translate-y-0.5 hover:border-rule-2 hover:shadow-[var(--shadow-card)]",
             )}
           >

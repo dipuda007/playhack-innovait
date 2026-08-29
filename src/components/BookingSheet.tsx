@@ -156,7 +156,7 @@ export function BookingSheet({
         className="animate-ink-in w-full max-w-lg overflow-hidden rounded-t-xl border border-rule bg-paper shadow-[var(--shadow-panel)] focus:outline-none sm:rounded-xl"
       >
         {/* Docket head */}
-        <div className="flex items-start justify-between gap-4 border-b border-navy-2 bg-navy px-5 py-4 text-paper">
+        <div className="flex items-start justify-between gap-4 border-b border-ink-soft bg-ink px-5 py-4 text-paper">
           <div>
             <p className="font-mono text-[10px] uppercase tracking-[0.2em] text-paper/60">
               {heading}
@@ -251,7 +251,7 @@ export function BookingSheet({
               </div>
 
               {result.replayed && (
-                <p className="rounded-r-md border-l-2 border-gold bg-paper-2 p-3 text-[13px] leading-snug text-ink-2">
+                <p className="rounded-r-md border-l-2 border-brass bg-paper-2 p-3 text-[13px] leading-snug text-ink-2">
                   This request replayed an idempotency key that was already
                   committed, so it returned your original booking rather than
                   creating a second one.

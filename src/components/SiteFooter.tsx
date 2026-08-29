@@ -23,7 +23,7 @@ const REPO = "https://github.com/dipuda007/playhack-innovait";
  */
 export function SiteFooter() {
   return (
-    <footer className="mt-20 border-t-4 border-burgundy bg-navy text-white">
+    <footer className="mt-20 border-t-4 border-rust bg-ink text-white">
       <div className="shell grid gap-10 py-14 md:grid-cols-2 lg:grid-cols-4">
         <div className="lg:col-span-1">
           <div className="flex items-center gap-3">
@@ -42,13 +42,13 @@ export function SiteFooter() {
 
         <nav className="lg:col-span-1">
           <h3 className="font-display text-[1.15rem] font-semibold tracking-[0.01em]">Sections</h3>
-          <div className="gold-rule mt-2.5" />
+          <div className="brass-rule mt-2.5" />
           <ul className="mt-4 space-y-2.5">
             {SECTIONS.map((s) => (
               <li key={s.href}>
                 <Link
                   href={s.href}
-                  className="link-grow text-[13px] text-white/75 hover:text-gold"
+                  className="link-grow text-[13px] text-white/75 hover:text-brass"
                 >
                   {s.label}
                 </Link>
@@ -59,12 +59,12 @@ export function SiteFooter() {
 
         <div className="lg:col-span-1">
           <h3 className="font-display text-[1.15rem] font-semibold tracking-[0.01em]">The guarantee</h3>
-          <div className="gold-rule mt-2.5" />
+          <div className="brass-rule mt-2.5" />
           <p className="mt-4 text-[13px] leading-relaxed text-white/70">
             Two students cannot hold the same court at the same time. Not
             because the code checks, but because the database refuses:
           </p>
-          <code className="mt-3 block overflow-x-auto whitespace-pre rounded-md bg-black/25 p-3 font-mono text-[11px] leading-relaxed text-gold">
+          <code className="mt-3 block overflow-x-auto whitespace-pre rounded-md bg-black/25 p-3 font-mono text-[11px] leading-relaxed text-brass">
 {`EXCLUDE USING gist (
   facility_id WITH =,
   during      WITH &&
@@ -74,7 +74,7 @@ export function SiteFooter() {
 
         <div className="lg:col-span-1">
           <h3 className="font-display text-[1.15rem] font-semibold tracking-[0.01em]">Credits</h3>
-          <div className="gold-rule mt-2.5" />
+          <div className="brass-rule mt-2.5" />
           <p className="mt-4 text-[12px] leading-relaxed text-white/60">
             Campus photography via Wikimedia Commons. The lake, by Ganesh Mohan
             T, under CC BY-SA 4.0. The academic complex, by Satyadeep Karnati,
@@ -84,7 +84,7 @@ export function SiteFooter() {
             href={REPO}
             target="_blank"
             rel="noreferrer"
-            className="link-grow mt-4 inline-flex items-center gap-1.5 text-[13px] font-semibold text-white/80 hover:text-gold"
+            className="link-grow mt-4 inline-flex items-center gap-1.5 text-[13px] font-semibold text-white/80 hover:text-brass"
           >
             Source on GitHub
             <span aria-hidden>↗</span>

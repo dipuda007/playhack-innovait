@@ -9,10 +9,10 @@
  * to identify the campus this project serves, not to imply that the institute
  * endorses or operates the service. See NOTICE and public/brand/CREDITS.md.
  *
- * It sits on a white disc rather than directly on the navy bar because the
- * emblem is drawn largely in near-black (#231f20), which disappears against
- * #002147. The disc is how the institute's own material sets it on dark
- * grounds, and it is what the reference design does too.
+ * It sits on a white disc rather than directly on the charcoal bar because
+ * the emblem is drawn largely in near-black (#231f20), which disappears
+ * against a dark ground. The disc is how the institute's own material sets
+ * it on dark grounds.
  *
  * A plain <img> rather than next/image: the source is a static SVG, so there
  * is nothing for the optimiser to resize, and routing it through /_next/image

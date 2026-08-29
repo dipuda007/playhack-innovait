@@ -177,16 +177,22 @@ the brief's consistency requirement is already lost.
 
 ## The interface
 
-Set as a university site: a deep navy chrome, a burgundy reserved for the one
-action on a screen, a gold hairline for emphasis, and real photography of the
-campus behind the address at the top. Headings are Playfair Display, everything
-a reader reads or clicks is Inter, and anything that has to line up in a column
-is JetBrains Mono.
+Set as a printed institutional prospectus. There is deliberately **no brand
+hue**: chrome is charcoal, paper is a warm off-white, and the only saturated
+colours on a screen are the ones that mean something — rust for the single
+action, brass for a hairline, forest and brick for status. A page whose
+colours are all load-bearing cannot look like a theme picked from a palette
+generator.
 
-Slot state is carried by **fill, not hue** — open is white, taken is solid navy,
-yours is burgundy, closed is hatched — so the grid stays readable in greyscale,
-to a colourblind reader, and through a badly calibrated projector. Availability
-is stated three ways on every card: a coloured dot, a word, and a count.
+Every grey is warm, mixed toward the paper rather than toward blue. Headings
+are Playfair Display, everything a reader reads or clicks is Inter, and
+anything that has to line up in a column is JetBrains Mono.
+
+Slot state is carried by **fill, not hue** — open is paper, taken is solid
+charcoal, yours is rust, closed is hatched — so the grid stays readable in
+greyscale, to a colourblind reader, and through a badly calibrated projector.
+Availability is stated three ways on every card: a coloured dot, a word, and
+a count.
 
 Motion is a response, never decoration. Cards rise into view once as you reach
 them, the hero photograph settles over twelve seconds, and every transition is
