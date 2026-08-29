@@ -341,6 +341,41 @@ export async function createBooking(
       `;
 
       /**
+       * Idempotent replay, resolved before anything is allowed to reject.
+       *
+       * This has to come first, and it has to be inside the transaction,
+       * behind the advisory lock above.
+       *
+       * The unique-violation handler further down also returns the original
+       * booking, but it can only fire if the INSERT is actually reached. It
+       * never was: a retry of a submit that succeeded means the caller
+       * already holds a confirmed booking over exactly this range, so the
+       * self-clash check below rejected it with OVERLAPS_OWN first and the
+       * replay path was unreachable for the one case it exists to serve —
+       * a double tap, or a retry after a timeout the client could not
+       * distinguish from a failure.
+       *
+       * Inside the transaction rather than before it, because the advisory
+       * lock is what makes two simultaneous retries of the same intent
+       * serialise: the second one then sees the first one's committed row
+       * here instead of racing past into the same self-clash rejection.
+       * The unique-violation handler stays as the backstop for a retry that
+       * arrives on a different connection before this one commits.
+       */
+      const [prior] = await tx<Record<string, unknown>[]>`
+        SELECT b.id, b.facility_id, b.user_id, b.status, b.kind, b.party_size,
+               b.note, b.booking_code, b.created_at,
+               lower(b.during) AS starts_at, upper(b.during) AS ends_at,
+               f.name AS facility_name, u.name AS user_name
+        FROM bookings b
+        JOIN facilities f ON f.id = b.facility_id
+        LEFT JOIN users u ON u.id = b.user_id
+        WHERE b.idempotency_key = ${req.idempotencyKey}
+          AND b.user_id = ${req.userId}
+      `;
+      if (prior) return { replay: prior };
+
+      /**
        * Quota and self-clash in one round trip.
        *
        * These were two separate queries. On a co-located database that was
@@ -413,9 +448,20 @@ export async function createBooking(
         FROM booked
       `;
 
-        return row;
+        return { inserted: row };
       }),
     );
+
+    // A retry that found its own earlier booking. Returned as the original,
+    // not as a second row and not as an error.
+    if ("replay" in result && result.replay) {
+      return {
+        ok: true as const,
+        booking: toRecord(result.replay),
+        replayed: true,
+        mechanism: "idempotent-replay",
+      };
+    }
 
     // Built from what the INSERT already returned plus the facility row we
     // loaded before the transaction — no extra round trip to re-read a row we
@@ -423,7 +469,7 @@ export async function createBooking(
     return {
       ok: true,
       booking: toRecord({
-        ...result,
+        ...result.inserted,
         facility_name: facility.name,
         user_name: null,
       }),
