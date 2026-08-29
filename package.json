@@ -18,7 +18,8 @@
     "media": "tsx scripts/media.mts",
     "infographic": "tsx scripts/infographic.mts",
     "deck": "tsx scripts/deck.mts && python scripts/deck.py",
-    "deck:extras": "python scripts/deck_pdf.py"
+    "deck:extras": "python scripts/deck_pdf.py",
+    "report": "tsx scripts/report.mts"
   },
   "dependencies": {
     "clsx": "^2.1.1",

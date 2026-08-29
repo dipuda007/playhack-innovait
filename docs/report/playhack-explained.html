@@ -1,0 +1,957 @@
+<!doctype html>
+<!--
+  PlayHack — the project, explained end to end.
+  Rendered to docs/PlayHack-Explained.pdf by scripts/report.mts (`npm run report`).
+  Every measured figure in here came from the deployed application.
+-->
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;1,600&family=Inter:wght@400;600;700&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet" />
+<style>
+  @page { size: A4; margin: 21mm 19mm 20mm; }
+  :root{--ink:#22201e;--ink2:#55504a;--ink3:#837c73;--paper:#fff;--rule:#e2dcd1;
+        --rust:#b4512a;--brass:#c29a4b;--open:#2e6b3e;--taken:#8c2f22;--wash:#f7f4ee;}
+  *{margin:0;padding:0;box-sizing:border-box}
+  body{font-family:Inter,system-ui,sans-serif;color:var(--ink);font-size:10.2pt;line-height:1.62;
+       -webkit-font-smoothing:antialiased;font-feature-settings:"cv05" 1,"cv08" 1;}
+  h1,h2,h3,h4{font-family:"Playfair Display",Georgia,serif;font-weight:700;line-height:1.15;
+              break-after:avoid;text-wrap:balance}
+  h2{font-size:21pt;letter-spacing:.005em;margin:0 0 4mm}
+  h3{font-size:13.5pt;margin:7mm 0 2.5mm;color:var(--ink)}
+  h4{font-family:Inter,sans-serif;font-size:10.3pt;font-weight:700;margin:5mm 0 1.5mm;
+     letter-spacing:.02em}
+  p{margin:0 0 3mm;text-wrap:pretty}
+  em{font-family:"Playfair Display",serif;font-style:italic}
+  b,strong{font-weight:700;color:var(--ink)}
+  a{color:var(--rust);text-decoration:none}
+  code,.mono{font-family:"JetBrains Mono",monospace;font-size:8.6pt}
+  code{color:var(--rust)}
+  pre{font-family:"JetBrains Mono",monospace;font-size:8.2pt;line-height:1.55;background:var(--wash);
+      border-left:2.5px solid var(--ink);padding:3.5mm 4mm;margin:3mm 0 4mm;white-space:pre-wrap;
+      break-inside:avoid;color:var(--ink2)}
+  pre b{color:var(--rust)}
+  pre .c{color:var(--ink3)}
+  ul,ol{margin:0 0 3mm 5mm}
+  li{margin-bottom:1.6mm}
+  table{border-collapse:collapse;width:100%;font-size:9pt;margin:3mm 0 4mm;break-inside:avoid}
+  th{text-align:left;font-size:7.6pt;letter-spacing:.1em;text-transform:uppercase;color:var(--ink3);
+     border-bottom:1px solid var(--ink);padding:0 3mm 1.6mm 0;font-weight:700}
+  td{border-bottom:1px solid var(--rule);padding:2mm 3mm 2mm 0;color:var(--ink2);vertical-align:top}
+  td b{color:var(--ink)}
+  .n{font-family:"JetBrains Mono",monospace;text-align:right;font-variant-numeric:tabular-nums}
+  .good{color:var(--open);font-weight:700}.bad{color:var(--taken);font-weight:700}
+  .sec{break-before:page}
+  .kicker{font-size:7.6pt;font-weight:700;letter-spacing:.2em;text-transform:uppercase;color:var(--rust);margin-bottom:2mm}
+  .rule{height:2px;width:18mm;background:var(--brass);margin:0 0 5mm}
+  .note{border:1px solid var(--rule);background:var(--wash);padding:3.5mm 4mm;margin:3mm 0 4mm;
+        font-size:9.2pt;break-inside:avoid}
+  .note .t{font-weight:700;color:var(--ink);display:block;margin-bottom:1mm}
+  .two{column-count:2;column-gap:8mm}
+  figure{margin:3mm 0 4mm;break-inside:avoid}
+  figure img{width:100%;border:1px solid var(--rule)}
+  figcaption{font-size:8pt;color:var(--ink3);margin-top:1.6mm}
+  .cover{height:247mm;display:flex;flex-direction:column;justify-content:space-between;break-after:page}
+  .cover h1{font-size:44pt;line-height:1.02;text-transform:uppercase;letter-spacing:.004em}
+  .cover .sub{font-size:13pt;color:var(--ink2);margin-top:6mm;max-width:26em;line-height:1.5}
+  .cover .meta{font-size:8.4pt;letter-spacing:.14em;text-transform:uppercase;color:var(--ink3);
+               border-top:1px solid var(--rule);padding-top:4mm;display:flex;justify-content:space-between}
+  .toc{font-size:9.4pt}
+  .toc div{display:flex;gap:3mm;align-items:baseline;padding:1.4mm 0;border-bottom:1px solid var(--rule)}
+  .toc .i{font-family:"JetBrains Mono",monospace;font-size:8pt;color:var(--ink3);width:9mm;flex:none}
+  .toc .t{flex:1}
+  .toc .p{font-family:"JetBrains Mono",monospace;font-size:8pt;color:var(--ink3)}
+</style>
+</head>
+<body>
+
+<!-- ══ COVER ══ -->
+<section class="cover">
+  <div>
+    <p class="kicker">PlayHack · SDE Track · IIT Guwahati</p>
+    <div class="rule" style="margin-top:4mm"></div>
+  </div>
+  <div>
+    <h1>PlayHack<br>Explained</h1>
+    <p class="sub">A campus sports facility booking system in which the winner of a
+      race for one court is decided by Postgres, not by application code — and the
+      complete engineering account of why that choice was made, how it was built,
+      how it is deployed, and how every claim in it was verified.</p>
+  </div>
+  <div class="meta">
+    <span>Team InnovAIT</span>
+    <span>innovait-hackathon.vercel.app</span>
+    <span>Technical report</span>
+  </div>
+</section>
+
+<!-- ══ 1 OVERVIEW ══ -->
+<section>
+  <p class="kicker">One</p>
+  <h2>Overview</h2>
+  <div class="rule"></div>
+
+  <p><b>The problem.</b> IIT Guwahati has twelve bookable sports facilities and
+  roughly six thousand students. At 6:00 PM, many of them want the same court.
+  A booking system must confirm exactly one of those requests and reject the
+  rest, without ever corrupting the record of who holds what.</p>
+
+  <p><b>What almost everybody builds.</b> Check whether the slot is free, then
+  write the booking if it looked free. Both statements are individually
+  reasonable. Between them is a gap, and under real load another request
+  commits inside it. Two students walk to the same court, and nothing in the
+  logs looks like an error.</p>
+
+  <p><b>What this does instead.</b> There is no check. A booking is a row
+  carrying a time range, and one Postgres exclusion constraint makes it
+  physically impossible to store two overlapping ranges for the same facility.
+  The write <em>is</em> the decision. The losers are rejected by the database
+  with SQLSTATE <code>23P01</code> before they can become rows.</p>
+
+  <div class="note">
+    <span class="t">The measured result</span>
+    Fifty simultaneous requests for one court, fired at the deployed
+    application. Through a textbook check-then-write: <b class="bad">50
+    confirmed</b> and <b class="bad">1,225 overlapping pairs</b> in the table.
+    Through the constrained path, identical traffic: <b class="good">1
+    confirmed, 49 rejected, 0 overlapping pairs</b> across every confirmed row
+    in the database.
+  </div>
+
+  <h3>What is in this document</h3>
+  <div class="toc">
+    <div><span class="i">01</span><span class="t">Overview</span></div>
+    <div><span class="i">02</span><span class="t">The project, explained for anyone</span></div>
+    <div><span class="i">03</span><span class="t">The concurrency problem, in depth</span></div>
+    <div><span class="i">04</span><span class="t">The mechanism: exclusion constraints over ranges</span></div>
+    <div><span class="i">05</span><span class="t">Data model</span></div>
+    <div><span class="i">06</span><span class="t">The write path, statement by statement</span></div>
+    <div><span class="i">07</span><span class="t">Idempotency</span></div>
+    <div><span class="i">08</span><span class="t">Losing well: typed rejections and alternatives</span></div>
+    <div><span class="i">09</span><span class="t">Cancellation and waitlist promotion</span></div>
+    <div><span class="i">10</span><span class="t">Maintenance closures</span></div>
+    <div><span class="i">11</span><span class="t">The fair draw</span></div>
+    <div><span class="i">12</span><span class="t">Availability is derived, never stored</span></div>
+    <div><span class="i">13</span><span class="t">Real time, and why the payload is a hint</span></div>
+    <div><span class="i">14</span><span class="t">The interface</span></div>
+    <div><span class="i">15</span><span class="t">Deployment and topology</span></div>
+    <div><span class="i">16</span><span class="t">Performance engineering</span></div>
+    <div><span class="i">17</span><span class="t">Verification strategy</span></div>
+    <div><span class="i">18</span><span class="t">Security posture and threat model</span></div>
+    <div><span class="i">19</span><span class="t">Limitations, and what we would do next</span></div>
+    <div><span class="i">A</span><span class="t">Appendix: API reference</span></div>
+    <div><span class="i">B</span><span class="t">Appendix: measured data</span></div>
+    <div><span class="i">C</span><span class="t">Appendix: repository map and glossary</span></div>
+  </div>
+</section>
+
+<!-- ══ 2 FOR ANYONE ══ -->
+<section class="sec">
+  <p class="kicker">Two</p>
+  <h2>The project, explained for anyone</h2>
+  <div class="rule"></div>
+
+  <p>Imagine a single badminton court and a noticeboard beside it where students
+  write their name against an hour. At 6:00 PM fifty students arrive at the
+  noticeboard at once, all holding pens, all looking at the same empty line for
+  7:00 PM.</p>
+
+  <p>A careless system is a noticeboard with fifty pens. Everybody looks, sees
+  the line is empty, and writes. Fifty names now occupy one line. Nobody did
+  anything wrong; the noticeboard simply had no way to stop the second pen.</p>
+
+  <p>The obvious fix is a supervisor who looks at the board before letting you
+  write. That is what most booking software does — a check, then a write. It
+  fails for a subtle reason: between the moment the supervisor looks and the
+  moment your pen touches the paper, somebody else's pen has already landed.
+  The check was honest and the answer was stale.</p>
+
+  <p><b>What we built is a noticeboard that physically cannot accept a second
+  name on an occupied line.</b> No supervisor, no looking. Everybody writes at
+  once; the board itself accepts exactly one and refuses the other forty-nine.
+  In software terms the noticeboard is a Postgres table and the physical
+  refusal is an <em>exclusion constraint</em> — a rule the database enforces on
+  every write, which cannot be bypassed, forgotten, or raced.</p>
+
+  <h3>Why that difference matters</h3>
+  <p>Because the rule lives in the database, it holds no matter what reaches
+  it. A bug in our code cannot double-book. A second copy of the application
+  running at the same time cannot double-book. A future developer who forgets
+  the check cannot double-book. There is nothing to remember.</p>
+
+  <h3>What a student actually sees</h3>
+  <ul>
+    <li>A page listing every facility on campus with how many slots are open today.</li>
+    <li>A day grid for a facility, showing each hour as open, taken, theirs, or closed.</li>
+    <li>A confirmation with a booking code, or — if they lost the race — a clear
+      reason and three other slots they could take instead.</li>
+    <li>A waitlist for a full slot, which is offered to them automatically the
+      moment somebody cancels.</li>
+  </ul>
+
+  <h3>What a facility manager sees</h3>
+  <ul>
+    <li>A console for closing a court for maintenance, which is refused if a
+      student already holds a slot inside that window.</li>
+    <li>Analytics: when demand actually peaks, which courts sit empty at prime
+      time, and which bookings are never turned up for.</li>
+  </ul>
+
+  <h3>The demonstration</h3>
+  <p>The application ships with a page that fires the race in front of you. You
+  choose a court, a slot, and how many simultaneous requests to send — up to two
+  hundred — and pick which implementation handles them. Nothing is simulated:
+  both modes write to real Postgres tables through a real HTTP endpoint. The
+  only difference between them is whether the table carries the constraint.</p>
+</section>
+
+<!-- ══ 3 PROBLEM ══ -->
+<section class="sec">
+  <p class="kicker">Three</p>
+  <h2>The concurrency problem, in depth</h2>
+  <div class="rule"></div>
+
+  <p>The brief states the requirement precisely: <em>“At 6:00 PM, many students
+  request the same facility and time slot at once. The system must confirm
+  exactly one and reject the rest, without corrupting data.”</em> Four
+  properties follow, and it is worth naming them because they fail
+  independently.</p>
+
+  <table>
+    <tr><th style="width:24%">Property</th><th>What it demands</th><th style="width:30%">How it is met here</th></tr>
+    <tr><td><b>Atomicity</b></td><td>A booking is fully confirmed or not created at all — never half-written.</td><td>One transaction; the booking row and its audit row are written by a single statement.</td></tr>
+    <tr><td><b>Uniqueness</b></td><td>A facility and time slot has at most one valid booking.</td><td>A partial exclusion constraint over <code>(facility_id, during)</code>.</td></tr>
+    <tr><td><b>Consistency</b></td><td>Availability and booking records never contradict each other.</td><td>Availability is computed from <code>bookings</code>; there is no second copy to disagree.</td></tr>
+    <tr><td><b>Reliability</b></td><td>The result is trustworthy under simultaneous requests.</td><td>Verified by a whole-table sweep after every race, at n up to 200.</td></tr>
+  </table>
+
+  <h3>Anatomy of the race</h3>
+  <p>The failing pattern is four lines long and appears in almost every
+  tutorial:</p>
+<pre><span class="c">// T1 and T2 arrive within microseconds of each other</span>
+const taken = await isSlotTaken(court, slot);   <span class="c">// both read: free</span>
+if (!taken) await insertBooking(court, slot);   <span class="c">// both write</span></pre>
+
+  <p>The window between the read and the write is not a bug in either line. It
+  is a property of doing two things instead of one. Widening the transaction
+  does not close it, because two transactions can both hold a consistent
+  snapshot in which the slot is free — under <code>READ COMMITTED</code>, the
+  default, neither read blocks the other and neither sees the other's
+  uncommitted insert.</p>
+
+  <h4>Why the usual defences are insufficient</h4>
+  <table>
+    <tr><th style="width:30%">Defence</th><th>Why it is not enough</th></tr>
+    <tr><td>Application-level mutex</td><td>Holds only within one process. Vercel runs many concurrent instances; a lock in memory protects nothing.</td></tr>
+    <tr><td><code>SERIALIZABLE</code> isolation</td><td>Correct, but converts the problem into serialization failures that must be retried, and costs throughput on every transaction rather than only contended ones.</td></tr>
+    <tr><td><code>SELECT … FOR UPDATE</code> on a slot row</td><td>Requires a <code>slots</code> table — a second source of truth about occupancy, and one more thing that can disagree with <code>bookings</code>.</td></tr>
+    <tr><td><code>UNIQUE (facility_id, starts_at)</code></td><td>Catches identical start times only. It cannot see that 18:30–19:30 overlaps 18:00–19:00, which is the collision that actually happens.</td></tr>
+  </table>
+
+  <div class="note">
+    <span class="t">The case a unique key cannot see</span>
+    A booking from 18:30 to 19:30 does not share a start time with one from
+    18:00 to 19:00, so a unique index stores both happily. They overlap by
+    thirty minutes. Overlap — not equality — is what matters to a student
+    holding a racket.
+  </div>
+</section>
+
+<!-- ══ 4 MECHANISM ══ -->
+<section class="sec">
+  <p class="kicker">Four</p>
+  <h2>The mechanism: exclusion constraints over ranges</h2>
+  <div class="rule"></div>
+
+  <p>Postgres can enforce that no two rows in a table satisfy a given pair of
+  operators simultaneously. That is an <em>exclusion constraint</em>. With a
+  range type and the overlap operator it expresses precisely the rule this
+  product needs:</p>
+
+<pre>ALTER TABLE bookings ADD CONSTRAINT bookings_no_overlap
+  <b>EXCLUDE USING gist (</b>
+    facility_id <b>WITH =</b>,
+    during      <b>WITH &amp;&amp;</b>
+  <b>)</b> WHERE (status = 'confirmed');</pre>
+
+  <p>Read aloud: <i>no two confirmed rows may have the same facility and
+  overlapping time ranges.</i> Three parts do the work.</p>
+
+  <h4><code>during</code> is a <code>tstzrange</code></h4>
+  <p>A single column holding a half-open interval <code>[start, end)</code>. Half-open
+  matters: a booking ending at 19:00 and one starting at 19:00 do <em>not</em>
+  overlap, which is the behaviour a timetable wants. Storing two timestamps
+  instead would push interval logic into application code, where it can be got
+  wrong.</p>
+
+  <h4><code>USING gist</code></h4>
+  <p>B-tree indexes answer equality and ordering. Overlap is neither, so the
+  constraint is backed by a GiST index, which supports the range operators.
+  <code>btree_gist</code> is required so that the scalar <code>facility_id = </code>
+  clause can live in the same index as the range clause; the migration creates
+  the extension itself.</p>
+
+  <h4><code>WHERE (status = 'confirmed')</code></h4>
+  <p>A <em>partial</em> constraint, and this single clause buys two features.
+  Cancelled rows fall out of the index, so cancelling is a status flip rather
+  than a delete: history is preserved and the slot is instantly bookable again
+  with no cleanup job. And because a maintenance closure is stored as a booking
+  row with <code>kind='block'</code>, closures pass through the same constraint —
+  a manager cannot close a court out from under a confirmed reservation.</p>
+
+  <h3>What the loser receives</h3>
+  <p>Postgres raises SQLSTATE <code>23P01</code>, <code>exclusion_violation</code>. The
+  application catches exactly that code and converts it into a typed product
+  outcome. It is a <em>result</em>, not an error: the slot is genuinely gone, so
+  it is never retried.</p>
+
+  <table>
+    <tr><th></th><th><code>UNIQUE (facility, starts_at)</code></th><th><code>EXCLUDE … WITH &amp;&amp;</code></th></tr>
+    <tr><td>Two bookings at 18:00</td><td class="good">rejected</td><td class="good">rejected</td></tr>
+    <tr><td><b>18:00–19:00 vs 18:30–19:30</b></td><td class="bad">both stored</td><td class="good">rejected</td></tr>
+    <tr><td>Two-hour closure spanning four slots</td><td class="bad">not expressible</td><td class="good">one row</td></tr>
+    <tr><td>Cancelling frees the slot</td><td>needs a delete</td><td class="good">status flip</td></tr>
+  </table>
+</section>
+
+<!-- ══ 5 DATA MODEL ══ -->
+<section class="sec">
+  <p class="kicker">Five</p>
+  <h2>Data model</h2>
+  <div class="rule"></div>
+
+  <p>Six tables carry the product; two more exist only to support the
+  demonstration. The design principle throughout is that occupancy has exactly
+  one representation.</p>
+
+  <table>
+    <tr><th style="width:26%">Table</th><th>Holds</th></tr>
+    <tr><td><code>users</code></td><td>The seeded roster — name, role, hostel, roll number, weekly quota, a reliability score used to weight the lottery.</td></tr>
+    <tr><td><code>facilities</code></td><td>Twelve courts. Opening and closing time, slot length in minutes, capacity, location, sport, and an <code>is_active</code> flag.</td></tr>
+    <tr><td><code>bookings</code></td><td><b>The only record of occupancy.</b> A facility, an optional user, a <code>tstzrange</code>, a status, a kind (<code>booking</code> or <code>block</code>), an idempotency key, and a human-readable booking code.</td></tr>
+    <tr><td><code>waitlist</code></td><td>Queue entries for full slots, with a state machine: <code>queued → offered → claimed</code>, and a claim expiry.</td></tr>
+    <tr><td><code>booking_events</code></td><td>Append-only audit. Written in the same statement as the thing it describes, so the trail cannot disagree with reality.</td></tr>
+    <tr><td><code>lotteries</code>, <code>lottery_entries</code></td><td>Fair-draw rounds: the published seed, entrant weights, and the drawn order.</td></tr>
+    <tr><td><code>rate_limit</code></td><td>Fixed-window counters for the demo endpoints, shared across function instances.</td></tr>
+    <tr><td><code>naive_bookings</code>, <code>race_attempts</code></td><td>The control group. Structurally like <code>bookings</code> but with <b>no</b> constraint, so the demo can show what identical traffic does to a schema that trusts application code. It exists in order to fail.</td></tr>
+  </table>
+
+  <h3>What is deliberately absent</h3>
+  <p><b>There is no <code>slots</code> table.</b> A row per court per hour per day
+  would be a second source of truth about occupancy. The moment it disagreed
+  with <code>bookings</code> — a partial write, a missed cleanup, a timezone bug —
+  the brief's consistency requirement would already be lost. Instead the slot
+  grid is generated per request from each facility's own timetable and
+  subtracted against confirmed bookings.</p>
+</section>
+
+<!-- ══ 6 WRITE PATH ══ -->
+<section class="sec">
+  <p class="kicker">Six</p>
+  <h2>The write path, statement by statement</h2>
+  <div class="rule"></div>
+
+  <p>A booking request enters at <code>POST /api/bookings</code>. The route validates
+  the body with a zod schema, resolves the acting user <b>from the signed
+  session cookie and never from the request body</b>, and calls
+  <code>createBooking</code>. Inside one transaction, four things happen in order.</p>
+
+  <h4>1 · One advisory lock, on the user</h4>
+<pre>SELECT pg_advisory_xact_lock($userLockKey);</pre>
+  <p>Not on the slot — on the person. The quota check that follows is a genuine
+  read-then-write, and one student firing ten parallel requests would otherwise
+  pass ten quota checks and commit all ten. Different students hash to
+  different keys and never contend, so in a race between fifty students this
+  lock is uncontended.</p>
+
+  <h4>2 · Idempotent replay, resolved first</h4>
+  <p>Before anything is allowed to reject, the transaction looks for a booking
+  already written under this idempotency key by this user. If one exists it is
+  returned as the original. This must sit inside the transaction and behind the
+  advisory lock — that is what makes two simultaneous retries of the same
+  intent serialise, so the second reads the first's committed row instead of
+  racing past it. <a href="#s7">Section seven</a> explains why this ordering
+  was a defect for a while.</p>
+
+  <h4>3 · Quota and self-clash, in one round trip</h4>
+  <p>A single statement returns how many bookings the user holds in the next
+  seven days, their weekly quota, and whether they already hold a booking
+  overlapping this range. A student cannot be on two courts at once — the same
+  shape of rule as the court invariant, scoped to the person. These were two
+  queries once; against a database a continent away every statement inside a
+  transaction is paid for twice, so they were merged.</p>
+
+  <h4>4 · The decisive statement</h4>
+<pre>WITH booked AS (
+  INSERT INTO bookings (facility_id, user_id, during, idempotency_key, …)
+  VALUES ($1, $2, tstzrange($3, $4, '[)'), $5, …)
+  RETURNING …
+), logged AS (
+  INSERT INTO booking_events (booking_id, facility_id, user_id, type, payload)
+  SELECT b.id, b.facility_id, b.user_id, 'booking.confirmed', … FROM booked b
+)
+SELECT … FROM booked;</pre>
+
+  <p>There is <b>no preceding availability check</b>. This INSERT either commits
+  and the slot is the user's, or it raises <code>23P01</code> and the slot never
+  was. There is no window between deciding and doing, because they are the same
+  operation. The audit row rides along in the same statement through a CTE —
+  same transaction as before, one round trip instead of two.</p>
+
+  <h3>Failure handling</h3>
+  <table>
+    <tr><th style="width:22%">SQLSTATE</th><th>Meaning</th><th style="width:34%">Response</th></tr>
+    <tr><td><code>23P01</code></td><td>Exclusion violation — somebody else holds the slot.</td><td>Typed <code>SLOT_TAKEN</code>, three alternatives, waitlist offered. Never retried: it is a settled result.</td></tr>
+    <tr><td><code>23505</code></td><td>Unique violation on the idempotency key.</td><td>The original booking is returned. Backstop for a retry arriving on another connection before the first commits.</td></tr>
+    <tr><td><code>40P01</code></td><td>Deadlock — two transactions each holding a tuple the other must check inside the constraint.</td><td>Rolled back cleanly, so it is retried with jittered backoff, six attempts.</td></tr>
+    <tr><td><code>40001</code></td><td>Serialization failure.</td><td>Retried on the same path.</td></tr>
+  </table>
+</section>
+
+<!-- ══ 7 IDEMPOTENCY ══ -->
+<section class="sec" id="s7">
+  <p class="kicker">Seven</p>
+  <h2>Idempotency</h2>
+  <div class="rule"></div>
+
+  <p>A transaction cannot distinguish a retry from a second intent. Both are
+  valid requests arriving twice; only the client knows they meant one thing. So
+  the client generates a key per booking intent and sends it. Absent keys are
+  <b>not</b> generated server-side — a server-generated key would be fresh on
+  every retry and would defeat the entire mechanism.</p>
+
+  <p>On a phone on hostel wifi, a submit that times out is indistinguishable
+  from a submit that failed. The student taps again. Without idempotency they
+  are told they clash with themselves; with it they are shown the booking they
+  already have.</p>
+
+  <div class="note">
+    <span class="t">A defect found during verification, and fixed</span>
+    The replay path originally keyed only off the unique-key violation, which
+    meant it could only fire if the INSERT was reached. It never was: a retry
+    of a successful submit means the caller already holds a confirmed booking
+    over that exact range, so the self-clash pre-check rejected it several
+    statements earlier with <code>OVERLAPS_OWN</code>. The branch was unreachable
+    for the one case it existed to serve. Nothing was ever double-booked — the
+    pre-check rejected, so the invariant was never in danger — but the promise
+    was not kept. Resolving the key first, inside the transaction and behind the
+    advisory lock, fixed it. Verified against production with five requests on
+    one key: before, <code>201</code> then <code>409</code> four times; after,
+    <code>201</code> five times returning the same booking code, one row in the
+    table.
+  </div>
+</section>
+
+<!-- ══ 8 LOSING WELL ══ -->
+<section class="sec">
+  <p class="kicker">Eight</p>
+  <h2>Losing well: typed rejections and alternatives</h2>
+  <div class="rule"></div>
+
+  <p>Forty-nine of fifty students lose. An error page tells them nothing. Every
+  rejection here is a typed outcome carrying a reason and a next action.</p>
+
+  <table>
+    <tr><th style="width:30%">Code</th><th>Cause</th><th style="width:26%">Carries</th></tr>
+    <tr><td><code>SLOT_TAKEN</code></td><td>Lost the race for the slot.</td><td>Three alternatives, queue position, waitlist offer.</td></tr>
+    <tr><td><code>OVERLAPS_OWN</code></td><td>The student already holds an overlapping booking.</td><td>Three alternatives.</td></tr>
+    <tr><td><code>QUOTA_EXCEEDED</code></td><td>Weekly quota reached.</td><td>The quota and the count.</td></tr>
+    <tr><td><code>FACILITY_INACTIVE</code>, <code>OUTSIDE_HOURS</code>, <code>SLOT_MISALIGNED</code>, <code>IN_THE_PAST</code></td><td>Configuration and validation failures, checked before any contended read.</td><td>A plain explanation.</td></tr>
+  </table>
+
+  <p>Alternatives are computed at rejection time from the same derived
+  availability the grid uses, so they cannot suggest a slot that has just gone.
+  The intent is that losing a race costs a student one tap, not a rethink.</p>
+</section>
+
+<!-- ══ 9 CANCELLATION ══ -->
+<section class="sec">
+  <p class="kicker">Nine</p>
+  <h2>Cancellation and waitlist promotion</h2>
+  <div class="rule"></div>
+
+  <p>Cancelling flips <code>status</code> to <code>cancelled</code> and stamps
+  <code>cancelled_at</code>. Because the exclusion constraint is partial over
+  confirmed rows, the row leaves the index the instant it commits and the slot
+  is bookable again — no delete, no cleanup job, and the history is retained.</p>
+
+  <p>Ownership is enforced in the statement itself: the <code>UPDATE</code> is scoped
+  by <code>user_id</code>, so a forged booking id matches no row and returns
+  <code>404</code> rather than cancelling somebody else's court.</p>
+
+  <h3>Promotion happens in the same transaction</h3>
+  <p>Releasing the slot and offering it to the next student in the queue are one
+  atomic operation. A background job would leave a window in which the slot is
+  free but unowned — precisely the window in which a race would take it, and
+  precisely the bug this whole system exists to prevent. The offer carries an
+  expiry; claiming it re-checks that expiry inside a
+  <code>SELECT … FOR UPDATE</code> rather than trusting what the page rendered
+  seconds ago.</p>
+
+  <p>The claim is then a normal constrained INSERT. An offer is a promise that
+  the slot was free when the offer was made, not that it still is — a manager
+  may have closed the court for maintenance in between. If the claim loses, the
+  student is told plainly rather than handed a booking that does not exist.</p>
+</section>
+
+<!-- ══ 10 CLOSURES ══ -->
+<section class="sec">
+  <p class="kicker">Ten</p>
+  <h2>Maintenance closures</h2>
+  <div class="rule"></div>
+
+  <p>A closure is a <code>bookings</code> row with <code>kind='block'</code> and no
+  user. One invariant, two features: because it travels the same constraint, a
+  manager attempting to close a window that a student already holds is refused
+  with the same <code>23P01</code>, and the console names who is in the way.</p>
+
+  <p>The constraint does not care who is in the way, but the manager does — so
+  the response distinguishes an existing closure (a duplicate action) from a
+  student booking (a conflict with a person), because those need different next
+  steps.</p>
+
+  <p>Reopening is a status flip guarded on <code>kind='block'</code>, so the endpoint
+  cannot be pointed at a student's booking. It writes a <code>block.lifted</code>
+  event to the audit log.</p>
+</section>
+
+<!-- ══ 11 LOTTERY ══ -->
+<section class="sec">
+  <p class="kicker">Eleven</p>
+  <h2>The fair draw</h2>
+  <div class="rule"></div>
+
+  <p>Winning a race is not the same as deserving the court. First-come-first-served
+  rewards whoever has the best wifi and the fastest thumb. For genuinely
+  contended peak slots the product offers an alternative: a seeded, weighted,
+  published lottery.</p>
+
+  <ul>
+    <li><b>The seed is published before the draw</b>, alongside the rules and the
+      entrant list, so anyone can recompute the winner afterwards and check it.</li>
+    <li><b>Weights are stated</b>: reliability score (a student who turns up is
+      weighted higher than one who no-shows) and how recently the entrant last
+      won a peak slot.</li>
+    <li><b>The draw is deterministic</b> given the seed and the entrant set, which
+      is what makes it auditable rather than merely random.</li>
+  </ul>
+
+  <p>The winner's booking is then written through the same constrained path as
+  any other booking. The lottery decides <em>who may attempt</em> the write; it
+  does not get to bypass the invariant.</p>
+</section>
+
+<!-- ══ 12 AVAILABILITY ══ -->
+<section class="sec">
+  <p class="kicker">Twelve</p>
+  <h2>Availability is derived, never stored</h2>
+  <div class="rule"></div>
+
+  <p>For a requested facility and date, the slot grid is generated from that
+  facility's own opening time, closing time and slot length using
+  <code>generate_series</code>, then each candidate slot is tested against
+  confirmed bookings with <code>NOT EXISTS (… during &amp;&amp; …)</code>. The
+  same query labels a slot as the caller's own where the booking's user matches
+  the session.</p>
+
+  <p>Everything is computed in <code>Asia/Kolkata</code>. Slot boundaries are derived
+  from the facility row rather than assumed to be hourly, so a ninety-minute
+  cricket booking and a thirty-minute squash booking coexist without special
+  cases.</p>
+
+  <div class="note">
+    <span class="t">The consequence</span>
+    Availability cannot drift from bookings, because it is not a separate fact.
+    Cancel a booking and the next request already reflects it. There is no
+    materialised view to refresh, no cache to invalidate, and no nightly job
+    whose failure quietly corrupts the front page.
+  </div>
+</section>
+
+<!-- ══ 13 REALTIME ══ -->
+<section class="sec">
+  <p class="kicker">Thirteen</p>
+  <h2>Real time, and why the payload is a hint</h2>
+  <div class="rule"></div>
+
+  <p>Open day grids update live over Server-Sent Events at
+  <code>GET /api/stream</code>. The event payload is deliberately minimal —
+  “something changed on this facility” — and clients respond by re-fetching the
+  authoritative day view rather than patching local state from the message.</p>
+
+  <p>That way a dropped, duplicated or out-of-order event can never leave a
+  screen disagreeing with the database; the worst it can do is cost one extra
+  fetch. A fifteen-second poll runs alongside as a fallback for clients whose
+  SSE connection cannot be established, and a keep-alive comment frame stops
+  proxies dropping the idle connection.</p>
+
+  <p>Publication happens after the writer has committed. It is a notification,
+  never part of the transaction — a failed publish must never be able to roll
+  back a confirmed booking.</p>
+</section>
+
+<!-- ══ 14 INTERFACE ══ -->
+<section class="sec">
+  <p class="kicker">Fourteen</p>
+  <h2>The interface</h2>
+  <div class="rule"></div>
+
+  <p>Set as a printed institutional prospectus rather than a dashboard. There is
+  deliberately <b>no brand hue</b>: chrome is charcoal, paper is a warm
+  off-white, and the only saturated colours on screen are the ones that mean
+  something.</p>
+
+  <table>
+    <tr><th style="width:22%">Token</th><th style="width:16%">Value</th><th>Role</th></tr>
+    <tr><td>ink</td><td><code>#22201e</code></td><td>Chrome, headings, primary action</td></tr>
+    <tr><td>rust</td><td><code>#b4512a</code></td><td>The one call to action, and the live state</td></tr>
+    <tr><td>brass</td><td><code>#c29a4b</code></td><td>Hairline emphasis; never a fill</td></tr>
+    <tr><td>paper</td><td><code>#f7f4ee</code></td><td>The ground</td></tr>
+    <tr><td>forest / brick</td><td><code>#2e6b3e</code> / <code>#8c2f22</code></td><td>Status only — independent of brand</td></tr>
+  </table>
+
+  <p>Every grey is warm, mixed toward the paper rather than toward blue. Cool
+  grey on cool grey is the strongest visual tell of a generated interface.</p>
+
+  <h3>State is carried by fill, not by hue</h3>
+  <p>Open is paper, taken is solid charcoal, the reader's own is rust, closed is
+  hatched — so the grid stays readable in greyscale, to a colourblind reader,
+  and through a badly calibrated projector. Availability is stated three ways on
+  every card: a coloured dot, a word, and a count. Hue is never the only
+  channel.</p>
+
+  <h3>Motion</h3>
+  <p>Motion is a response, never decoration. Cards rise into view once as the
+  reader reaches them, driven by a single document-wide IntersectionObserver so
+  that server-rendered markup can opt in with a bare attribute. The hidden start
+  state is gated behind an attribute the script sets, so with JavaScript off
+  nothing is hidden — an animation is never the reason a page is blank.
+  Everything is dropped under <code>prefers-reduced-motion</code>, except the cues
+  that carry meaning, which remain present but unanimated.</p>
+</section>
+
+<!-- ══ 15 DEPLOYMENT ══ -->
+<section class="sec">
+  <p class="kicker">Fifteen</p>
+  <h2>Deployment and topology</h2>
+  <div class="rule"></div>
+
+  <table>
+    <tr><th style="width:26%">Layer</th><th>Choice</th></tr>
+    <tr><td>Framework</td><td>Next.js 15 App Router, React 19, TypeScript in strict mode.</td></tr>
+    <tr><td>Runtime</td><td>Node.js serverless functions on Vercel, pinned to region <code>sin1</code> (Singapore).</td></tr>
+    <tr><td>Database</td><td>Neon Postgres 17 in <code>ap-southeast-1</code>, with <code>btree_gist</code>.</td></tr>
+    <tr><td>Driver</td><td><code>postgres</code> (postgres.js). Tagged templates only, so every value is a bind parameter.</td></tr>
+    <tr><td>Styling</td><td>Tailwind v4 with a token layer; no component library.</td></tr>
+  </table>
+
+  <h3>Region is a correctness-adjacent decision</h3>
+  <p>Functions and database sit in the same region on purpose. Every statement
+  inside a transaction costs a round trip out and back; with the database a
+  continent away, a transaction containing four statements pays four times the
+  latency. Co-locating them is what makes a 200-way burst finish inside the
+  function's time budget.</p>
+
+  <h3>The connection pool</h3>
+  <p>The pool is created lazily on first use, never at module import. Next
+  statically generates the 404 page, which pulls in the root layout — a pool
+  created at import time would fail any build without a <code>DATABASE_URL</code>,
+  such as CI or a judge cloning the repository to read it. Prepared statements
+  are disabled when the connection string indicates a pooler, which cannot
+  guarantee the same backend across statements.</p>
+
+  <h3>The shell renders without a database</h3>
+  <p>The layout's data load is wrapped so that a throwing query yields an empty
+  shell rather than a failed build. Pages that genuinely need data fail on their
+  own, where the error is actionable.</p>
+</section>
+
+<!-- ══ 16 PERFORMANCE ══ -->
+<section class="sec">
+  <p class="kicker">Sixteen</p>
+  <h2>Performance engineering</h2>
+  <div class="rule"></div>
+
+  <h3>The per-slot lock that was removed</h3>
+  <p>An earlier version took a second advisory lock on the slot, in sorted key
+  order alongside the user lock. On a co-located database it was faster:
+  contenders queued on a cheap lock instead of piling into the constraint's
+  wait-for-uncommitted-row path.</p>
+
+  <p>Over a network it was a disaster, because it serialised every contender and
+  each transaction then cost a full round-trip budget. Measured against Neon
+  from a Vercel function:</p>
+
+  <table>
+    <tr><th>Contenders</th><th class="n">2</th><th class="n">5</th><th class="n">10</th><th class="n">20</th></tr>
+    <tr><td>With a per-slot lock</td><td class="n">6.3 s</td><td class="n">10.6 s</td><td class="n">19.2 s</td><td class="n">36.4 s</td></tr>
+  </table>
+
+  <p>Dead linear at about 1.8 s per contender; fifty would have exceeded the
+  function timeout. Correctness was never in question — one booking, every run —
+  throughput was. Removing it lets all contenders attempt the insert at once:
+  one wins, the rest block on its uncommitted row and are released together the
+  moment it commits. Total time becomes one transaction plus a round trip,
+  whatever <i>n</i> is.</p>
+
+  <p>Removing it also removed the deadlock class it was guarding against. A
+  deadlock needs two locks taken in varying order; with a single lock per
+  transaction, keyed per user, an advisory-lock cycle cannot be constructed.</p>
+
+  <h3>The residual deadlock, and the retry that absorbs it</h3>
+  <p>Partially-overlapping ranges can still deadlock inside the exclusion
+  constraint itself, when two transactions each hold a tuple the other must
+  check. That rolls back cleanly, so it is retried. Three attempts backing off
+  15/30/60 ms proved measurably insufficient — the load suite escaped it in CI
+  while eighteen of nineteen tests passed — so the wrapper now allows six
+  attempts with wider jitter, backing off to about a second in total. Surfacing
+  a deadlock to a student who did nothing wrong is far more expensive than
+  waiting.</p>
+
+  <h3>Measured throughput</h3>
+  <table>
+    <tr><th>Mode</th><th class="n">Requests</th><th class="n">Server time</th><th class="n">Confirmed</th><th class="n">Rows</th><th class="n">Overlapping pairs</th></tr>
+    <tr><td>naive</td><td class="n">50</td><td class="n">37 ms</td><td class="n bad">50</td><td class="n">50</td><td class="n bad">1 225</td></tr>
+    <tr><td>safe</td><td class="n">10</td><td class="n">47 ms</td><td class="n">1</td><td class="n">1</td><td class="n good">0</td></tr>
+    <tr><td>safe</td><td class="n">50</td><td class="n">116 ms</td><td class="n">1</td><td class="n">1</td><td class="n good">0</td></tr>
+    <tr><td>safe</td><td class="n">100</td><td class="n">251 ms</td><td class="n">1</td><td class="n">1</td><td class="n good">0</td></tr>
+    <tr><td><b>safe</b></td><td class="n"><b>200</b></td><td class="n"><b>546 ms</b></td><td class="n"><b>1</b></td><td class="n"><b>1</b></td><td class="n good"><b>0</b></td></tr>
+  </table>
+
+  <p>Median of three warm runs. Twenty times the load for roughly ten times the
+  time — sub-linear, because nothing in the write path serialises on <i>n</i>.</p>
+
+  <div class="note">
+    <span class="t">Cold start is real, and worth knowing before a demo</span>
+    The first race fired after an idle period runs roughly three times slower
+    than the table above while the function and the connection pool warm up.
+    Measured cold: 149 ms at n=10 against 47 ms warm. Fire one race before
+    presenting.
+  </div>
+</section>
+
+<!-- ══ 17 VERIFICATION ══ -->
+<section class="sec">
+  <p class="kicker">Seventeen</p>
+  <h2>Verification strategy</h2>
+  <div class="rule"></div>
+
+  <p>Every claim in this document is reproducible from the repository. Four
+  independent layers check different things.</p>
+
+  <h4>1 · Unit and concurrency suites — <code>npm run test</code></h4>
+  <p>Nineteen tests under vitest, including a load test that fires concurrent
+  bookings at one slot. CI runs them against a real Postgres 17 service
+  container rather than a mock, because a mock cannot exhibit the behaviour
+  under examination.</p>
+
+  <h4>2 · The whole-table invariant sweep — <code>npm run invariant</code></h4>
+  <p>Every confirmed row checked against every other row on the same facility.
+  Not a sample, and not limited to the slot just tested. Exits non-zero if it
+  finds a single overlapping pair, so it can gate CI or be run against
+  production as a smoke check. The same sweep runs server-side after every race
+  and its result is returned in the response.</p>
+
+  <h4>3 · Browser journey — <code>npm run e2e</code></h4>
+  <p>Eleven checks driving a real browser through the student journey: browse,
+  open a slot grid, open the booking sheet, confirm, see the code in My
+  Bookings, see the slot marked as theirs, cancel, and confirm the slot returns
+  to the grid as open. It asserts zero uncaught client errors throughout, and
+  can be pointed at any deployment with <code>E2E_BASE</code>. <b>Result against
+  production: 11/11.</b></p>
+
+  <h4>4 · Continuous integration</h4>
+  <p>On every push: typecheck, apply the schema to a live Postgres, seed, run
+  the suites, run the invariant sweep, and produce a production build.</p>
+
+  <div class="note">
+    <span class="t">A test bug found and fixed during this work</span>
+    The browser suite located a bookable slot by searching for a button whose
+    text contained “Open”. A redesign gave the header a mobile menu toggle
+    labelled “Open menu”, which sorts earlier in the document, so the suite
+    clicked the hamburger and timed out waiting for a booking dialog. The
+    product was fine; the selector was not. Slots now expose
+    <code>data-slot-state</code> and the test addresses that instead. The
+    post-cancellation recount had the same flaw and was passing only because
+    both sides of its comparison were wrong by the same one.
+  </div>
+</section>
+
+<!-- ══ 18 SECURITY ══ -->
+<section class="sec">
+  <p class="kicker">Eighteen</p>
+  <h2>Security posture and threat model</h2>
+  <div class="rule"></div>
+
+  <h3>What is enforced</h3>
+  <table>
+    <tr><th style="width:26%">Control</th><th>Implementation</th></tr>
+    <tr><td>Ownership</td><td>Cancellation scopes to <code>user_id</code> inside the <code>UPDATE</code>; waitlist claims scope inside a <code>SELECT … FOR UPDATE</code>. A forged id matches no row.</td></tr>
+    <tr><td>Actor identity</td><td>Derived from the signed cookie on the server on every write path, never from the request body.</td></tr>
+    <tr><td>Input validation</td><td>A zod schema on every route body before anything reaches SQL.</td></tr>
+    <tr><td>Injection</td><td>Every query is a tagged template, so every value is a bind parameter. There is no <code>sql.unsafe</code> in application code.</td></tr>
+    <tr><td>Cookie integrity</td><td>HMAC-SHA256 signed, <code>httpOnly</code>, <code>sameSite=lax</code>, <code>secure</code> in production, compared with <code>timingSafeEqual</code>.</td></tr>
+    <tr><td>Response headers</td><td><code>X-Frame-Options: DENY</code>, <code>nosniff</code>, a referrer policy and a permissions policy on every response.</td></tr>
+    <tr><td>Dependencies</td><td><code>npm audit</code>: 0 vulnerabilities.</td></tr>
+  </table>
+
+  <h3>What is deliberately not enforced</h3>
+  <p><b>There are no passwords.</b> Identity is a signed cookie over a seeded
+  roster with a “switch reader” control, because racing two students against one
+  slot has to be doable in front of a judge without two browser profiles. The
+  cost, stated rather than left to be discovered:</p>
+
+  <table>
+    <tr><th style="width:30%">Surface</th><th>Exposure</th></tr>
+    <tr><td><code>POST /api/session</code></td><td>Issues any identity with no credential, and roster ids appear in the page HTML — so anyone can become a manager. The role check on <code>/api/ops</code> is therefore a demo guard, not a security boundary. Verified: a malformed body returns <code>400</code> as a manager and <code>403</code> anonymously, which proves the gate is passed.</td></tr>
+    <tr><td><code>/api/race</code>, <code>/api/race/reset</code>, <code>/api/lottery</code></td><td>Unauthenticated. Rate limited rather than gated, because the race demo has to stay one click away.</td></tr>
+  </table>
+
+  <h3>The rate limiter, and a negative result worth recording</h3>
+  <p>The first implementation kept counters in module memory. Measured against
+  the deployment, it did nothing at all: sixty-six consecutive requests under a
+  single key were every one of them allowed, because the platform did not reuse
+  the function instance and each request began with an empty map. A counter that
+  never counts is worse than no counter, because it reads like protection.</p>
+
+  <p>It now counts in Postgres — the only state every instance already shares —
+  with a single upsert that increments and returns the new count, so two
+  simultaneous callers cannot both read “under the limit”. It <b>fails open</b>:
+  a missing table or failed query allows the request, because a demo that
+  refuses to run when its rate limiter breaks has turned a nice-to-have into an
+  outage. It is not an authentication boundary; <code>x-forwarded-for</code> is
+  client-controlled and the key can be rotated freely.</p>
+
+  <p>Swapping in real authentication is a contained change: replacing
+  <code>currentUser()</code> is the whole job, because no call site reads the
+  cookie directly.</p>
+</section>
+
+<!-- ══ 19 LIMITATIONS ══ -->
+<section class="sec">
+  <p class="kicker">Nineteen</p>
+  <h2>Limitations, and what we would do next</h2>
+  <div class="rule"></div>
+
+  <table>
+    <tr><th style="width:32%">Limitation</th><th>Next step</th></tr>
+    <tr><td>No real authentication.</td><td>Institute SSO behind <code>currentUser()</code>; every write path already takes its actor from the server.</td></tr>
+    <tr><td>Rate limiting keyed on a client-controlled header, and inactive until the table is created.</td><td>Key on authenticated identity; run the migration as part of deploy.</td></tr>
+    <tr><td>No Content-Security-Policy.</td><td>Next's inline bootstrap needs per-request nonces — a change to the rendering path, not a config line, and one worth testing rather than bolting on.</td></tr>
+    <tr><td>Waitlist offers are visible only in the application.</td><td>Push or email notification, so an offer that expires in ten minutes reaches somebody who is not looking at the page.</td></tr>
+    <tr><td>Single region.</td><td>Read replicas for availability queries; the write path must stay next to the primary.</td></tr>
+    <tr><td>Analytics are computed per request.</td><td>Materialise the heavier aggregates once demand justifies it — carefully, since a second source of truth is exactly what this design avoids elsewhere.</td></tr>
+  </table>
+
+  <h3>What we would not change</h3>
+  <p>The constraint. Every feature in this document — closures, cancellation,
+  waitlist promotion, the lottery — is expressed through it rather than around
+  it. That is the reason the system has one invariant to reason about instead of
+  five, and the reason a future contributor cannot accidentally introduce a
+  double booking.</p>
+</section>
+
+<!-- ══ APPENDIX A ══ -->
+<section class="sec">
+  <p class="kicker">Appendix A</p>
+  <h2>API reference</h2>
+  <div class="rule"></div>
+
+  <table>
+    <tr><th style="width:34%">Endpoint</th><th>Behaviour</th></tr>
+    <tr><td><code>GET /api/availability</code></td><td>Derived day grid for <code>?facility=&amp;date=</code>. <code>400</code> without both, <code>404</code> for an unknown facility. Polling fallback for clients without SSE.</td></tr>
+    <tr><td><code>POST /api/bookings</code></td><td>Create a booking. Body: facility, start, end, idempotency key, optional party size and note. <code>201</code> confirmed, or a typed rejection.</td></tr>
+    <tr><td><code>POST /api/bookings/cancel</code></td><td>Cancel by id, scoped to the session user. <code>404</code> if not theirs.</td></tr>
+    <tr><td><code>POST /api/waitlist</code></td><td>Join the queue for a taken slot; returns queue position.</td></tr>
+    <tr><td><code>POST /api/waitlist/claim</code></td><td>Claim an offer. Re-checks expiry under lock, then a normal constrained insert.</td></tr>
+    <tr><td><code>POST /api/ops</code></td><td>Manager only: <code>block</code>, <code>unblock</code>, <code>toggle</code>. Closures pass the booking constraint.</td></tr>
+    <tr><td><code>POST /api/lottery</code></td><td><code>simulate</code> seeds a round; <code>draw</code> runs the seeded weighted draw. <code>GET ?id=</code> returns the round.</td></tr>
+    <tr><td><code>POST /api/race</code></td><td>Fire <i>n</i> concurrent bookings in <code>safe</code> or <code>naive</code> mode; returns per-request outcomes and a whole-table sweep.</td></tr>
+    <tr><td><code>POST /api/race/reset</code></td><td>Clears demo rows only — keys matching <code>race-%</code> plus the two demo tables.</td></tr>
+    <tr><td><code>GET /api/stream</code></td><td>Server-sent events. Payload is a hint; clients re-fetch.</td></tr>
+    <tr><td><code>POST /api/session</code></td><td>Switch reader. No credential — see section eighteen.</td></tr>
+  </table>
+</section>
+
+<!-- ══ APPENDIX B ══ -->
+<section class="sec">
+  <p class="kicker">Appendix B</p>
+  <h2>Measured data</h2>
+  <div class="rule"></div>
+
+  <h4>Concurrency, safe mode — three warm runs each</h4>
+  <table>
+    <tr><th class="n">n</th><th class="n">Run 1</th><th class="n">Run 2</th><th class="n">Run 3</th><th class="n">Median</th><th class="n">Confirmed</th><th class="n">Overlaps</th></tr>
+    <tr><td class="n">10</td><td class="n">43</td><td class="n">47</td><td class="n">47</td><td class="n"><b>47 ms</b></td><td class="n">1</td><td class="n good">0</td></tr>
+    <tr><td class="n">50</td><td class="n">116</td><td class="n">191</td><td class="n">95</td><td class="n"><b>116 ms</b></td><td class="n">1</td><td class="n good">0</td></tr>
+    <tr><td class="n">100</td><td class="n">221</td><td class="n">313</td><td class="n">251</td><td class="n"><b>251 ms</b></td><td class="n">1</td><td class="n good">0</td></tr>
+    <tr><td class="n">200</td><td class="n">364</td><td class="n">546</td><td class="n">563</td><td class="n"><b>546 ms</b></td><td class="n">1</td><td class="n good">0</td></tr>
+  </table>
+  <p style="font-size:9pt;color:var(--ink3)">Eighteen safe runs were executed in
+  total during verification. Every one ended with exactly one confirmed booking
+  and zero overlapping pairs table-wide.</p>
+
+  <h4>Reads while a 200-way burst is in flight</h4>
+  <table>
+    <tr><th>Page</th><th class="n">Idle</th><th class="n">Under load</th><th class="n">Status</th></tr>
+    <tr><td>Home</td><td class="n">249–378 ms</td><td class="n">625 ms</td><td class="n good">200</td></tr>
+    <tr><td>Facility grid</td><td class="n">—</td><td class="n">378 ms</td><td class="n good">200</td></tr>
+    <tr><td>Availability API</td><td class="n">—</td><td class="n">291 ms</td><td class="n good">200</td></tr>
+    <tr><td>My bookings</td><td class="n">—</td><td class="n">420 ms</td><td class="n good">200</td></tr>
+  </table>
+  <p style="font-size:9pt;color:var(--ink3)">The race itself still returned 1
+  confirmed, 199 rejected, 0 overlaps in 928 ms. A judge clicking around during
+  the demo sees no errors and no hang.</p>
+
+  <h4>Backend probe against production</h4>
+  <p style="font-size:9.4pt">Sixteen checks, all as expected: availability
+  (<code>200</code> / <code>400</code> / <code>404</code>), malformed bodies rejected
+  <code>400</code>, idempotent replay returning one booking across five requests,
+  typed rejection with three alternatives, forged cancellation <code>404</code>,
+  SSE <code>ready</code> frame, and the privilege-escalation finding confirmed
+  rather than asserted.</p>
+</section>
+
+<!-- ══ APPENDIX C ══ -->
+<section class="sec">
+  <p class="kicker">Appendix C</p>
+  <h2>Repository map and glossary</h2>
+  <div class="rule"></div>
+
+<pre>migrations/0001_init.sql   the schema — and the constraint that is the product
+src/db/client.ts           pool, SQLSTATE constants, deadlock retry
+src/lib/booking.ts         the write path: create, cancel, promote, suggest
+src/lib/race.ts            the race harness and the whole-table invariant sweep
+src/lib/lottery.ts         seeded weighted draw, deterministic and auditable
+src/lib/availability.ts    derived availability — no slots table
+src/lib/ratelimit.ts       fixed-window counters, in Postgres, fail-open
+src/lib/session.ts         signed-cookie identity; the single swap point for SSO
+src/app/                   Next.js App Router: pages and route handlers
+src/components/            UI, court diagrams, sport glyphs
+tests/                     vitest — concurrency and lottery suites
+scripts/                   migrate · seed · invariant · e2e · media · deck · report
+docs/ARCHITECTURE.md       data model, trade-offs, what we would do next
+docs/DEPLOY.md             Neon + Vercel, and the region that matters</pre>
+
+  <h3>Glossary</h3>
+  <table>
+    <tr><th style="width:30%">Term</th><th>Meaning</th></tr>
+    <tr><td><b>Exclusion constraint</b></td><td>A Postgres constraint forbidding two rows from simultaneously satisfying a set of operator comparisons.</td></tr>
+    <tr><td><b><code>tstzrange</code></b></td><td>A timestamp-with-timezone range type. Used half-open, <code>[start, end)</code>.</td></tr>
+    <tr><td><b>GiST</b></td><td>Generalised Search Tree — the index type able to answer overlap queries, unlike a B-tree.</td></tr>
+    <tr><td><b><code>&amp;&amp;</code></b></td><td>The range overlap operator.</td></tr>
+    <tr><td><b><code>23P01</code></b></td><td>SQLSTATE for <code>exclusion_violation</code> — the loser of a race.</td></tr>
+    <tr><td><b><code>40P01</code></b></td><td>SQLSTATE for a detected deadlock. Rolled back cleanly, therefore retryable.</td></tr>
+    <tr><td><b>Advisory lock</b></td><td>An application-defined lock held by Postgres. Used here per user, never per slot.</td></tr>
+    <tr><td><b>Idempotency key</b></td><td>A client-generated token identifying one booking intent, so a retry returns the original result.</td></tr>
+    <tr><td><b>Partial constraint</b></td><td>A constraint with a <code>WHERE</code> clause, so only qualifying rows are indexed — here, only confirmed bookings.</td></tr>
+  </table>
+
+  <div class="note" style="margin-top:8mm">
+    <span class="t">Reproducing every figure in this report</span>
+    <span class="mono" style="font-size:8.4pt;line-height:1.7">npm run test&nbsp;&nbsp;·&nbsp;&nbsp;npm run invariant&nbsp;&nbsp;·&nbsp;&nbsp;npm run e2e&nbsp;&nbsp;·&nbsp;&nbsp;E2E_BASE=&lt;url&gt; npm run e2e</span>
+  </div>
+</section>
+
+</body>
+</html>
