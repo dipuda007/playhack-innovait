@@ -5,6 +5,7 @@ import {
   openLottery, enterLottery, drawLottery, getLottery, weightFor,
 } from "@/lib/lottery";
 import { publish } from "@/lib/events";
+import { clientKey, rateLimit, tooManyRequests } from "@/lib/ratelimit";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -30,6 +31,10 @@ export async function GET(req: Request) {
 }
 
 export async function POST(req: Request) {
+  // `simulate` seeds up to two hundred entrants and `draw` writes a booking.
+  const gate = await rateLimit(`lottery:${clientKey(req)}`, 30, 600);
+  if (!gate.ok) return tooManyRequests(gate.retryAfter);
+
   const parsed = Body.safeParse(await req.json().catch(() => null));
   if (!parsed.success) {
     return NextResponse.json({ issues: parsed.error.issues }, { status: 400 });

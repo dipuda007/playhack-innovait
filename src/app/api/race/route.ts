@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { runRace, invariantCheck } from "@/lib/race";
+import { clientKey, rateLimit, tooManyRequests } from "@/lib/ratelimit";
 import { publish } from "@/lib/events";
 
 export const runtime = "nodejs";
@@ -17,6 +18,11 @@ const Body = z.object({
 });
 
 export async function POST(req: Request) {
+  // Thirty bursts in ten minutes. A race takes about a second, so a demo
+  // cannot reach this; a loop against the public URL can.
+  const gate = await rateLimit(`race:${clientKey(req)}`, 30, 600);
+  if (!gate.ok) return tooManyRequests(gate.retryAfter);
+
   const parsed = Body.safeParse(await req.json().catch(() => null));
   if (!parsed.success) {
     return NextResponse.json(

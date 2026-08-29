@@ -285,3 +285,26 @@ CREATE TABLE IF NOT EXISTS naive_bookings (
 );
 
 CREATE INDEX IF NOT EXISTS naive_bookings_run_idx ON naive_bookings (run_id);
+
+-- ---------------------------------------------------------------------------
+-- Rate limiting for the demo endpoints.
+--
+-- This lives in Postgres rather than in function memory on purpose. The first
+-- attempt kept counters in a module-level Map, which measured as completely
+-- ineffective on Vercel: sixty-six consecutive requests under one key were all
+-- allowed, because the platform did not reuse the instance and every request
+-- started with an empty map. A counter that never counts is worse than none,
+-- because it reads like protection.
+--
+-- One row per (bucket, window). The window start is floored server-side so
+-- every instance agrees on which window it is writing to without coordinating.
+-- ---------------------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS rate_limit (
+  bucket       text        NOT NULL,
+  window_start timestamptz NOT NULL,
+  count        integer     NOT NULL DEFAULT 0,
+  PRIMARY KEY (bucket, window_start)
+);
+
+-- Old windows are dead weight; this index makes the sweep cheap.
+CREATE INDEX IF NOT EXISTS rate_limit_window_idx ON rate_limit (window_start);

@@ -243,8 +243,8 @@ What that costs, stated plainly rather than left to be discovered:
 | | |
 |---|---|
 | `POST /api/session` | Takes a user id and issues that identity. No credential is required, and the roster ids are in the page HTML, so **anyone can become a manager.** The role check on `/api/ops` is therefore a demo guard, not a security boundary. |
-| `POST /api/race`, `/api/race/reset` | Unauthenticated. The race writes up to 200 rows per call; the reset deletes only rows keyed `race-%` plus the two demo tables, so it cannot touch a student booking — but both are open to anyone with the URL. |
-| Rate limiting | None. |
+| `POST /api/race`, `/api/race/reset`, `/api/lottery` | Unauthenticated. The race writes up to 200 rows per call and the lottery seeds up to 200 entrants; the reset deletes only rows keyed `race-%` plus the two demo tables, so it cannot touch a student booking. All three are open to anyone with the URL. |
+| Rate limiting | A fixed window on those three demo endpoints — 30 runs per 10 minutes, 60 for the reset — counted in Postgres, because an in-memory counter measured as completely ineffective here (66 consecutive requests, none blocked: Vercel does not reuse the instance). It fails **open**, so a missing table or a failed query allows the request rather than breaking the demo — which also means it is inactive until `npm run db:push` has created `rate_limit`. `x-forwarded-for` is client-controlled, so this raises the cost of casual abuse and is not an authentication boundary. Nothing on the booking path is limited. |
 
 Swapping in real auth is a contained change: every write path already derives
 the acting user from the signed cookie on the server and never from the
