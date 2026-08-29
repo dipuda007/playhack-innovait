@@ -10,12 +10,12 @@ Exactly one gets it — and that decision is made by Postgres, not by our code.*
 [**▶ Live demo**](https://innovait-hackathon.vercel.app) · [Run the race yourself](https://innovait-hackathon.vercel.app/race) · [Architecture](docs/ARCHITECTURE.md) · [Deploying](docs/DEPLOY.md)
 
 [![CI](https://github.com/dipuda007/playhack-innovait/actions/workflows/ci.yml/badge.svg)](https://github.com/dipuda007/playhack-innovait/actions/workflows/ci.yml)
-![Next.js](https://img.shields.io/badge/Next.js-15.5-002147?style=flat-square&labelColor=002147&color=faf9fd)
-![Postgres](https://img.shields.io/badge/Postgres-17-002147?style=flat-square&labelColor=002147&color=faf9fd)
-![TypeScript](https://img.shields.io/badge/TypeScript-strict-002147?style=flat-square&labelColor=002147&color=faf9fd)
-![Tests](https://img.shields.io/badge/tests-19%20unit%20%2B%2011%20browser-6b1414?style=flat-square&labelColor=002147)
-![Overlaps](https://img.shields.io/badge/overlapping%20bookings-0-6b1414?style=flat-square&labelColor=002147)
-![Audit](https://img.shields.io/badge/npm%20audit-0%20vulnerabilities-002147?style=flat-square&labelColor=002147&color=faf9fd)
+![Next.js](https://img.shields.io/badge/Next.js-15.5-22201e?style=flat-square&labelColor=22201e&color=f7f4ee)
+![Postgres](https://img.shields.io/badge/Postgres-17-22201e?style=flat-square&labelColor=22201e&color=f7f4ee)
+![TypeScript](https://img.shields.io/badge/TypeScript-strict-22201e?style=flat-square&labelColor=22201e&color=f7f4ee)
+![Tests](https://img.shields.io/badge/tests-19%20unit%20%2B%2011%20browser-b4512a?style=flat-square&labelColor=22201e)
+![Overlaps](https://img.shields.io/badge/overlapping%20bookings-0-b4512a?style=flat-square&labelColor=22201e)
+![Audit](https://img.shields.io/badge/npm%20audit-0%20vulnerabilities-22201e?style=flat-square&labelColor=22201e&color=f7f4ee)
 
 <br>
 
