@@ -9,8 +9,8 @@ export default async function FairPage() {
   const facilities = await listFacilities();
 
   return (
-    <div>
-      <header className="border-b-2 border-ink pb-8 pt-8">
+    <div className="shell pb-16">
+      <header className="border-b border-rule pb-8 pt-8">
         <p className="kicker kicker-signal">Innovation · Fair allocation</p>
 
         <div className="mt-4 grid gap-8 lg:grid-cols-[1.15fr_1fr] lg:gap-12">
@@ -81,7 +81,7 @@ export default async function FairPage() {
         </div>
       </section>
 
-      <p className="prose-news mt-10 border-t-2 border-ink pt-5 text-[15px]">
+      <p className="prose-news mt-10 border-t border-rule pt-5 text-[15px]">
         <strong>Fairness never replaces correctness.</strong> The winning entry
         is written through the same constrained INSERT as an ordinary booking,
         so if a slot somehow went to two draws, the second would still be

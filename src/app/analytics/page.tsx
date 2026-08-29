@@ -31,8 +31,8 @@ export default async function AnalyticsPage() {
   const cell = new Map(heat.map((h) => [`${h.facility_id}:${h.hour}`, h.bookings]));
 
   return (
-    <div>
-      <header className="border-b-2 border-ink pb-8 pt-8">
+    <div className="shell pb-16">
+      <header className="border-b border-rule pb-8 pt-8">
         <p className="kicker kicker-signal">Operations · Insights</p>
 
         <div className="mt-4 grid gap-8 lg:grid-cols-[1.05fr_1fr] lg:gap-12">
@@ -92,7 +92,7 @@ export default async function AnalyticsPage() {
                   <div
                     className={cn(
                       "w-full",
-                      isPeak ? "bg-ink" : "border-t-2 border-ink bg-paper-3",
+                      isPeak ? "bg-ink" : "border-t border-rule bg-paper-3",
                     )}
                     style={{ height: `${Math.max(2, pct)}%` }}
                   />

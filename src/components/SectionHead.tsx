@@ -1,10 +1,11 @@
 /**
  * A section head.
  *
- * Heavy rule, number, name, and a one-line note in the right column — the
- * standing furniture a paper uses to tell you which section you are in. It is
- * the only heading pattern in the product, used identically on every page, so
- * a reader learns it once.
+ * Number, title in the display serif, a gold rule under it, and whatever the
+ * section is filtered or controlled by sitting on the same baseline at the
+ * right. It is the only heading pattern in the product and it is used
+ * identically on every page, so a reader learns it once and then knows where
+ * the controls for any section will be.
  */
 export function SectionHead({
   index,
@@ -18,30 +19,38 @@ export function SectionHead({
   note?: string;
   action?: React.ReactNode;
   /**
-   * The heavy rule above the heading. Turn it off where the page header
-   * already drew one — two heavy rules a few pixels apart is a printing
-   * mistake, not a stronger break.
+   * The rule above the heading. Turn it off where the band above already
+   * closed with one.
    */
   rule?: boolean;
 }) {
   return (
-    <div className={rule ? "border-t-2 border-ink pt-3" : ""}>
-      <div className="flex flex-wrap items-baseline justify-between gap-x-8 gap-y-2">
-        <h2 className="hed-md flex items-baseline gap-3 font-display uppercase">
-          <span className="fig text-[0.8rem] font-normal text-signal">
-            {index}
-          </span>
-          {title}
-        </h2>
+    <div className={rule ? "border-t border-rule pt-8" : ""}>
+      <div className="flex flex-col gap-4 border-b border-rule pb-4 md:flex-row md:items-end md:justify-between md:gap-8">
+        <div>
+          <h2 className="hed-lg flex items-baseline gap-3 uppercase text-burgundy">
+            <span className="fig text-[0.8rem] font-normal text-ink-3">
+              {index}
+            </span>
+            {title}
+          </h2>
+          <div className="gold-rule mt-3" />
+        </div>
 
-        {note && (
-          <p className="max-w-[52ch] flex-1 text-right text-[12px] leading-snug text-ink-3">
+        {note && !action && (
+          <p className="max-w-[52ch] text-[13px] leading-snug text-ink-3 md:text-right">
             {note}
           </p>
         )}
 
         {action}
       </div>
+
+      {note && action && (
+        <p className="mt-3 max-w-[68ch] text-[13px] leading-snug text-ink-3">
+          {note}
+        </p>
+      )}
     </div>
   );
 }

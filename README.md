@@ -10,12 +10,12 @@ Exactly one gets it — and that decision is made by Postgres, not by our code.*
 [**▶ Live demo**](https://innovait-hackathon.vercel.app) · [Run the race yourself](https://innovait-hackathon.vercel.app/race) · [Architecture](docs/ARCHITECTURE.md) · [Deploying](docs/DEPLOY.md)
 
 [![CI](https://github.com/dipuda007/playhack-innovait/actions/workflows/ci.yml/badge.svg)](https://github.com/dipuda007/playhack-innovait/actions/workflows/ci.yml)
-![Next.js](https://img.shields.io/badge/Next.js-15.5-12100e?style=flat-square&labelColor=12100e&color=faf8f3)
-![Postgres](https://img.shields.io/badge/Postgres-17-12100e?style=flat-square&labelColor=12100e&color=faf8f3)
-![TypeScript](https://img.shields.io/badge/TypeScript-strict-12100e?style=flat-square&labelColor=12100e&color=faf8f3)
-![Tests](https://img.shields.io/badge/tests-19%20unit%20%2B%2011%20browser-cf2e17?style=flat-square&labelColor=12100e)
-![Overlaps](https://img.shields.io/badge/overlapping%20bookings-0-cf2e17?style=flat-square&labelColor=12100e)
-![Audit](https://img.shields.io/badge/npm%20audit-0%20vulnerabilities-12100e?style=flat-square&labelColor=12100e&color=faf8f3)
+![Next.js](https://img.shields.io/badge/Next.js-15.5-002147?style=flat-square&labelColor=002147&color=faf9fd)
+![Postgres](https://img.shields.io/badge/Postgres-17-002147?style=flat-square&labelColor=002147&color=faf9fd)
+![TypeScript](https://img.shields.io/badge/TypeScript-strict-002147?style=flat-square&labelColor=002147&color=faf9fd)
+![Tests](https://img.shields.io/badge/tests-19%20unit%20%2B%2011%20browser-6b1414?style=flat-square&labelColor=002147)
+![Overlaps](https://img.shields.io/badge/overlapping%20bookings-0-6b1414?style=flat-square&labelColor=002147)
+![Audit](https://img.shields.io/badge/npm%20audit-0%20vulnerabilities-002147?style=flat-square&labelColor=002147&color=faf9fd)
 
 <br>
 
@@ -177,14 +177,20 @@ the brief's consistency requirement is already lost.
 
 ## The interface
 
-Set as a broadsheet: ink on paper, one vermilion accent, hairline rules, and a
-serif for anything that argues a case. No gradients, no glass, no glow, no
-shadows — hierarchy comes from rule weight, type size and empty space, the way
-print has always done it.
+Set as a university site: a deep navy chrome, a burgundy reserved for the one
+action on a screen, a gold hairline for emphasis, and real photography of the
+campus behind the address at the top. Headings are Playfair Display, everything
+a reader reads or clicks is Inter, and anything that has to line up in a column
+is JetBrains Mono.
 
-Slot state is carried by **fill, not hue** — open is paper, taken is solid ink,
-yours is vermilion, closed is hatched — so the grid stays readable in
-greyscale, to a colourblind reader, and through a badly calibrated projector.
+Slot state is carried by **fill, not hue** — open is white, taken is solid navy,
+yours is burgundy, closed is hatched — so the grid stays readable in greyscale,
+to a colourblind reader, and through a badly calibrated projector. Availability
+is stated three ways on every card: a coloured dot, a word, and a count.
+
+Motion is a response, never decoration. Cards rise into view once as you reach
+them, the hero photograph settles over twelve seconds, and every transition is
+dropped entirely under `prefers-reduced-motion`.
 
 <table>
 <tr>
@@ -254,7 +260,7 @@ src/lib/race.ts            the race harness and the whole-table invariant sweep
 src/lib/lottery.ts         seeded weighted draw, deterministic and auditable
 src/lib/availability.ts    derived availability — no slots table
 src/app/                   Next.js App Router: pages and route handlers
-src/components/            broadsheet UI, court diagrams, sport glyphs
+src/components/            UI, court diagrams, sport glyphs
 tests/                     vitest — concurrency and lottery suites
 scripts/                   migrate · seed · invariant · e2e · media capture
 docs/ARCHITECTURE.md       data model, trade-offs, what we would do next

@@ -151,7 +151,7 @@ export function RaceConsole({
   return (
     <div>
       {/* ── The entry form ───────────────────────────────────────────── */}
-      <div className="border-y-2 border-ink">
+      <div className="border-y border-rule">
         <div className="grid gap-px bg-rule sm:grid-cols-2 lg:grid-cols-4">
           <Field label="Facility">
             <select
@@ -300,7 +300,7 @@ export function RaceConsole({
 
                 <p
                   className={cn(
-                    "mt-4 max-w-[62ch] font-serif text-[17px] leading-relaxed",
+                    "mt-4 max-w-[62ch] text-[17px] leading-relaxed",
                     verdict === "nothing" ? "text-ink-2" : "text-paper/85",
                   )}
                 >

@@ -2,7 +2,35 @@ PlayHack — third-party material
 ===============================
 
 The MIT licence in LICENSE covers the source code of this project. It does
-NOT cover the campus photographs.
+NOT cover the IIT Guwahati emblem or the campus photographs.
+
+
+Trademarked emblem — NOT covered by the MIT licence
+---------------------------------------------------
+
+  public/brand/iitg-logo.svg
+  src/app/icon.svg
+  src/app/apple-icon.svg
+      The emblem of the Indian Institute of Technology Guwahati. Copyrighted
+      and non-free; the institute retains all rights in it. It is reproduced
+      here to identify the campus whose facilities this project books, and
+      NOT under any grant, licence or endorsement from the institute.
+
+      PlayHack is an independent student project. It is not an official
+      service of IIT Guwahati and is not affiliated with, sponsored by, or
+      endorsed by the institute.
+
+      Anyone forking this repository takes on that determination themselves.
+      The MIT grant in LICENSE does not extend to the emblem, and removing
+      these three files is the safe default for any use outside a project
+      about IIT Guwahati itself.
+
+      Source: https://en.wikipedia.org/wiki/File:IIT_Guwahati_Logo.svg
+      (originally from the IIT Guwahati placement brochure, 2014-15)
+
+
+Campus photographs — NOT covered by the MIT licence
+----------------------------------------------------
 
   public/campus/tihor-lake.jpg
       "IIT Guwahati lake 01" by Ganesh Mohan T, CC BY-SA 4.0, via Wikimedia
@@ -12,7 +40,12 @@ NOT cover the campus photographs.
       "IITG acad complex" by Satyadeep Karnati, public domain, via Wikimedia
       Commons.
 
-Full details, including source links, are in public/campus/CREDITS.md.
+Full details, including source links, are in public/campus/CREDITS.md and
+public/brand/CREDITS.md.
 
-Fonts (Archivo, Archivo Black, Newsreader, JetBrains Mono) are served through
-next/font from Google Fonts and are licensed under the SIL Open Font License.
+
+Fonts
+-----
+
+Playfair Display, Inter and JetBrains Mono are served through next/font from
+Google Fonts and are licensed under the SIL Open Font License.

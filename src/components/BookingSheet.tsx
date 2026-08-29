@@ -153,10 +153,10 @@ export function BookingSheet({
           it is not itself an interactive control — the focus ring belongs on
           the buttons within, not around the whole slip.
         */
-        className="animate-ink-in w-full max-w-lg border-2 border-ink bg-paper focus:outline-none"
+        className="animate-ink-in w-full max-w-lg overflow-hidden rounded-t-xl border border-rule bg-paper shadow-[var(--shadow-panel)] focus:outline-none sm:rounded-xl"
       >
         {/* Docket head */}
-        <div className="flex items-start justify-between gap-4 border-b-2 border-ink bg-ink px-5 py-3 text-paper">
+        <div className="flex items-start justify-between gap-4 border-b border-navy-2 bg-navy px-5 py-4 text-paper">
           <div>
             <p className="font-mono text-[10px] uppercase tracking-[0.2em] text-paper/60">
               {heading}
@@ -240,7 +240,7 @@ export function BookingSheet({
           {phase === "won" && (
             <div className="space-y-5">
               {/* The stamp. A booking code is a receipt, so it is set like one. */}
-              <div className="border-2 border-ink px-5 py-7 text-center">
+              <div className="rounded-lg border border-rule bg-paper-2 px-5 py-7 text-center">
                 <p className="kicker">Booking code</p>
                 <p className="fig mt-2 text-[2.6rem] font-bold leading-none tracking-tight">
                   {result.bookingCode}
@@ -251,7 +251,7 @@ export function BookingSheet({
               </div>
 
               {result.replayed && (
-                <p className="border-l-2 border-ink bg-paper-2 p-3 text-[13px] leading-snug text-ink-2">
+                <p className="rounded-r-md border-l-2 border-gold bg-paper-2 p-3 text-[13px] leading-snug text-ink-2">
                   This request replayed an idempotency key that was already
                   committed, so it returned your original booking rather than
                   creating a second one.
@@ -266,7 +266,7 @@ export function BookingSheet({
 
           {phase === "queued" && (
             <div className="space-y-5">
-              <div className="border-2 border-ink px-5 py-7 text-center">
+              <div className="rounded-lg border border-rule bg-paper-2 px-5 py-7 text-center">
                 <p className="kicker">Queue position</p>
                 <p className="fig mt-2 text-[2.6rem] font-bold leading-none">
                   #{result.position}

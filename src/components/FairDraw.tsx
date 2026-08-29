@@ -107,7 +107,7 @@ export function FairDraw({
 
   return (
     <div>
-      <div className="border-y-2 border-ink">
+      <div className="border-y border-rule">
         <div className="grid gap-px bg-rule sm:grid-cols-3">
           <label className="block bg-paper p-4">
             <span className="kicker mb-2 block">Contested facility</span>
@@ -180,7 +180,7 @@ export function FairDraw({
           </div>
 
           {lottery.drawnAt && lottery.winnerName && (
-            <section className="animate-ink-in mt-5 border-2 border-ink bg-ink px-6 py-7 text-paper sm:px-8">
+            <section className="animate-ink-in mt-5 rounded-xl border border-navy bg-navy px-6 py-7 text-paper sm:px-8">
               <p className="font-mono text-[10px] uppercase tracking-[0.3em] text-paper/60">
                 Drawn from {lottery.entries.length} entrants
               </p>
@@ -190,7 +190,7 @@ export function FairDraw({
               <p className="fig mt-4 text-lg">
                 Booking {lottery.bookingCode}
               </p>
-              <p className="mt-4 max-w-[62ch] font-serif text-[16px] leading-relaxed text-paper/85">
+              <p className="mt-4 max-w-[62ch] text-[16px] leading-relaxed text-paper/85">
                 The winner&apos;s booking was inserted through the same
                 exclusion constraint as every other booking. Fairness chose the
                 winner; correctness still enforced the slot.

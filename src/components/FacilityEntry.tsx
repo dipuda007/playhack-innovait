@@ -1,5 +1,7 @@
 import Link from "next/link";
+import { MapPin, Users, ArrowRight } from "lucide-react";
 import { CourtArt } from "@/components/CourtArt";
+import { SportIcon } from "@/components/SportIcon";
 import { cn } from "@/lib/cn";
 
 export type EntryFacility = {
@@ -17,15 +19,16 @@ export type EntrySummary = {
 };
 
 /**
- * One facility, as an index entry.
+ * One facility, as a card.
  *
- * This is a listing, not a card: no radius, no shadow, no fill. It is set off
- * from its neighbours by the hairline rules of the grid it sits in, exactly
- * the way a results table or a classified column works. Hovering darkens the
- * rule and tints the paper; nothing lifts, because nothing on a page lifts.
+ * Two zones, split by a rule: the facts on white, and the court plan on a
+ * tinted strip beneath. The split is what stops a grid of twelve cards from
+ * turning into a wall of text — the eye can navigate the row by court shape
+ * alone, and the shapes are genuinely different from each other.
  *
- * The court drawing is printed as a technical diagram in the corner — line
- * art at 8% ink, which is how a paper prints a pitch plan beside a fixture.
+ * Availability is stated three ways on purpose: a coloured dot, a word, and
+ * a count. The dot is the fast read, the word survives colourblindness, and
+ * the count is the one a student actually plans around.
  */
 export function FacilityEntry({
   index,
@@ -43,61 +46,84 @@ export function FacilityEntry({
   const full = !dayOver && free === 0;
   const tight = !dayOver && !full && free / remaining <= 0.25;
 
-  const status = dayOver
-    ? "Day closed"
+  const state = dayOver ? "closed" : full ? "taken" : "open";
+  const stateLabel = dayOver ? "Day closed" : full ? "Fully booked" : "Available";
+
+  const note = dayOver
+    ? "No slots remain today"
     : full
-      ? "Fully booked"
+      ? "Join the waitlist for a release"
       : nextFreeLabel
         ? `Next free ${nextFreeLabel}`
-        : "Open";
+        : "Open now";
 
   return (
     <Link
       href={`/facility/${facility.slug}?date=${dateKey}`}
-      className="box box-link group relative flex min-h-[13.5rem] flex-col overflow-hidden p-5"
+      data-reveal
+      style={{ "--reveal-delay": `${Math.min(index, 8) * 55}ms` } as React.CSSProperties}
+      className={cn(
+        "box box-link group flex flex-col overflow-hidden",
+        dayOver && "opacity-80",
+      )}
     >
-      <div
-        aria-hidden
-        className="pointer-events-none absolute -bottom-6 -right-8 h-40 w-56 text-ink opacity-[0.09] transition-opacity duration-200 group-hover:opacity-[0.16]"
-      >
-        <CourtArt sport={facility.sport} className="h-full w-full" />
-      </div>
+      <div className="flex flex-1 flex-col p-5">
+        <div className="flex items-start justify-between gap-3">
+          <h3 className="hed-sm uppercase text-navy">{facility.name}</h3>
+          <SportIcon
+            sport={facility.sport}
+            size={22}
+            className="mt-0.5 shrink-0 text-navy transition-transform duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] group-hover:scale-110"
+          />
+        </div>
 
-      <div className="relative flex items-start justify-between gap-3">
-        <span className="fig text-[11px] text-ink-3">
-          {String(index).padStart(2, "0")}
-        </span>
-        <span className="tag text-ink-3">{facility.sport}</span>
-      </div>
+        <p
+          className={cn(
+            "status mt-2.5",
+            state === "open" && "status-open",
+            state === "taken" && "status-taken",
+            state === "closed" && "status-closed",
+          )}
+        >
+          {stateLabel}
+        </p>
 
-      <h3 className="hed-sm relative mt-3 font-display uppercase">
-        {facility.name}
-      </h3>
+        <p className="mt-3 flex items-center gap-1.5 text-[13px] text-ink-2">
+          <MapPin size={14} className="shrink-0 text-ink-3" aria-hidden />
+          {facility.location}
+        </p>
+        <p className="mt-1 flex items-center gap-1.5 text-[13px] text-ink-2">
+          <Users size={14} className="shrink-0 text-ink-3" aria-hidden />
+          Capacity: <span className="fig">{facility.capacity}</span>
+        </p>
 
-      <p className="relative mt-1 font-mono text-[10px] uppercase tracking-[0.12em] text-ink-3">
-        {facility.location} · {facility.capacity} players
-      </p>
-
-      <div className="relative mt-auto pt-5">
-        {dayOver ? (
-          <p className="fig text-[2.5rem] font-bold leading-none text-ink-3">
-            —
+        <div className="mt-5 flex flex-wrap items-end justify-between gap-x-3 gap-y-2 pt-1">
+          <p className="whitespace-nowrap">
+            {dayOver ? (
+              <span className="fig text-[2.25rem] font-bold leading-none text-ink-3">
+                —
+              </span>
+            ) : (
+              <>
+                <span
+                  className={cn(
+                    "fig text-[2.25rem] font-bold leading-none",
+                    full ? "text-ink-3" : tight ? "text-signal" : "text-navy",
+                  )}
+                >
+                  {String(free).padStart(2, "0")}
+                </span>
+                <span className="ml-2 text-[11px] uppercase tracking-[0.08em] text-ink-3">
+                  of {remaining} open
+                </span>
+              </>
+            )}
           </p>
-        ) : (
-          <p className="flex items-baseline gap-2">
-            <span
-              className={cn(
-                "fig text-[2.75rem] font-bold leading-none",
-                full ? "text-ink-3" : tight ? "text-signal" : "text-ink",
-              )}
-            >
-              {String(free).padStart(2, "0")}
-            </span>
-            <span className="text-[11px] uppercase tracking-[0.1em] text-ink-3">
-              of {remaining} open
-            </span>
-          </p>
-        )}
+
+          {!dayOver && !full && (
+            <span className="btn btn-signal btn-sm ml-auto">Quick book</span>
+          )}
+        </div>
 
         {/*
           Occupancy as a segmented bar — one cell per remaining slot, filled
@@ -105,27 +131,45 @@ export function FacilityEntry({
           which a percentage bar never is.
         */}
         {!dayOver && (
-          <div className="mt-3 flex gap-px" aria-hidden>
+          <div className="mt-3 flex gap-px overflow-hidden rounded-full" aria-hidden>
             {Array.from({ length: Math.min(remaining, 24) }, (_, i) => (
               <span
                 key={i}
                 className={cn(
-                  "h-2 flex-1",
-                  i < remaining - free ? "bg-ink" : "bg-paper-3",
+                  "h-1.5 flex-1",
+                  i < remaining - free ? "bg-navy" : "bg-paper-3",
                 )}
               />
             ))}
           </div>
         )}
 
-        <p className="mt-3 flex items-center justify-between border-t border-rule pt-2.5 text-[11px] uppercase tracking-[0.08em]">
-          <span className={cn(tight && !full ? "text-signal" : "text-ink-3")}>
-            {status}
+        <p className="mt-3 flex items-center justify-between border-t border-rule pt-3 text-[11px] text-ink-3">
+          <span className={cn(tight && !full && "font-semibold text-signal")}>
+            {note}
           </span>
-          <span className="text-ink opacity-0 transition-opacity group-hover:opacity-100">
-            Open grid →
-          </span>
+          <ArrowRight
+            size={14}
+            aria-hidden
+            className="shrink-0 -translate-x-1 opacity-0 transition-all duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] group-hover:translate-x-0 group-hover:opacity-100"
+          />
         </p>
+      </div>
+
+      {/* The court plan. A drawing of the actual playing surface, to scale. */}
+      <div className="relative h-24 overflow-hidden border-t border-rule bg-paper-2">
+        {dayOver ? (
+          <span className="hatch absolute inset-0 grid place-items-center text-[11px] font-semibold uppercase tracking-[0.14em] text-ink-3">
+            Day closed
+          </span>
+        ) : (
+          <div
+            aria-hidden
+            className="absolute inset-0 p-2.5 text-navy opacity-40 transition-opacity duration-300 group-hover:opacity-60"
+          >
+            <CourtArt sport={facility.sport} className="h-full w-full" />
+          </div>
+        )}
       </div>
     </Link>
   );

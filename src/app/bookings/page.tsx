@@ -29,9 +29,9 @@ export default async function BookingsPage() {
   const noShows = history.filter((b) => b.status === "no_show").length;
 
   return (
-    <div>
+    <div className="shell pb-16">
       {/* The reader's own page: name at masthead scale, standing under it. */}
-      <header className="border-b-2 border-ink pb-7 pt-8">
+      <header className="border-b border-rule pb-7 pt-8">
         <p className="kicker kicker-signal">Your account</p>
         <h2 className="hed-lg mt-3 font-display uppercase">{user.name}</h2>
         <p className="mt-2 font-mono text-[11px] uppercase tracking-[0.14em] text-ink-3">
@@ -168,7 +168,7 @@ export default async function BookingsPage() {
                   )}
                 </div>
 
-                <span className="fig border border-ink px-2.5 py-1 text-sm font-bold">
+                <span className="fig border border-rule px-2.5 py-1 text-sm font-bold">
                   {b.booking_code}
                 </span>
 

@@ -8,11 +8,12 @@ import { cn } from "@/lib/cn";
 /**
  * The day rail.
  *
- * A fixture list runs across the page as one ruled strip of dates, not as a
- * row of pills. Each day is a cell in a table: weekday over date, hairline
- * between, and the selected one inverted to solid ink — the same fill
- * language the slot grid uses for a taken slot, so "selected" and "occupied"
- * read as the same kind of fact throughout the paper.
+ * Eight days as one scrollable strip of tiles. The selected day inverts to
+ * solid navy — the same fill the slot grid uses for a taken slot, so the
+ * language of "this cell is claimed" is identical everywhere in the product.
+ *
+ * The strip scrolls horizontally on a phone rather than wrapping. A wrapped
+ * date row puts Thursday under Sunday, and the sequence is the whole point.
  */
 export function DayRail({
   current,
@@ -31,7 +32,7 @@ export function DayRail({
 
   return (
     <div
-      className="flex overflow-x-auto border-y border-ink"
+      className="flex gap-2 overflow-x-auto pb-1"
       role="tablist"
       aria-label="Choose a day"
     >
@@ -48,19 +49,21 @@ export function DayRail({
             role="tab"
             aria-selected={active}
             className={cn(
-              "min-w-[6.5rem] flex-1 border-r border-rule px-3 py-3 text-center transition-colors last:border-r-0",
-              active ? "bg-ink text-paper" : "hover:bg-paper-2",
+              "min-w-[6.25rem] flex-1 rounded-lg border px-3 py-3 text-center transition-all duration-250 ease-[cubic-bezier(0.16,1,0.3,1)]",
+              active
+                ? "border-navy bg-navy text-white shadow-[0_8px_20px_-10px_rgb(0_33_71/0.6)]"
+                : "border-rule bg-paper text-ink hover:-translate-y-0.5 hover:border-rule-2 hover:shadow-[var(--shadow-card)]",
             )}
           >
             <span
               className={cn(
-                "block font-mono text-[9px] uppercase tracking-[0.16em]",
-                active ? "text-paper/70" : "text-ink-3",
+                "block text-[10px] font-bold uppercase tracking-[0.12em]",
+                active ? "text-white/70" : "text-ink-3",
               )}
             >
               {i === 0 ? "Today" : i === 1 ? "Tomorrow" : weekday}
             </span>
-            <span className="mt-1 block whitespace-nowrap font-display text-sm uppercase">
+            <span className="mt-1.5 block whitespace-nowrap text-sm font-semibold">
               {date}
             </span>
           </Link>

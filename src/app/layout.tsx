@@ -1,34 +1,29 @@
 import type { Metadata, Viewport } from "next";
-import { Archivo, Archivo_Black, Newsreader, JetBrains_Mono } from "next/font/google";
+import { Inter, Playfair_Display, JetBrains_Mono } from "next/font/google";
 import "./globals.css";
 import { Masthead } from "@/components/Masthead";
+import { SiteFooter } from "@/components/SiteFooter";
+import { Reveal } from "@/components/Reveal";
 import { currentUserOrDemo } from "@/lib/session";
 import { sql } from "@/db/client";
 
 /*
- * Four faces, which is what a newspaper actually uses:
+ * Three faces:
  *
- *   Archivo Black   mastheads and headlines — heavy, tight, no ornament
- *   Archivo         labels, navigation, controls
- *   Newsreader      body copy, because this page argues a case
- *   JetBrains Mono  times, codes, counts — anything that must line up
+ *   Playfair Display  headings and the wordmark — the institutional serif
+ *   Inter             everything a reader reads or clicks
+ *   JetBrains Mono    times, counts, SQL — anything that must line up
  */
-const display = Archivo_Black({
+const display = Playfair_Display({
   subsets: ["latin"],
-  weight: "400",
-  variable: "--font-archivo-black",
+  weight: ["700"],
+  variable: "--font-playfair",
   display: "swap",
 });
 
-const sans = Archivo({
+const sans = Inter({
   subsets: ["latin"],
-  variable: "--font-archivo",
-  display: "swap",
-});
-
-const serif = Newsreader({
-  subsets: ["latin"],
-  variable: "--font-newsreader",
+  variable: "--font-inter",
   display: "swap",
 });
 
@@ -45,7 +40,7 @@ export const metadata: Metadata = {
 };
 
 export const viewport: Viewport = {
-  themeColor: "#faf8f3",
+  themeColor: "#002147",
   width: "device-width",
   initialScale: 1,
 };
@@ -83,59 +78,28 @@ export default async function RootLayout({
   return (
     <html
       lang="en"
-      className={`${display.variable} ${sans.variable} ${serif.variable} ${mono.variable}`}
+      className={`${display.variable} ${sans.variable} ${mono.variable}`}
     >
-      <body className="min-h-screen">
+      <body className="flex min-h-screen flex-col">
         <a
           href="#main"
-          className="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-50 focus:bg-ink focus:px-4 focus:py-2 focus:font-medium focus:text-paper"
+          className="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-[60] focus:rounded-md focus:bg-navy focus:px-4 focus:py-2 focus:font-medium focus:text-white"
         >
           Skip to content
         </a>
 
+        <Reveal />
         <Masthead user={user} roster={roster} />
 
-        <main id="main" className="mx-auto w-full max-w-[86rem] px-5 pb-20 sm:px-8">
+        {/*
+          No measure here. The hero and the statistics band run full-bleed to
+          the window edge; everything inside a page opts back in with .shell.
+        */}
+        <main id="main" className="flex-1">
           {children}
         </main>
 
-        {/* The colophon. What a reader needs to check the paper against. */}
-        <footer className="mt-16 border-t-2 border-ink">
-          <div className="mx-auto grid max-w-[86rem] gap-8 px-5 py-10 sm:px-8 md:grid-cols-[1.4fr_1fr_1fr]">
-            <div>
-              <p className="font-display text-2xl leading-none">PLAYHACK</p>
-              <p className="prose-news mt-3 max-w-[40ch] text-[15px]">
-                A sports facility booking system for IIT Guwahati, built for the
-                PlayHack SDE track by Team InnovAIT.
-              </p>
-            </div>
-
-            <div>
-              <p className="kicker">The invariant</p>
-              <code className="mt-2 block whitespace-pre font-mono text-[11px] leading-relaxed text-ink-2">
-{`EXCLUDE USING gist (
-  facility_id WITH =,
-  during      WITH &&
-) WHERE (status = 'confirmed')`}
-              </code>
-            </div>
-
-            <div>
-              <p className="kicker">Picture credits</p>
-              <p className="mt-2 text-[11px] leading-relaxed text-ink-3">
-                Tihor lake, IIT Guwahati — Ganesh Mohan T, CC BY-SA 4.0.
-                Academic complex — Satyadeep Karnati, public domain. Both via
-                Wikimedia Commons.
-              </p>
-            </div>
-          </div>
-
-          <div className="border-t border-rule">
-            <p className="mx-auto max-w-[86rem] px-5 py-4 text-center font-mono text-[10px] uppercase tracking-[0.2em] text-ink-3 sm:px-8">
-              PlayHack · SDE Track · Team InnovAIT · IIT Guwahati
-            </p>
-          </div>
-        </footer>
+        <SiteFooter />
       </body>
     </html>
   );

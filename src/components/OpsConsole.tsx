@@ -74,7 +74,7 @@ export function OpsConsole({
   return (
     <div>
       {/* ── Closure docket ───────────────────────────────────────────── */}
-      <div className="border-y-2 border-ink">
+      <div className="border-y border-rule">
         <div className="grid gap-px bg-rule sm:grid-cols-2 lg:grid-cols-4">
           <Cell label="Facility">
             <select
@@ -145,7 +145,7 @@ export function OpsConsole({
       </div>
 
       {result?.ok && (
-        <p className="animate-ink-in mt-4 border-l-2 border-ink bg-paper-2 px-4 py-3 text-[14px]">
+        <p className="animate-ink-in mt-4 rounded-r-md border-l-2 border-gold bg-paper-2 px-4 py-3 text-[14px]">
           <strong>Closure filed.</strong> Those slots are now unbookable and
           appear as closed on the student grid.
         </p>

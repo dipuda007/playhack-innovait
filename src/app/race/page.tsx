@@ -13,8 +13,8 @@ export default async function RacePage() {
   ]);
 
   return (
-    <div>
-      <header className="border-b-2 border-ink pb-8 pt-8">
+    <div className="shell pb-16">
+      <header className="border-b border-rule pb-8 pt-8">
         <p className="kicker kicker-signal">Core challenge · Proof</p>
 
         <div className="mt-4 grid gap-8 lg:grid-cols-[1.1fr_1fr] lg:gap-12">

@@ -29,7 +29,7 @@ export default async function FacilityPage({
   const { facility } = day;
 
   return (
-    <div>
+    <div className="shell pb-16">
       <p className="pt-5">
         <Link
           href={`/?date=${dateKey}`}
@@ -45,7 +45,7 @@ export default async function FacilityPage({
         ruled fact table underneath. The court drawing is the same artwork the
         index entry carried, printed here at the size it deserves.
       */}
-      <header className="mt-4 border-y-2 border-ink py-7">
+      <header className="mt-4 border-y border-rule py-7">
         <div className="grid gap-7 lg:grid-cols-[1.35fr_1fr] lg:gap-10">
           <div>
             <p className="kicker kicker-signal">{facility.sport}</p>
@@ -72,7 +72,7 @@ export default async function FacilityPage({
           </div>
 
           <figure className="hidden lg:block">
-            <div className="border border-ink p-6 text-ink">
+            <div className="border border-rule p-6 text-ink">
               <CourtArt sport={facility.sport} className="h-44 w-full" />
             </div>
             <figcaption className="mt-2 font-mono text-[10px] uppercase tracking-[0.14em] text-ink-3">

@@ -1,59 +1,83 @@
 @import "tailwindcss";
 
 /*
- * PlayHack — broadsheet.
+ * PlayHack — IIT Guwahati.
  *
- * The brief is a timetable: which court, which hour, who has it. Printed
- * sport has solved that presentation for a century, so this takes the
- * newspaper sports page as its model rather than the dashboard.
+ * The model is an institutional site, not a dashboard and not a newspaper.
+ * Universities present themselves with a deep navy chrome, a warm accent
+ * reserved for action, real photography of the place, and generous space
+ * between blocks of content. That is the register a student expects from a
+ * page carrying the name of the institute on it.
  *
- * What that rules out, deliberately:
+ * Three colours do the work:
  *
- *   no gradients          no glass / backdrop blur     no glow
- *   no drop shadows       no rounded corners           no colour washes
+ *   navy      chrome — header, footer, statistics band, primary action
+ *   burgundy  the single call to action, and the live/urgent state
+ *   gold      hairline emphasis; never a fill, never a background
  *
- * Every one of those is a way of faking hierarchy. Remove them and hierarchy
- * has to come from the things print actually uses — rule weight, type size,
- * column position, and the decision to leave space empty. That is harder and
- * it is the whole point.
+ * Status has its own pair (forest / crimson) because availability is a fact
+ * about the world, not a brand decision, and it must not be confused with
+ * the accent that means "press this".
  *
- * Colour is scarce on purpose. Ink and paper carry the page; vermilion is
- * reserved for the live and the actionable, and appears perhaps twice per
- * screen. A slot's state is shown by *fill* — open is paper, taken is solid
- * ink, yours is solid vermilion — so the grid is readable in greyscale, by a
- * colourblind reader, and in a photograph of a projector.
+ * The token names below (paper / ink / signal / rule) are the ones the rest
+ * of the app already addresses. They are kept and re-pointed rather than
+ * renamed, so every page inherits the new identity without a rewrite.
  */
 @theme {
-  /* ── Paper and ink ───────────────────────────────────────────────────── */
-  --color-paper: #faf8f3;
-  --color-paper-2: #f2efe6;
-  --color-paper-3: #e8e4d8;
-  --color-ink: #12100e;
-  --color-ink-2: #4a463d;
-  --color-ink-3: #857e71;
+  /* ── Institutional palette ───────────────────────────────────────────── */
+  --color-navy: #002147;
+  --color-navy-2: #0b3767;
+  --color-navy-3: #17497f;
+  --color-burgundy: #6b1414;
+  --color-burgundy-2: #4d0e0e;
+  --color-gold: #c5a059;
 
-  /* Rules. Hairline for the grid, heavy for a section break. */
-  --color-rule: #d5cfc0;
-  --color-rule-2: #b8b1a0;
+  /* ── Surfaces ────────────────────────────────────────────────────────── */
+  --color-paper: #ffffff;
+  --color-paper-2: #f5f7f9;
+  --color-paper-3: #e9edf1;
+  --color-canvas: #faf9fd;
+
+  /* ── Text ────────────────────────────────────────────────────────────── */
+  --color-ink: #002147;
+  --color-ink-2: #44474e;
+  --color-ink-3: #6f737b;
+
+  /* ── Lines ───────────────────────────────────────────────────────────── */
+  --color-rule: #e0e4e8;
+  --color-rule-2: #c4c6cf;
 
   /* ── The one accent ──────────────────────────────────────────────────── */
-  --color-signal: #cf2e17;
-  --color-signal-ink: #8f1f0f;
+  --color-signal: #6b1414;
+  --color-signal-ink: #4d0e0e;
 
-  /* A second, quieter accent for confirmation. Dark enough to sit on paper. */
-  --color-field: #2c5f3f;
+  /* ── Status. Independent of brand, distinguishable in greyscale. ─────── */
+  --color-open: #1b5e20;
+  --color-taken: #b71c1c;
+  --color-field: #1b5e20;
 
-  /* Chart marks: ink-first, signal for the series under discussion. */
-  --color-chart-1: #cf2e17;
-  --color-chart-2: #2c5f3f;
+  --color-chart-1: #002147;
+  --color-chart-2: #6b1414;
+  --color-chart-3: #c5a059;
 
-  --font-display: "Archivo Black", "Archivo", ui-sans-serif, system-ui, sans-serif;
-  --font-sans: "Archivo", ui-sans-serif, system-ui, sans-serif;
-  --font-serif: "Newsreader", Georgia, "Times New Roman", serif;
-  --font-mono: "JetBrains Mono", ui-monospace, "SF Mono", Menlo, monospace;
+  --font-display: var(--font-playfair), Georgia, "Times New Roman", serif;
+  --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+  --font-serif: var(--font-playfair), Georgia, serif;
+  --font-mono: var(--font-jetbrains-mono), ui-monospace, "SF Mono", Menlo, monospace;
 
-  /* Print does not bounce. Short, flat, no overshoot. */
-  --ease-page: cubic-bezier(0.2, 0, 0, 1);
+  /*
+   * Motion.
+   *
+   * One decelerating curve for anything that enters or grows, one shorter
+   * curve for a state change on something already on screen. Two curves is
+   * a system; five is a mood board.
+   */
+  --ease-out-soft: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-state: cubic-bezier(0.4, 0, 0.2, 1);
+
+  --shadow-card: 0 1px 2px rgb(0 33 71 / 0.06), 0 4px 14px -6px rgb(0 33 71 / 0.12);
+  --shadow-card-hover: 0 2px 4px rgb(0 33 71 / 0.08), 0 16px 32px -12px rgb(0 33 71 / 0.22);
+  --shadow-panel: 0 24px 60px -20px rgb(0 33 71 / 0.32);
 }
 
 @layer base {
@@ -64,209 +88,276 @@
   html {
     font-variant-numeric: tabular-nums;
     -webkit-text-size-adjust: 100%;
+    scroll-behavior: smooth;
   }
 
   body {
-    background: var(--color-paper);
-    color: var(--color-ink);
+    background: var(--color-canvas);
+    color: #1a1b1e;
     font-family: var(--font-sans);
     -webkit-font-smoothing: antialiased;
   }
 
-  /*
-   * Newsprint tooth.
-   *
-   * A single-pixel dot at 3% ink, tiled. It is almost invisible and it is the
-   * difference between "white background" and "paper" — the eye reads the
-   * irregularity as a surface. This is the only decorative layer in the whole
-   * stylesheet.
-   */
-  body::before {
-    content: "";
-    position: fixed;
-    inset: 0;
-    z-index: -1;
-    pointer-events: none;
-    background-image: radial-gradient(
-      circle at 1px 1px,
-      rgb(18 16 14 / 0.045) 1px,
-      transparent 0
-    );
-    background-size: 4px 4px;
-  }
-
   ::selection {
-    background: var(--color-ink);
-    color: var(--color-paper);
+    background: var(--color-navy);
+    color: #ffffff;
   }
 
   :focus-visible {
-    outline: 2px solid var(--color-signal);
+    outline: 2px solid var(--color-burgundy);
     outline-offset: 2px;
+    border-radius: 2px;
   }
 
-  /* Headings are set in the display face and never wrapped in a container. */
+  /*
+   * Headings are Playfair. A serif display face is the strongest single
+   * signal that a page belongs to an institution rather than to a startup,
+   * and it costs one font request.
+   */
   h1, h2, h3 {
     font-family: var(--font-display);
+    font-weight: 700;
     letter-spacing: -0.02em;
-    line-height: 0.94;
+    line-height: 1.12;
     text-wrap: balance;
   }
 
-  ::-webkit-scrollbar { width: 12px; height: 12px; }
+  ::-webkit-scrollbar { width: 11px; height: 11px; }
   ::-webkit-scrollbar-track { background: var(--color-paper-2); }
   ::-webkit-scrollbar-thumb {
-    background: var(--color-ink-3);
+    background: var(--color-rule-2);
     border: 3px solid var(--color-paper-2);
+    border-radius: 999px;
   }
-  ::-webkit-scrollbar-thumb:hover { background: var(--color-ink); }
+  ::-webkit-scrollbar-thumb:hover { background: var(--color-ink-3); }
 }
 
 @layer components {
-  /* ── Structural rules ────────────────────────────────────────────────── */
+  /* ── Page furniture ──────────────────────────────────────────────────── */
 
-  /** A section break: heavy rule above, label sitting on it. */
-  .rule-top { border-top: 2px solid var(--color-ink); }
+  /** The single content measure. Every band on every page uses it. */
+  .shell {
+    margin-inline: auto;
+    width: 100%;
+    max-width: 80rem;
+    padding-inline: 1.25rem;
+  }
+  @media (min-width: 640px) {
+    .shell { padding-inline: 2rem; }
+  }
+
+  .rule-top { border-top: 1px solid var(--color-rule); }
   .rule-thin { border-top: 1px solid var(--color-rule); }
   .rule-bottom { border-bottom: 1px solid var(--color-rule); }
 
-  /**
-   * The kicker: the small caps line that names a section.
-   *
-   * Set in mono because these are labels, not prose, and mono makes a
-   * two-word label look deliberate at 10px where a sans just looks small.
-   */
+  /** The small-caps label that names a region. */
   .kicker {
-    font-family: var(--font-mono);
-    font-size: 0.625rem;
-    font-weight: 500;
-    letter-spacing: 0.2em;
+    font-family: var(--font-sans);
+    font-size: 0.6875rem;
+    font-weight: 700;
+    letter-spacing: 0.12em;
     text-transform: uppercase;
     color: var(--color-ink-3);
   }
 
   .kicker-signal { color: var(--color-signal); }
 
-  /** Headline sizes. Set tight; broadsheet headlines nearly touch. */
-  .hed-xl { font-size: clamp(2.75rem, 7.5vw, 6rem); line-height: 0.88; letter-spacing: -0.035em; }
-  .hed-lg { font-size: clamp(2rem, 4.5vw, 3.25rem); line-height: 0.92; letter-spacing: -0.03em; }
-  .hed-md { font-size: clamp(1.4rem, 2.6vw, 2rem); line-height: 0.96; letter-spacing: -0.025em; }
-  .hed-sm { font-size: 1.0625rem; line-height: 1.1; letter-spacing: -0.015em; }
-
-  /** Body copy is a serif, because this page has things to say. */
-  .prose-news {
-    font-family: var(--font-serif);
+  /** Headline sizes. Serif, so set looser than a sans would be. */
+  .hed-xl { font-size: clamp(1.95rem, 4.6vw, 3.5rem); line-height: 1.1; letter-spacing: -0.025em; }
+  .hed-lg { font-size: clamp(1.75rem, 3.4vw, 2.5rem); line-height: 1.14; letter-spacing: -0.02em; }
+  .hed-md { font-size: clamp(1.25rem, 2vw, 1.625rem); line-height: 1.2; letter-spacing: -0.015em; }
+  .hed-sm {
+    font-family: var(--font-sans);
     font-size: 1.0625rem;
-    line-height: 1.55;
+    font-weight: 700;
+    line-height: 1.25;
+    letter-spacing: -0.005em;
+  }
+
+  /** Body copy. Sans, because most of it is instruction rather than prose. */
+  .prose-news {
+    font-family: var(--font-sans);
+    font-size: 1rem;
+    line-height: 1.65;
     color: var(--color-ink-2);
   }
-  .prose-news strong { color: var(--color-ink); font-weight: 600; }
+  .prose-news strong { color: #1a1b1e; font-weight: 600; }
 
-  /** The standfirst: the larger paragraph directly under a headline. */
+  /** The paragraph directly under a headline. */
   .standfirst {
-    font-family: var(--font-serif);
-    font-size: clamp(1.0625rem, 1.6vw, 1.25rem);
-    line-height: 1.45;
+    font-family: var(--font-sans);
+    font-size: clamp(1rem, 1.3vw, 1.125rem);
+    line-height: 1.6;
     color: var(--color-ink-2);
   }
 
-  /* ── Boxes ───────────────────────────────────────────────────────────── */
+  /* ── Cards ───────────────────────────────────────────────────────────── */
 
   /**
-   * A ruled box. Not a card: no radius, no shadow, no fill by default. It is
-   * a region of the page marked off by a line, which is all a card ever was.
+   * The card. Radius, hairline, and a shadow shallow enough that a grid of
+   * twelve does not look quilted. The lift on hover is 2px — enough to read
+   * as a response, small enough not to disturb the row.
    */
   .box {
-    border: 1px solid var(--color-rule);
     background: var(--color-paper);
+    border: 1px solid var(--color-rule);
+    border-radius: 0.75rem;
+    box-shadow: var(--shadow-card);
   }
 
   .box-ink {
-    border: 1px solid var(--color-ink);
-    background: var(--color-ink);
-    color: var(--color-paper);
+    background: var(--color-navy);
+    border: 1px solid var(--color-navy);
+    border-radius: 0.75rem;
+    color: #ffffff;
   }
 
-  /** Interactive box: the rule thickens and darkens. Nothing moves. */
   .box-link {
     transition:
-      border-color 0.18s var(--ease-page),
-      background-color 0.18s var(--ease-page);
+      transform 0.28s var(--ease-out-soft),
+      box-shadow 0.28s var(--ease-out-soft),
+      border-color 0.28s var(--ease-state);
   }
-  .box-link:hover { border-color: var(--color-ink); background: var(--color-paper-2); }
+  .box-link:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-card-hover);
+    border-color: var(--color-rule-2);
+  }
+  .box-link:active { transform: translateY(0); }
 
   /* ── Controls ────────────────────────────────────────────────────────── */
 
   .btn {
+    position: relative;
     display: inline-flex;
     align-items: center;
     justify-content: center;
     gap: 0.5rem;
-    padding: 0.7rem 1.15rem;
+    padding: 0.75rem 1.35rem;
+    border-radius: 0.375rem;
+    border: 1px solid transparent;
     font-family: var(--font-sans);
     font-size: 0.8125rem;
     font-weight: 600;
     letter-spacing: 0.06em;
     text-transform: uppercase;
-    border: 1px solid var(--color-ink);
+    white-space: nowrap;
     transition:
-      background-color 0.16s var(--ease-page),
-      color 0.16s var(--ease-page),
-      border-color 0.16s var(--ease-page);
+      background-color 0.2s var(--ease-state),
+      color 0.2s var(--ease-state),
+      border-color 0.2s var(--ease-state),
+      box-shadow 0.24s var(--ease-out-soft),
+      transform 0.24s var(--ease-out-soft);
+  }
+  .btn:hover:not(:disabled) { transform: translateY(-1px); }
+  .btn:active:not(:disabled) { transform: translateY(0); }
+
+  .btn-solid {
+    background: var(--color-navy);
+    border-color: var(--color-navy);
+    color: #ffffff;
+  }
+  .btn-solid:hover:not(:disabled) {
+    background: var(--color-navy-2);
+    border-color: var(--color-navy-2);
+    box-shadow: 0 8px 20px -8px rgb(0 33 71 / 0.55);
   }
 
-  .btn-solid { background: var(--color-ink); color: var(--color-paper); }
-  .btn-solid:hover:not(:disabled) { background: var(--color-signal); border-color: var(--color-signal); }
+  .btn-signal {
+    background: var(--color-burgundy);
+    border-color: var(--color-burgundy);
+    color: #ffffff;
+  }
+  .btn-signal:hover:not(:disabled) {
+    background: var(--color-burgundy-2);
+    border-color: var(--color-burgundy-2);
+    box-shadow: 0 8px 20px -8px rgb(107 20 20 / 0.6);
+  }
 
-  .btn-signal { background: var(--color-signal); border-color: var(--color-signal); color: var(--color-paper); }
-  .btn-signal:hover:not(:disabled) { background: var(--color-signal-ink); border-color: var(--color-signal-ink); }
+  .btn-outline {
+    background: transparent;
+    border-color: var(--color-rule-2);
+    color: var(--color-navy);
+  }
+  .btn-outline:hover:not(:disabled) {
+    background: var(--color-paper-2);
+    border-color: var(--color-navy);
+  }
 
-  .btn-outline { background: transparent; color: var(--color-ink); }
-  .btn-outline:hover:not(:disabled) { background: var(--color-ink); color: var(--color-paper); }
+  .btn-sm { padding: 0.45rem 0.85rem; font-size: 0.75rem; letter-spacing: 0.04em; }
 
-  .btn:disabled { opacity: 0.35; cursor: not-allowed; }
+  .btn:disabled { opacity: 0.4; cursor: not-allowed; transform: none; }
 
   .field {
     width: 100%;
-    padding: 0.6rem 0.75rem;
+    padding: 0.65rem 0.85rem;
     border: 1px solid var(--color-rule-2);
+    border-radius: 0.375rem;
     background: var(--color-paper);
-    color: var(--color-ink);
+    color: #1a1b1e;
     font-family: var(--font-sans);
     font-size: 0.875rem;
+    transition: border-color 0.18s var(--ease-state), box-shadow 0.18s var(--ease-state);
   }
-  .field:focus { outline: 2px solid var(--color-signal); outline-offset: -1px; border-color: var(--color-signal); }
+  .field:focus {
+    outline: none;
+    border-color: var(--color-navy);
+    box-shadow: 0 0 0 3px rgb(0 33 71 / 0.12);
+  }
 
   /* ── Data ────────────────────────────────────────────────────────────── */
 
-  /** Figures: the numbers a reader scans for. Mono, tight, never wrapped. */
+  /** Figures: anything a reader compares down a column. */
   .fig {
     font-family: var(--font-mono);
     font-variant-numeric: tabular-nums;
-    letter-spacing: -0.02em;
+    letter-spacing: -0.01em;
   }
 
-  /** A tag: small caps in a hairline box. */
+  /** A pill. Small caps in a tinted capsule. */
   .tag {
     display: inline-flex;
     align-items: center;
     gap: 0.35rem;
-    padding: 0.12rem 0.4rem;
-    border: 1px solid currentColor;
-    font-family: var(--font-mono);
-    font-size: 0.5625rem;
-    letter-spacing: 0.14em;
+    padding: 0.2rem 0.55rem;
+    border-radius: 999px;
+    background: var(--color-paper-2);
+    border: 1px solid var(--color-rule);
+    color: var(--color-ink-3);
+    font-family: var(--font-sans);
+    font-size: 0.625rem;
+    font-weight: 700;
+    letter-spacing: 0.1em;
     text-transform: uppercase;
     white-space: nowrap;
   }
 
   /**
-   * A closed slot, drawn as hatching rather than as a colour.
-   *
-   * Print marks unavailable space with a screen or a hatch, and it survives
-   * photocopying, projection and colourblindness in a way a pale yellow fill
-   * does not.
+   * A status dot with its label: a filled circle carrying the colour, and
+   * the word carrying the meaning. Never the circle alone.
    */
+  .status {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    font-size: 0.6875rem;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+  }
+  .status::before {
+    content: "";
+    width: 0.5rem;
+    height: 0.5rem;
+    border-radius: 999px;
+    background: currentColor;
+    flex: none;
+  }
+  .status-open { color: var(--color-open); }
+  .status-taken { color: var(--color-taken); }
+  .status-closed { color: var(--color-ink-3); }
+
+  /** Unavailable area, marked by hatch so it survives greyscale. */
   .hatch {
     background-image: repeating-linear-gradient(
       45deg,
@@ -277,26 +368,87 @@
     );
   }
 
-  /** Photography is halftone: greyscale, hard contrast, no colour. */
-  .halftone { filter: grayscale(1) contrast(1.22) brightness(1.02); }
+  /**
+   * Photography treatment. The campus is the subject, so colour stays — but
+   * a small lift in contrast keeps a dusk photograph from going muddy under
+   * the navy scrim that sits on top of it.
+   */
+  .halftone { filter: saturate(1.04) contrast(1.06); }
+
+  /** The navy scrim over a hero photograph. Left-weighted, so type reads. */
+  .scrim-navy {
+    background: linear-gradient(
+      100deg,
+      rgb(0 33 71 / 0.94) 0%,
+      rgb(0 33 71 / 0.76) 34%,
+      rgb(0 33 71 / 0.36) 62%,
+      rgb(0 33 71 / 0.10) 100%
+    );
+  }
+
+  /** A gold hairline. Used once per band, under a heading or over a footer. */
+  .gold-rule {
+    height: 3px;
+    width: 3.5rem;
+    background: var(--color-gold);
+    border-radius: 2px;
+  }
+
+  /* ── Navigation ──────────────────────────────────────────────────────── */
+
+  /**
+   * A nav link on the navy bar. The underline grows from the centre rather
+   * than fading in, which reads as a deliberate movement instead of a glow.
+   */
+  .navlink {
+    position: relative;
+    padding: 0.5rem 0.15rem;
+    font-size: 0.8125rem;
+    font-weight: 600;
+    letter-spacing: 0.07em;
+    text-transform: uppercase;
+    color: rgb(255 255 255 / 0.78);
+    transition: color 0.2s var(--ease-state);
+  }
+  .navlink:hover { color: #ffffff; }
+  .navlink::after {
+    content: "";
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    height: 2px;
+    background: var(--color-gold);
+    transform: scaleX(0);
+    transform-origin: center;
+    transition: transform 0.28s var(--ease-out-soft);
+  }
+  .navlink:hover::after { transform: scaleX(1); }
+
+  .navlink-active {
+    background: var(--color-burgundy);
+    color: #ffffff;
+    padding: 0.5rem 0.9rem;
+    border-radius: 0.375rem;
+  }
+  .navlink-active::after { display: none; }
 }
 
-/*
- * Motion.
- *
- * A newspaper does not animate, so nothing here bounces, lifts or floats.
- * The only movements are ones print has analogues for: a rule drawing itself
- * across the page, and a block of type arriving. Both are short and flat.
- */
-@media (prefers-reduced-motion: reduce) {
-  *,
-  *::before,
-  *::after {
-    animation-duration: 0.001ms !important;
-    animation-iteration-count: 1 !important;
-    transition-duration: 0.001ms !important;
-    scroll-behavior: auto !important;
-  }
+/* ── Motion ────────────────────────────────────────────────────────────── */
+
+@keyframes rise-in {
+  from { opacity: 0; transform: translateY(18px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes ken-burns {
+  from { transform: scale(1.06); }
+  to { transform: scale(1); }
 }
 
 @keyframes rule-draw {
@@ -304,16 +456,55 @@
   to { transform: scaleX(1); }
 }
 
-@keyframes ink-in {
-  from { opacity: 0; transform: translateY(6px); }
-  to { opacity: 1; transform: translateY(0); }
-}
-
-@keyframes blink-signal {
+@keyframes pulse-signal {
   0%, 100% { opacity: 1; }
-  50% { opacity: 0.25; }
+  50% { opacity: 0.35; }
 }
 
-.animate-rule-draw { transform-origin: left; animation: rule-draw 0.6s var(--ease-page) both; }
-.animate-ink-in { animation: ink-in 0.34s var(--ease-page) both; }
-.animate-blink { animation: blink-signal 1.6s steps(1, end) infinite; }
+.animate-rule-draw { transform-origin: left; animation: rule-draw 0.7s var(--ease-out-soft) both; }
+.animate-ink-in { animation: rise-in 0.42s var(--ease-out-soft) both; }
+.animate-rise { animation: rise-in 0.62s var(--ease-out-soft) both; }
+.animate-fade { animation: fade-in 0.5s var(--ease-state) both; }
+.animate-blink { animation: pulse-signal 1.6s var(--ease-state) infinite; }
+
+/**
+ * The hero photograph settles over twelve seconds rather than sitting still.
+ * It is the only ambient motion on the site; everything else is a response
+ * to something the reader did.
+ */
+.animate-ken-burns { animation: ken-burns 12s var(--ease-out-soft) both; }
+
+/**
+ * Scroll reveal.
+ *
+ * The displaced start state is gated behind [data-reveal-ready], which the
+ * Reveal component sets on <html> once its observer is running. Without
+ * JavaScript — or before hydration, or for a crawler — nothing is hidden,
+ * so the page never depends on a script to become readable.
+ */
+[data-reveal-ready] [data-reveal] {
+  opacity: 0;
+  transform: translateY(22px);
+  transition:
+    opacity 0.65s var(--ease-out-soft),
+    transform 0.65s var(--ease-out-soft);
+  transition-delay: var(--reveal-delay, 0ms);
+}
+[data-reveal-ready] [data-reveal][data-shown="true"] {
+  opacity: 1;
+  transform: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+  }
+  [data-reveal-ready] [data-reveal] { opacity: 1; transform: none; }
+  .btn:hover:not(:disabled),
+  .box-link:hover { transform: none; }
+}

@@ -42,7 +42,7 @@ export function ClaimButton({
 
   if (done) {
     return (
-      <span className="fig border border-ink bg-ink px-2.5 py-1 text-[11px] font-bold text-paper">
+      <span className="fig rounded-md bg-navy px-2.5 py-1 text-[11px] font-bold text-paper">
         {done}
       </span>
     );
