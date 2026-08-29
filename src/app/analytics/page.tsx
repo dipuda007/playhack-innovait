@@ -36,7 +36,7 @@ export default async function AnalyticsPage() {
         <p className="kicker kicker-signal">Operations · Insights</p>
 
         <div className="mt-4 grid gap-8 lg:grid-cols-[1.05fr_1fr] lg:gap-12">
-          <h2 className="hed-xl font-display uppercase">
+          <h2 className="hed-xl font-display uppercase text-navy">
             Where the campus actually plays
           </h2>
           <div className="prose-news space-y-4 self-end">

@@ -41,14 +41,14 @@ export function SiteFooter() {
         </div>
 
         <nav className="lg:col-span-1">
-          <h3 className="font-display text-lg font-bold">Sections</h3>
+          <h3 className="font-display text-[1.15rem] font-semibold tracking-[0.01em]">Sections</h3>
           <div className="gold-rule mt-2.5" />
           <ul className="mt-4 space-y-2.5">
             {SECTIONS.map((s) => (
               <li key={s.href}>
                 <Link
                   href={s.href}
-                  className="text-[13px] text-white/75 transition-colors duration-200 hover:text-gold"
+                  className="link-grow text-[13px] text-white/75 hover:text-gold"
                 >
                   {s.label}
                 </Link>
@@ -58,7 +58,7 @@ export function SiteFooter() {
         </nav>
 
         <div className="lg:col-span-1">
-          <h3 className="font-display text-lg font-bold">The guarantee</h3>
+          <h3 className="font-display text-[1.15rem] font-semibold tracking-[0.01em]">The guarantee</h3>
           <div className="gold-rule mt-2.5" />
           <p className="mt-4 text-[13px] leading-relaxed text-white/70">
             Two students cannot hold the same court at the same time. Not
@@ -73,7 +73,7 @@ export function SiteFooter() {
         </div>
 
         <div className="lg:col-span-1">
-          <h3 className="font-display text-lg font-bold">Credits</h3>
+          <h3 className="font-display text-[1.15rem] font-semibold tracking-[0.01em]">Credits</h3>
           <div className="gold-rule mt-2.5" />
           <p className="mt-4 text-[12px] leading-relaxed text-white/60">
             Campus photography via Wikimedia Commons. The lake, by Ganesh Mohan
@@ -84,7 +84,7 @@ export function SiteFooter() {
             href={REPO}
             target="_blank"
             rel="noreferrer"
-            className="mt-4 inline-flex items-center gap-1.5 text-[13px] font-semibold text-white/80 transition-colors duration-200 hover:text-gold"
+            className="link-grow mt-4 inline-flex items-center gap-1.5 text-[13px] font-semibold text-white/80 hover:text-gold"
           >
             Source on GitHub
             <span aria-hidden>↗</span>

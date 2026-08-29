@@ -14,7 +14,7 @@ export default async function FairPage() {
         <p className="kicker kicker-signal">Innovation · Fair allocation</p>
 
         <div className="mt-4 grid gap-8 lg:grid-cols-[1.15fr_1fr] lg:gap-12">
-          <h2 className="hed-xl font-display uppercase">
+          <h2 className="hed-xl font-display uppercase text-navy">
             Winning a race is not deserving the court
           </h2>
 

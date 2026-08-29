@@ -69,7 +69,9 @@ export function FacilityEntry({
     >
       <div className="flex flex-1 flex-col p-5">
         <div className="flex items-start justify-between gap-3">
-          <h3 className="hed-sm uppercase text-navy">{facility.name}</h3>
+          <h3 className="hed-sm uppercase text-navy transition-colors duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] group-hover:text-burgundy">
+            {facility.name}
+          </h3>
           <SportIcon
             sport={facility.sport}
             size={22}
@@ -98,7 +100,7 @@ export function FacilityEntry({
         </p>
 
         <div className="mt-5 flex flex-wrap items-end justify-between gap-x-3 gap-y-2 pt-1">
-          <p className="whitespace-nowrap">
+          <p className="basis-full whitespace-nowrap">
             {dayOver ? (
               <span className="fig text-[2.25rem] font-bold leading-none text-ink-3">
                 —
@@ -165,7 +167,7 @@ export function FacilityEntry({
         ) : (
           <div
             aria-hidden
-            className="absolute inset-0 p-2.5 text-navy opacity-40 transition-opacity duration-300 group-hover:opacity-60"
+            className="absolute inset-0 p-2.5 text-navy opacity-40 transition-[opacity,transform] duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] group-hover:scale-[1.07] group-hover:opacity-65"
           >
             <CourtArt sport={facility.sport} className="h-full w-full" />
           </div>

@@ -33,7 +33,7 @@ export default async function BookingsPage() {
       {/* The reader's own page: name at masthead scale, standing under it. */}
       <header className="border-b border-rule pb-7 pt-8">
         <p className="kicker kicker-signal">Your account</p>
-        <h2 className="hed-lg mt-3 font-display uppercase">{user.name}</h2>
+        <h2 className="hed-lg mt-3 font-display uppercase text-navy">{user.name}</h2>
         <p className="mt-2 font-mono text-[11px] uppercase tracking-[0.14em] text-ink-3">
           {user.rollNumber} · {user.hostel} hostel
         </p>

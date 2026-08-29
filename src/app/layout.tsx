@@ -13,16 +13,29 @@ import { sql } from "@/db/client";
  *   Playfair Display  headings and the wordmark — the institutional serif
  *   Inter             everything a reader reads or clicks
  *   JetBrains Mono    times, counts, SQL — anything that must line up
+ *
+ * Playfair and Inter are both loaded as *variable* fonts rather than at a
+ * fixed weight. That is one file each, not one per weight, and it is what
+ * makes a real type scale possible: a 56px hero can be set at 700 while an
+ * 18px footer heading is set at 600, and the two look like the same family
+ * doing its job rather than one weight stretched across both jobs.
+ *
+ * Playfair also carries an italic, used sparingly for the one editorial
+ * aside per page. Inter carries an optical-size axis, so small text is
+ * drawn with slightly open spacing and large text is drawn tight — the
+ * difference is invisible described and obvious on the page.
  */
 const display = Playfair_Display({
   subsets: ["latin"],
-  weight: ["700"],
+  style: ["normal", "italic"],
   variable: "--font-playfair",
   display: "swap",
 });
 
 const sans = Inter({
   subsets: ["latin"],
+  style: ["normal", "italic"],
+  axes: ["opsz"],
   variable: "--font-inter",
   display: "swap",
 });
