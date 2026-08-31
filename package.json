@@ -19,7 +19,8 @@
     "infographic": "tsx scripts/infographic.mts",
     "deck": "python scripts/deck_native.py",
     "deck:extras": "python scripts/deck_pdf.py",
-    "report": "tsx scripts/report.mts"
+    "report": "tsx scripts/report.mts",
+    "deck:pdf": "tsx scripts/deck_pdf_vector.mts"
   },
   "dependencies": {
     "clsx": "^2.1.1",

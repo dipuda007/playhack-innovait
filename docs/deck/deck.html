@@ -114,6 +114,14 @@
   .wire img{width:100%;display:block}
   .wire figcaption{font-size:13px;color:var(--ink-2);padding:10px 12px;border-top:1px solid var(--rule)}
   .wire figcaption b{color:var(--ink)}
+
+  /* Print: one slide per page, vector text, no gaps. Used by npm run deck:pdf. */
+  @page { size: 1600px 900px; margin: 0; }
+  @media print {
+    body { background: #fff; }
+    .slide { margin: 0 !important; break-after: page; break-inside: avoid; }
+    .slide:last-child { break-after: auto; }
+  }
   .full{padding:0}
   .full img{width:100%;height:100%;object-fit:contain;background:var(--paper)}
 </style>
