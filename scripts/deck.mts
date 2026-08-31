@@ -22,7 +22,7 @@ const browser = await puppeteer.launch({
   args: ["--no-sandbox", "--disable-gpu", "--hide-scrollbars", "--allow-file-access-from-files"],
 });
 const page = await browser.newPage();
-await page.setViewport({ width: 1600, height: 900, deviceScaleFactor: 2 });
+await page.setViewport({ width: 1600, height: 900, deviceScaleFactor: 2.4 });  // 3840x2160 per slide
 await page.goto(pathToFileURL(SRC).href, { waitUntil: "networkidle2" });
 await page.evaluate(() => (document as Document & { fonts: FontFaceSet }).fonts.ready);
 await new Promise((r) => setTimeout(r, 700));

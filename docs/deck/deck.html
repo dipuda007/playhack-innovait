@@ -93,6 +93,27 @@
   .title .meta{margin-top:40px;display:flex;gap:44px;font-size:15px;letter-spacing:.12em;text-transform:uppercase;color:rgba(247,244,238,.62)}
   .title .meta b{color:var(--paper)}
 
+
+  .flow{display:flex;align-items:stretch;gap:0;margin-top:34px}
+  .step2{flex:1;border:1.5px solid var(--ink);background:#fff;padding:18px 16px;position:relative}
+  .step2 + .step2{border-left:0}
+  .step2 .i{font-family:"JetBrains Mono",monospace;font-size:12px;color:var(--rust);font-weight:700}
+  .step2 .t{font-size:17px;font-weight:700;margin-top:8px;line-height:1.25}
+  .step2 .d{font-size:13.5px;color:var(--ink-2);margin-top:7px;line-height:1.4}
+  .branch{display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-top:22px}
+  .br{border-left:3px solid var(--open);background:var(--paper-2);padding:16px 18px}
+  .br.no{border-left-color:var(--taken)}
+  .br .h{font-size:13px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--open)}
+  .br.no .h{color:var(--taken)}
+  .br p{font-size:15px;color:var(--ink-2);margin-top:8px;line-height:1.45}
+  .stack{display:grid;grid-template-columns:1fr 1fr;gap:0 46px}
+  .stack table{font-size:17px}
+  .stack td{padding:11px 12px 11px 0}
+  .wire{display:grid;grid-template-columns:repeat(4,1fr);gap:18px;margin-top:30px}
+  .wire figure{border:1px solid var(--rule);background:#fff}
+  .wire img{width:100%;display:block}
+  .wire figcaption{font-size:13px;color:var(--ink-2);padding:10px 12px;border-top:1px solid var(--rule)}
+  .wire figcaption b{color:var(--ink)}
   .full{padding:0}
   .full img{width:100%;height:100%;object-fit:contain;background:var(--paper)}
 </style>
@@ -306,6 +327,108 @@ npm run e2e         <span class="c"># 11 browser checks</span></pre>
     <li><b>Next:</b> institute SSO, push notifications for waitlist offers, and a real limiter keyed on identity rather than on a header the client controls.</li>
   </ul>
   <div class="foot"><span>PlayHack · Team InnovAIT</span><span>11</span></div>
+</section>
+
+
+<!-- KEY FEATURES -->
+<section class="slide">
+  <p class="kicker">Key features and functionality</p>
+  <h2 style="margin-top:18px">What the product actually does</h2>
+  <div class="rule"></div>
+  <table style="margin-top:34px">
+    <tr><th style="width:26%">Feature</th><th>Functionality</th></tr>
+    <tr><td><b>Availability view</b></td><td>Twelve campus facilities with live open, taken and closed counts. Availability is derived from the bookings table per request &mdash; never stored, so it cannot drift.</td></tr>
+    <tr><td><b>Slot selection</b></td><td>A day grid per facility on its own timetable, in IST, seven days ahead. Updates live over Server-Sent Events.</td></tr>
+    <tr><td><b>Booking with a guarantee</b></td><td>Confirmed by the database or refused by it. Idempotency keys make a retry return the original booking rather than a second one.</td></tr>
+    <tr><td><b>Typed rejections</b></td><td><span class="num">SLOT_TAKEN</span>, <span class="num">QUOTA_EXCEEDED</span>, <span class="num">OVERLAPS_OWN</span> &mdash; each carrying three alternative slots and a queue position.</td></tr>
+    <tr><td><b>Waitlist</b></td><td>Join a full slot; a cancellation offers it to the next student in the <em>same transaction</em>, with a claim expiry.</td></tr>
+    <tr><td><b>Fair draw</b></td><td>Peak slots go to a seeded, weighted, published lottery, so the fastest wifi does not always win.</td></tr>
+    <tr><td><b>Operations console</b></td><td>Maintenance closures, which the same constraint refuses if a student already holds that window.</td></tr>
+    <tr><td><b>Insights</b></td><td>Demand by hour, a utilisation heatmap, no-show rate, and under-used prime slots.</td></tr>
+  </table>
+  <div class="foot"><span>PlayHack &middot; Team InnovAIT</span><span>09</span></div>
+</section>
+
+<!-- USER FLOW -->
+<section class="slide">
+  <p class="kicker">Overall user flow</p>
+  <h2 style="margin-top:18px">From discovery to confirmation</h2>
+  <div class="rule"></div>
+  <div class="flow">
+    <div class="step2"><div class="i">01</div><div class="t">Browse</div><div class="d">Facilities with live open counts. Filter by sport, pick a day.</div></div>
+    <div class="step2"><div class="i">02</div><div class="t">Inspect</div><div class="d">The day grid for one court. Open, taken, yours, closed &mdash; by fill, not hue.</div></div>
+    <div class="step2"><div class="i">03</div><div class="t">Select</div><div class="d">Tap a slot. The sheet shows party size and the idempotency key.</div></div>
+    <div class="step2"><div class="i">04</div><div class="t">Submit</div><div class="d">One constrained INSERT. No availability check on the write path.</div></div>
+    <div class="step2"><div class="i">05</div><div class="t">Decide</div><div class="d">Postgres confirms exactly one and refuses every other request.</div></div>
+  </div>
+  <div class="branch">
+    <div class="br">
+      <div class="h">Won &rarr; 201 Confirmed</div>
+      <p>A booking code is issued. It appears in My Bookings and the grid marks the slot as yours, live on every open screen. Cancelling releases it <em>and</em> promotes the waitlist in one transaction.</p>
+    </div>
+    <div class="br no">
+      <div class="h">Lost &rarr; 409 Typed rejection</div>
+      <p>SQLSTATE 23P01 becomes a reason a student can act on: three alternative slots on the same grid, plus a waitlist place that is offered automatically when somebody cancels.</p>
+    </div>
+  </div>
+  <div class="foot"><span>Manager flow: close a window &rarr; refused if a student holds it &rarr; reopening is a status flip</span><span>10</span></div>
+</section>
+
+<!-- WIREFRAMES AND UI -->
+<section class="slide">
+  <p class="kicker">Wireframes and UI design</p>
+  <h2 style="margin-top:18px">The screens, as built</h2>
+  <div class="rule"></div>
+  <div class="wire">
+    <figure><img src="../media/home.jpg" alt="" /><figcaption><b>Browse.</b> Hero, live counts, facility grid.</figcaption></figure>
+    <figure><img src="../media/facility.png" alt="" /><figcaption><b>Slot grid.</b> The day as a fixture table.</figcaption></figure>
+    <figure><img src="../media/bookings.png" alt="" /><figcaption><b>My bookings.</b> Upcoming and history.</figcaption></figure>
+    <figure><img src="../media/ops.png" alt="" /><figcaption><b>Ops.</b> Closures, refused on a clash.</figcaption></figure>
+  </div>
+  <div class="cols c2" style="margin-top:26px;gap:40px">
+    <div>
+      <p class="body" style="font-size:17px"><b>Design system.</b> No brand hue: charcoal chrome, warm paper, rust for the single action, brass for a hairline. Every saturated colour on screen means something.</p>
+    </div>
+    <div>
+      <p class="body" style="font-size:17px"><b>Accessible by construction.</b> State is carried by fill rather than hue, and availability is stated three ways &mdash; dot, word, count. Motion is dropped under <span class="num">prefers-reduced-motion</span>.</p>
+    </div>
+  </div>
+  <div class="foot"><span>Mobile first &mdash; students book from phones</span><span>11</span></div>
+</section>
+
+<!-- TECHNOLOGY STACK -->
+<section class="slide">
+  <p class="kicker">Technology stack</p>
+  <h2 style="margin-top:18px">What it is built on</h2>
+  <div class="rule"></div>
+  <div class="stack" style="margin-top:30px">
+    <div>
+      <table>
+        <tr><th colspan="2">Application</th></tr>
+        <tr><td><b>Next.js 15</b></td><td>App Router, React Server Components</td></tr>
+        <tr><td><b>React 19</b></td><td>UI runtime</td></tr>
+        <tr><td><b>TypeScript</b></td><td>Strict mode</td></tr>
+        <tr><td><b>Tailwind CSS v4</b></td><td>Token layer, no component library</td></tr>
+        <tr><td><b>lucide-react</b></td><td>Icon set</td></tr>
+        <tr><td><b>zod</b></td><td>Validation on every request body</td></tr>
+        <tr><td><b>date-fns</b></td><td>IST-correct date handling</td></tr>
+      </table>
+    </div>
+    <div>
+      <table>
+        <tr><th colspan="2">Data and platform</th></tr>
+        <tr><td><b>PostgreSQL 17</b></td><td>Neon, <span class="num">ap-southeast-1</span></td></tr>
+        <tr><td><b>btree_gist</b></td><td>Extension backing the exclusion constraint</td></tr>
+        <tr><td><b>postgres.js</b></td><td>Driver &mdash; tagged templates, bind parameters only</td></tr>
+        <tr><td><b>Vercel</b></td><td>Serverless functions, region <span class="num">sin1</span></td></tr>
+        <tr><td><b>Server-Sent Events</b></td><td>Live availability, native &mdash; no socket library</td></tr>
+        <tr><td><b>Vitest</b></td><td>19 unit and concurrency tests</td></tr>
+        <tr><td><b>Puppeteer</b></td><td>11-check browser journey</td></tr>
+        <tr><td><b>GitHub Actions</b></td><td>CI against a real Postgres service container</td></tr>
+      </table>
+    </div>
+  </div>
+  <div class="foot"><span>No ORM &mdash; the constraint is the product, and it is written in SQL</span><span>12</span></div>
 </section>
 
 <!-- 12 ───────────────────────────────────────────────────────────────── -->
