@@ -128,6 +128,7 @@
 </head>
 <body>
 
+
 <!-- 01 ───────────────────────────────────────────────────────────────── -->
 <section class="slide title">
   <img class="bg" src="../../public/campus/tihor-lake.jpg" alt="" />
@@ -274,72 +275,6 @@ if (!taken) await insertBooking(court, slot);</pre>
 
 <!-- 08 ───────────────────────────────────────────────────────────────── -->
 <section class="slide">
-  <p class="kicker">Beyond “it does not double-book”</p>
-  <h2 style="margin-top:18px">Correctness is the floor</h2>
-  <div class="rule"></div>
-  <ul style="margin-top:30px">
-    <li><b>Idempotency keys.</b> A retried submit returns the original booking. A double-tap on hostel wifi is the common case, not the edge case.</li>
-    <li><b>Typed rejections.</b> Losing returns <span class="num">SLOT_TAKEN</span>, <span class="num">QUOTA_EXCEEDED</span>, <span class="num">OVERLAPS_OWN</span> — with three alternative slots and a queue position.</li>
-    <li><b>Waitlist promotion.</b> Cancelling frees the slot <em>and</em> offers it to the next student in the same transaction — no window where it is free but unowned.</li>
-    <li><b>Maintenance closures.</b> A closure is a booking row. One invariant, two features: a manager cannot close a court out from under a confirmed reservation.</li>
-    <li><b>Fair draw.</b> Peak slots go to a seeded, weighted, published lottery. First-come-first-served rewards the best wifi, not the keenest player.</li>
-  </ul>
-  <div class="foot"><span>PlayHack · Team InnovAIT</span><span>08</span></div>
-</section>
-
-<!-- 09 ───────────────────────────────────────────────────────────────── -->
-<section class="slide">
-  <p class="kicker">The product</p>
-  <h2 style="margin-top:18px">Built for a student on a phone at 5:58 PM</h2>
-  <div class="rule"></div>
-  <div class="shots">
-    <figure><img src="../media/facility.png" alt="" /><figcaption><b>Booking.</b> The day as a fixture table, live over SSE.</figcaption></figure>
-    <figure><img src="../media/fair.png" alt="" /><figcaption><b>Fair draw.</b> Rules and seed published before the draw.</figcaption></figure>
-    <figure><img src="../media/insights.png" alt="" /><figcaption><b>Insights.</b> Aggregated from the booking table itself.</figcaption></figure>
-  </div>
-  <div class="foot"><span>Twelve facilities · availability derived, never stored</span><span>09</span></div>
-</section>
-
-<!-- 10 ───────────────────────────────────────────────────────────────── -->
-<section class="slide">
-  <p class="kicker">Verified, not asserted</p>
-  <h2 style="margin-top:18px">Every claim on these slides is reproducible</h2>
-  <div class="rule"></div>
-  <div class="cols c2" style="margin-top:42px">
-    <div>
-      <div class="stat"><span class="v good">11/11</span><span class="l">browser journey against production — book, confirm, cancel, slot returns</span></div>
-      <div class="stat"><span class="v good">19</span><span class="l">unit tests, run in CI against a real Postgres 17</span></div>
-      <div class="stat"><span class="v good">0</span><span class="l">npm audit vulnerabilities</span></div>
-    </div>
-    <div class="mid">
-<pre style="font-size:18px">npm run test        <span class="c"># concurrency + lottery</span>
-npm run invariant   <span class="c"># whole-table sweep</span>
-npm run e2e         <span class="c"># 11 browser checks</span></pre>
-      <p class="body" style="margin-top:26px;font-size:18px">The overlap count is
-        never a check of the slot just tested — it is <b>every confirmed row
-        against every other row</b> on the same court, run after every race.</p>
-    </div>
-  </div>
-  <div class="foot"><span>PlayHack · Team InnovAIT</span><span>10</span></div>
-</section>
-
-<!-- 11 ───────────────────────────────────────────────────────────────── -->
-<section class="slide">
-  <p class="kicker">Stated plainly</p>
-  <h2 style="margin-top:18px">What is deliberately out of scope</h2>
-  <div class="rule"></div>
-  <ul style="margin-top:30px">
-    <li><b>No passwords.</b> Identity is a signed cookie over a seeded roster, with a “switch reader” control — so a judge can race two students without two browser profiles. <span style="color:var(--ink-3)">Swapping in SSO replaces one function.</span></li>
-    <li><b>The demo endpoints are unauthenticated</b> and rate limited rather than gated, because the race demo has to stay one click away.</li>
-    <li><b>What is enforced:</b> ownership scoped inside every UPDATE, zod on every request body, bind parameters on every query, no <span class="num">sql.unsafe</span> anywhere.</li>
-    <li><b>Next:</b> institute SSO, push notifications for waitlist offers, and a real limiter keyed on identity rather than on a header the client controls.</li>
-  </ul>
-  <div class="foot"><span>PlayHack · Team InnovAIT</span><span>11</span></div>
-</section>
-
-
-<!-- KEY FEATURES -->
-<section class="slide">
   <p class="kicker">Key features and functionality</p>
   <h2 style="margin-top:18px">What the product actually does</h2>
   <div class="rule"></div>
@@ -354,7 +289,7 @@ npm run e2e         <span class="c"># 11 browser checks</span></pre>
     <tr><td><b>Operations console</b></td><td>Maintenance closures, which the same constraint refuses if a student already holds that window.</td></tr>
     <tr><td><b>Insights</b></td><td>Demand by hour, a utilisation heatmap, no-show rate, and under-used prime slots.</td></tr>
   </table>
-  <div class="foot"><span>PlayHack &middot; Team InnovAIT</span><span>09</span></div>
+  <div class="foot"><span>PlayHack &middot; Team InnovAIT</span><span>08</span></div>
 </section>
 
 <!-- USER FLOW -->
@@ -379,7 +314,7 @@ npm run e2e         <span class="c"># 11 browser checks</span></pre>
       <p>SQLSTATE 23P01 becomes a reason a student can act on: three alternative slots on the same grid, plus a waitlist place that is offered automatically when somebody cancels.</p>
     </div>
   </div>
-  <div class="foot"><span>Manager flow: close a window &rarr; refused if a student holds it &rarr; reopening is a status flip</span><span>10</span></div>
+  <div class="foot"><span>Manager flow: close a window &rarr; refused if a student holds it &rarr; reopening is a status flip</span><span>09</span></div>
 </section>
 
 <!-- WIREFRAMES AND UI -->
@@ -387,13 +322,12 @@ npm run e2e         <span class="c"># 11 browser checks</span></pre>
   <p class="kicker">Wireframes and UI design</p>
   <h2 style="margin-top:18px">The screens, as built</h2>
   <div class="rule"></div>
-  <div class="wire">
-    <figure><img src="../media/home.jpg" alt="" /><figcaption><b>Browse.</b> Hero, live counts, facility grid.</figcaption></figure>
-    <figure><img src="../media/facility.png" alt="" /><figcaption><b>Slot grid.</b> The day as a fixture table.</figcaption></figure>
-    <figure><img src="../media/bookings.png" alt="" /><figcaption><b>My bookings.</b> Upcoming and history.</figcaption></figure>
-    <figure><img src="../media/ops.png" alt="" /><figcaption><b>Ops.</b> Closures, refused on a clash.</figcaption></figure>
+  <div class="wire" style="grid-template-columns:repeat(3,1fr);gap:26px;margin-top:32px">
+    <figure><img src="../media/home.jpg" alt="" /><figcaption><b>Browse.</b> Live open counts across twelve facilities, filtered by sport.</figcaption></figure>
+    <figure><img src="../media/facility.png" alt="" /><figcaption><b>Slot grid.</b> The day as a fixture table, live over SSE.</figcaption></figure>
+    <figure><img src="../media/insights.png" alt="" /><figcaption><b>Insights.</b> Demand, utilisation and no-shows, from the bookings table.</figcaption></figure>
   </div>
-  <div class="cols c2" style="margin-top:26px;gap:40px">
+  <div class="cols c2" style="margin-top:30px;gap:44px">
     <div>
       <p class="body" style="font-size:17px"><b>Design system.</b> No brand hue: charcoal chrome, warm paper, rust for the single action, brass for a hairline. Every saturated colour on screen means something.</p>
     </div>
@@ -401,10 +335,9 @@ npm run e2e         <span class="c"># 11 browser checks</span></pre>
       <p class="body" style="font-size:17px"><b>Accessible by construction.</b> State is carried by fill rather than hue, and availability is stated three ways &mdash; dot, word, count. Motion is dropped under <span class="num">prefers-reduced-motion</span>.</p>
     </div>
   </div>
-  <div class="foot"><span>Mobile first &mdash; students book from phones</span><span>11</span></div>
+  <div class="foot"><span>Mobile first &mdash; students book from phones &middot; My Bookings and the Ops console follow the same grammar</span><span>10</span></div>
 </section>
 
-<!-- TECHNOLOGY STACK -->
 <section class="slide">
   <p class="kicker">Technology stack</p>
   <h2 style="margin-top:18px">What it is built on</h2>
@@ -429,6 +362,7 @@ npm run e2e         <span class="c"># 11 browser checks</span></pre>
         <tr><td><b>btree_gist</b></td><td>Extension backing the exclusion constraint</td></tr>
         <tr><td><b>postgres.js</b></td><td>Driver &mdash; tagged templates, bind parameters only</td></tr>
         <tr><td><b>Vercel</b></td><td>Serverless functions, region <span class="num">sin1</span></td></tr>
+        <tr><td><b>APIs</b></td><td>Internal REST route handlers; SSE for live availability. No third-party APIs, deliberately.</td></tr>
         <tr><td><b>Server-Sent Events</b></td><td>Live availability, native &mdash; no socket library</td></tr>
         <tr><td><b>Vitest</b></td><td>19 unit and concurrency tests</td></tr>
         <tr><td><b>Puppeteer</b></td><td>11-check browser journey</td></tr>
@@ -436,10 +370,63 @@ npm run e2e         <span class="c"># 11 browser checks</span></pre>
       </table>
     </div>
   </div>
-  <div class="foot"><span>No ORM &mdash; the constraint is the product, and it is written in SQL</span><span>12</span></div>
+  <div class="foot"><span>No ORM &mdash; the constraint is the product, and it is written in SQL</span><span>11</span></div>
 </section>
 
 <!-- 12 ───────────────────────────────────────────────────────────────── -->
+<section class="slide">
+  <p class="kicker">Beyond “it does not double-book”</p>
+  <h2 style="margin-top:18px">Correctness is the floor</h2>
+  <div class="rule"></div>
+  <ul style="margin-top:30px">
+    <li><b>Idempotency keys.</b> A retried submit returns the original booking. A double-tap on hostel wifi is the common case, not the edge case.</li>
+    <li><b>Typed rejections.</b> Losing returns <span class="num">SLOT_TAKEN</span>, <span class="num">QUOTA_EXCEEDED</span>, <span class="num">OVERLAPS_OWN</span> — with three alternative slots and a queue position.</li>
+    <li><b>Waitlist promotion.</b> Cancelling frees the slot <em>and</em> offers it to the next student in the same transaction — no window where it is free but unowned.</li>
+    <li><b>Maintenance closures.</b> A closure is a booking row. One invariant, two features: a manager cannot close a court out from under a confirmed reservation.</li>
+    <li><b>Fair draw.</b> Peak slots go to a seeded, weighted, published lottery. First-come-first-served rewards the best wifi, not the keenest player.</li>
+  </ul>
+  <div class="foot"><span>PlayHack · Team InnovAIT</span><span>12</span></div>
+</section>
+
+<!-- 09 ───────────────────────────────────────────────────────────────── -->
+<section class="slide">
+  <p class="kicker">Verified, not asserted</p>
+  <h2 style="margin-top:18px">Every claim on these slides is reproducible</h2>
+  <div class="rule"></div>
+  <div class="cols c2" style="margin-top:42px">
+    <div>
+      <div class="stat"><span class="v good">11/11</span><span class="l">browser journey against production — book, confirm, cancel, slot returns</span></div>
+      <div class="stat"><span class="v good">19</span><span class="l">unit tests, run in CI against a real Postgres 17</span></div>
+      <div class="stat"><span class="v good">0</span><span class="l">npm audit vulnerabilities</span></div>
+    </div>
+    <div class="mid">
+<pre style="font-size:18px">npm run test        <span class="c"># concurrency + lottery</span>
+npm run invariant   <span class="c"># whole-table sweep</span>
+npm run e2e         <span class="c"># 11 browser checks</span></pre>
+      <p class="body" style="margin-top:26px;font-size:18px">The overlap count is
+        never a check of the slot just tested — it is <b>every confirmed row
+        against every other row</b> on the same court, run after every race.</p>
+    </div>
+  </div>
+  <div class="foot"><span>PlayHack · Team InnovAIT</span><span>13</span></div>
+</section>
+
+<!-- 11 ───────────────────────────────────────────────────────────────── -->
+<section class="slide">
+  <p class="kicker">Stated plainly</p>
+  <h2 style="margin-top:18px">What is deliberately out of scope</h2>
+  <div class="rule"></div>
+  <ul style="margin-top:30px">
+    <li><b>No passwords.</b> Identity is a signed cookie over a seeded roster, with a “switch reader” control — so a judge can race two students without two browser profiles. <span style="color:var(--ink-3)">Swapping in SSO replaces one function.</span></li>
+    <li><b>The demo endpoints are unauthenticated</b> and rate limited rather than gated, because the race demo has to stay one click away.</li>
+    <li><b>What is enforced:</b> ownership scoped inside every UPDATE, zod on every request body, bind parameters on every query, no <span class="num">sql.unsafe</span> anywhere.</li>
+    <li><b>Next:</b> institute SSO, push notifications for waitlist offers, and a real limiter keyed on identity rather than on a header the client controls.</li>
+  </ul>
+  <div class="foot"><span>PlayHack · Team InnovAIT</span><span>14</span></div>
+</section>
+
+
+<!-- KEY FEATURES -->
 <section class="slide" style="justify-content:center;align-items:center;text-align:center">
   <p class="kicker">One platform. Zero clashes.</p>
   <h1 style="margin-top:26px;max-width:20ch">Fifty students. One court. One winner.</h1>

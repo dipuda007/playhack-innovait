@@ -30,7 +30,7 @@ await page.pdf({
   width: "1600px",
   height: "900px",
   printBackground: true,
-  pageRanges: "1-16",
+  pageRanges: "1-15",
   margin: { top: "0", bottom: "0", left: "0", right: "0" },
 });
 await browser.close();
