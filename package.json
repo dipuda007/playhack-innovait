@@ -17,7 +17,7 @@
     "e2e": "tsx scripts/e2e.mts",
     "media": "tsx scripts/media.mts",
     "infographic": "tsx scripts/infographic.mts",
-    "deck": "tsx scripts/deck.mts && python scripts/deck.py",
+    "deck": "python scripts/deck_native.py",
     "deck:extras": "python scripts/deck_pdf.py",
     "report": "tsx scripts/report.mts"
   },
